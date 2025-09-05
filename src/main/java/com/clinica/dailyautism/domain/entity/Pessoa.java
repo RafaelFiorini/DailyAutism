@@ -1,34 +1,85 @@
 package com.clinica.dailyautism.domain.entity;
 
+import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Data;
 import java.time.LocalDate;
 import java.util.Objects;
 
+@Entity
+@Data
+@Builder
 public class Pessoa {
 
-    private String IdPessoa;
-    private String CPFPessoa;
-    private LocalDate DataNascPessoa;
-    private String RGPessoa;
-    private String Endereco;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, length = 36)
+    private String idPessoa;
 
-    public Pessoa(String endereco, String RGPessoa, LocalDate dataNascPessoa, String CPFPessoa, String idPessoa) {
-        Endereco = endereco;
-        this.RGPessoa = RGPessoa;
-        DataNascPessoa = dataNascPessoa;
-        this.CPFPessoa = CPFPessoa;
-        IdPessoa = idPessoa;
-    }
+    @Column(nullable = false, length = 255)
+    private String nomePessoa;
+
+    @Column(nullable = false, length = 11)
+    private String CPFPessoa;
+
+    @Column(nullable = false)
+    private LocalDate datanascPessoa;
+
+    @Column(nullable = false)
+    private String RGPessoa;
+
+    private String enderecoPessoa;
+
+    private String telefonePessoa;
+
+    @Column(nullable = false, length = 11)
+    private String celularPessoa;
+
+    @Column(nullable = false, length = 255)
+    private String emailPessoa;
 
     public Pessoa() {
+    }
 
+    public Pessoa(String idPessoa, String nomePessoa, String CPFPessoa, LocalDate datanascPessoa, String RGPessoa, String enderecoPessoa, String telefonePessoa, String celularPessoa, String emailPessoa) {
+        this.idPessoa = idPessoa;
+        this.nomePessoa = nomePessoa;
+        this.CPFPessoa = CPFPessoa;
+        this.datanascPessoa = datanascPessoa;
+        this.RGPessoa = RGPessoa;
+        this.enderecoPessoa = enderecoPessoa;
+        this.telefonePessoa = telefonePessoa;
+        this.celularPessoa = celularPessoa;
+        this.emailPessoa = emailPessoa;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Pessoa pessoa = (Pessoa) o;
+        return Objects.equals(idPessoa, pessoa.idPessoa) && Objects.equals(nomePessoa, pessoa.nomePessoa) && Objects.equals(CPFPessoa, pessoa.CPFPessoa) && Objects.equals(datanascPessoa, pessoa.datanascPessoa) && Objects.equals(RGPessoa, pessoa.RGPessoa) && Objects.equals(enderecoPessoa, pessoa.enderecoPessoa) && Objects.equals(telefonePessoa, pessoa.telefonePessoa) && Objects.equals(celularPessoa, pessoa.celularPessoa) && Objects.equals(emailPessoa, pessoa.emailPessoa);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(idPessoa, nomePessoa, CPFPessoa, datanascPessoa, RGPessoa, enderecoPessoa, telefonePessoa, celularPessoa, emailPessoa);
     }
 
     public String getIdPessoa() {
-        return IdPessoa;
+        return idPessoa;
     }
 
     public void setIdPessoa(String idPessoa) {
-        IdPessoa = idPessoa;
+        this.idPessoa = idPessoa;
+    }
+
+    public String getNomePessoa() {
+        return nomePessoa;
+    }
+
+    public void setNomePessoa(String nomePessoa) {
+        this.nomePessoa = nomePessoa;
     }
 
     public String getCPFPessoa() {
@@ -39,12 +90,12 @@ public class Pessoa {
         this.CPFPessoa = CPFPessoa;
     }
 
-    public LocalDate getDataNascPessoa() {
-        return DataNascPessoa;
+    public LocalDate getDatanascPessoa() {
+        return datanascPessoa;
     }
 
-    public void setDataNascPessoa(LocalDate dataNascPessoa) {
-        DataNascPessoa = dataNascPessoa;
+    public void setDatanascPessoa(LocalDate datanascPessoa) {
+        this.datanascPessoa = datanascPessoa;
     }
 
     public String getRGPessoa() {
@@ -55,25 +106,36 @@ public class Pessoa {
         this.RGPessoa = RGPessoa;
     }
 
-    public String getEndereco() {
-        return Endereco;
+    public String getEnderecoPessoa() {
+        return enderecoPessoa;
     }
 
-    public void setEndereco(String endereco) {
-        Endereco = endereco;
+    public void setEnderecoPessoa(String enderecoPessoa) {
+        this.enderecoPessoa = enderecoPessoa;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Pessoa pessoa = (Pessoa) o;
-        return Objects.equals(IdPessoa, pessoa.IdPessoa) && Objects.equals(CPFPessoa, pessoa.CPFPessoa) && Objects.equals(DataNascPessoa, pessoa.DataNascPessoa) && Objects.equals(RGPessoa, pessoa.RGPessoa) && Objects.equals(Endereco, pessoa.Endereco);
+    public String getTelefonePessoa() {
+        return telefonePessoa;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(IdPessoa, CPFPessoa, DataNascPessoa, RGPessoa, Endereco);
+    public void setTelefonePessoa(String telefonePessoa) {
+        this.telefonePessoa = telefonePessoa;
     }
-}
+
+    public String getCelularPessoa() {
+        return celularPessoa;
+    }
+
+    public void setCelularPessoa(String celularPessoa) {
+        this.celularPessoa = celularPessoa;
+    }
+
+    public String getEmailPessoa() {
+        return emailPessoa;
+    }
+
+    public void setEmailPessoa(String emailPessoa) {
+        this.emailPessoa = emailPessoa;
+    }
+ }
 
