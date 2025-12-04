@@ -10,14 +10,14 @@ public class UserDTO {
 
     private final String idUser;
     private final String nomeUser;
-    private final String celularUser;
+    private final String passwordUser;
     private final String emailUser;
 
     public static UserDTO create(User user) {
         return new UserDTO(
                 user.getIdUser(),
                 user.getNomeUser(),
-                user.getCelularUser(),
+                user.getPasswordUser(),
                 user.getEmailUser()
         );
     }

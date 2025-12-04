@@ -18,9 +18,9 @@ public class User {
     @Column(nullable = false, length = 255)
     private String nomeUser;
 
-    @Column(nullable = false, length = 11)
-    private String celularUser;
-
     @Column(nullable = false, length = 255)
     private String emailUser;
+
+    @Column(nullable = false)
+    private String passwordUser;
 }
