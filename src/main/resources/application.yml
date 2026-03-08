@@ -1,4 +1,6 @@
 spring:
+  jackson:
+    default-property-inclusion: non-null
   application:
     name: DailyAutism
   datasource:

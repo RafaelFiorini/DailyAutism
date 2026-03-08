@@ -1,7 +1,7 @@
 package com.clinica.dailyautism.infraestructure.controller;
 
 import com.clinica.dailyautism.domain.aplicationservice.UserService;
-import com.clinica.dailyautism.domain.entity.User;
+import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.infraestructure.dto.SaveUserDTO;
 import com.clinica.dailyautism.infraestructure.dto.UserDTO;
 import lombok.RequiredArgsConstructor;

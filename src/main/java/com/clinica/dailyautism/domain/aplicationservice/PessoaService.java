@@ -32,4 +32,11 @@ public class PessoaService {
 
      return pessoa;
     }
+
+    public Pessoa loadPessoa(String pessoaId){
+        return pessoaRepository
+                .findById(pessoaId)
+                .orElseThrow();
+
+    }
 }

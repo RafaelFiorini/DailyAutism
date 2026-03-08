@@ -1,8 +1,6 @@
 package com.clinica.dailyautism.infraestructure.dto;
 
-import com.clinica.dailyautism.domain.entity.Pessoa;
-import com.clinica.dailyautism.domain.entity.User;
-import jakarta.persistence.Column;
+import com.clinica.dailyautism.domain.entity.security.User;
 import lombok.Data;
 
 @Data

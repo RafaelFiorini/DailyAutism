@@ -1,4 +1,6 @@
 package com.clinica.dailyautism.domain.exception;
 
-public class PessoaNotFoundException {
+import org.apache.coyote.BadRequestException;
+
+public class PessoaNotFoundException extends BadRequestException {
 }
