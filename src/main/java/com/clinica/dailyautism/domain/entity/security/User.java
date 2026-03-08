@@ -15,10 +15,10 @@ public class User {
     @Column(nullable = false, length = 36)
     private String idUser;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 200)
     private String nomeUser;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 100)
     private String emailUser;
 
     @Column(nullable = false)
