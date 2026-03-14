@@ -1,7 +1,6 @@
 package com.clinica.dailyautism.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
 import lombok.Data;
 
 
