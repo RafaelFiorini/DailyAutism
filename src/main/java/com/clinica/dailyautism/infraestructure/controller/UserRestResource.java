@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/users")
@@ -22,10 +21,17 @@ public class UserRestResource {
         private final UserService userService;
 
         @PostMapping
-        public ResponseEntity<UserDTO> createUser(@RequestBody SaveUserDTO saveUserDTO){
-            User user = userService.createUser(saveUserDTO);
-            return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
-                    .body(UserDTO.create(user));
+        public ResponseEntity<UserDTO> createUser(@RequestBody SaveUserDTO saveUserDTO) {
+                User user = userService.createUser(saveUserDTO);
+                return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
+                                .body(UserDTO.create(user));
+        }
+
+        @PostMapping
+        public ResponseEntity<UserDTO> login(@RequestBody SaveUserDTO saveUserDTO) {
+                User user = userService.createUser(saveUserDTO);
+                return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
+                                .body(UserDTO.create(user));
         }
 
 }

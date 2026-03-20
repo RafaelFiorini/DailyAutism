@@ -2,6 +2,7 @@ package com.clinica.dailyautism.infraestructure.dto;
 import lombok.Data;
 import java.time.LocalDate;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -29,6 +30,7 @@ public class SavePessoaDataDTO {
     
     private final String celularPessoa;
     
+    @Email(message = "Email inválido" )
     private final String emailPessoa;
 
 }
