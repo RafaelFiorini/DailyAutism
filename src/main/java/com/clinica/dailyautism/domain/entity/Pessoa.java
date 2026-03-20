@@ -32,7 +32,7 @@ public class Pessoa {
 
     private String telefonePessoa;
 
-    @Column(nullable = false, length = 11)
+    //@Column(nullable = false, length = 11)
     private String celularPessoa;
 
     @Column(nullable = false, length = 255)

@@ -1,14 +1,23 @@
 package com.clinica.dailyautism.domain.entity.security;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 
 @Entity
 @Data
 @Builder
-public class User {
+@NoArgsConstructor
+@AllArgsConstructor
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -18,9 +27,25 @@ public class User {
     @Column(nullable = false, length = 200)
     private String nomeUser;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String emailUser;
 
     @Column(nullable = false)
     private String passwordUser;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordUser;
+    }
+
+    @Override
+    public String getUsername() {
+        return emailUser; // usa o email como identificador
+    }
 }
+

@@ -13,3 +13,8 @@ spring:
     hibernate.ddl-auto: update
     repositories.enabled: true
     database: mysql
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:#HeatCliff789)Viviane1208##Julia0204#Emmanuel1305}

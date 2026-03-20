@@ -18,20 +18,12 @@ import java.net.URI;
 @RequestMapping("/users")
 public class UserRestResource {
 
-        private final UserService userService;
+    private final UserService userService;
 
-        @PostMapping
-        public ResponseEntity<UserDTO> createUser(@RequestBody SaveUserDTO saveUserDTO) {
-                User user = userService.createUser(saveUserDTO);
-                return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
-                                .body(UserDTO.create(user));
-        }
-
-        @PostMapping
-        public ResponseEntity<UserDTO> login(@RequestBody SaveUserDTO saveUserDTO) {
-                User user = userService.createUser(saveUserDTO);
-                return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
-                                .body(UserDTO.create(user));
-        }
-
+    @PostMapping
+    public ResponseEntity<UserDTO> createUser(@RequestBody SaveUserDTO saveUserDTO) {
+        User user = userService.createUser(saveUserDTO);
+        return ResponseEntity.created(URI.create("/users/" + user.getIdUser()))
+                .body(UserDTO.create(user));
+    }
 }
