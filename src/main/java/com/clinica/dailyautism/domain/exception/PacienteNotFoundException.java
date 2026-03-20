@@ -1,4 +1,9 @@
 package com.clinica.dailyautism.domain.exception;
 
-public class PacienteNotFoundException {
+import com.clinica.dailyautism.infraestructure.exception.RequestException;
+
+public class PacienteNotFoundException extends RequestException {
+    public PacienteNotFoundException(String pacienteId) {
+        super("Paciente não encontrado: " + pacienteId, "PacienteNotFound");
+    }
 }

@@ -1,13 +1,17 @@
 package com.clinica.dailyautism.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-
-public class Profissional  {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Profissional {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -21,7 +25,4 @@ public class Profissional  {
     private String conselhoProf;
 
     private boolean ativoProf;
-
-
-
 }

@@ -8,20 +8,20 @@ import jakarta.validation.constraints.Size;
 
 
 @Data
-public class SavePessoaDataDTO {
+public class SavePessoaDTO {
 
     @NotNull(message = "O nome da pessoa é obrigatório")
     @Size(min = 2, max = 100, message = "Nome inválido")
     private final String nomePessoa;
 
     @NotNull(message = "O CPF da pessoa é obrigatório")
-    @Size(min = 11, max = 11, message = "CPF inválido")
+    @Size(max = 11, message = "CPF inválido")
     private final String CPFPessoa;
     
     @NotNull(message = "A data de nascimento da pessoa é obrigatória")
     private final LocalDate datanascPessoa;
     
-    @Size(min = 2, max = 20, message = "RG inválido")
+    @Size(max = 20, message = "RG inválido")
     private final String RGPessoa;
     
     private final String enderecoPessoa;

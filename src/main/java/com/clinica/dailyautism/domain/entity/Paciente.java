@@ -1,15 +1,38 @@
 package com.clinica.dailyautism.domain.entity;
 
-import java.time.LocalDate;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Paciente {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, length = 36)
     private String idPaciente;
-    private Pessoa idPessoa;
-    private String apelidoPaciente;
-    private char planoPaciente;
-    private LocalDate vencimentoLiberacaoPlanoPaciente;
-    private boolean isResponsavel;
-    private Responsavel idResponsavel;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "pessoaPaciente", referencedColumnName = "idPessoa")
+    private Pessoa pessoaPaciente;
+
+    private String apelidoPaciente;
+
+    private String planoPaciente;
+
+    private LocalDate vencimentoLiberacaoPlanoPaciente;
+
+    private boolean isResponsavel;
+
+    @ManyToMany(mappedBy = "pacientes")
+    private List<Responsavel> responsaveis;
 }
