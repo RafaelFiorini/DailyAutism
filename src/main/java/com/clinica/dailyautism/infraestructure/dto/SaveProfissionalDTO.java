@@ -1,12 +1,15 @@
 package com.clinica.dailyautism.infraestructure.dto;
 
-import com.clinica.dailyautism.domain.entity.Pessoa;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class SaveProfissionalDTO {
 
-    private final Pessoa pessoaProf;
-    private final String ConselhoProf;
+    @NotNull(message = "O ID da pessoa é obrigatório")
+    private final String idPessoa;
+
+    private final String conselhoProf;
+
     private final boolean ativoProf;
-    }
+}

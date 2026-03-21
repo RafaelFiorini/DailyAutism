@@ -1,4 +1,56 @@
 package com.clinica.dailyautism.infraestructure.controller;
 
+import com.clinica.dailyautism.domain.aplicationservice.ProfissionalService;
+import com.clinica.dailyautism.domain.entity.Profissional;
+import com.clinica.dailyautism.infraestructure.dto.ProfissionalDTO;
+import com.clinica.dailyautism.infraestructure.dto.SaveProfissionalDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.List;
+
+@RequiredArgsConstructor
+@RestController
+@RequestMapping("/profissionais")
 public class ProfissionalRestResource {
+
+    private final ProfissionalService profissionalService;
+
+    @PostMapping
+    public ResponseEntity<ProfissionalDTO> createProfissional(@Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
+        Profissional profissional = profissionalService.createProfissional(saveProfissionalDTO);
+        return ResponseEntity.created(URI.create("/profissionais/" + profissional.getIdProf()))
+                .body(ProfissionalDTO.create(profissional));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProfissionalDTO> loadProfissional(@PathVariable String id) {
+        Profissional profissional = profissionalService.loadProfissional(id);
+        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ProfissionalDTO>> listProfissionais() {
+        List<ProfissionalDTO> profissionais = profissionalService.listProfissionais()
+                .stream()
+                .map(ProfissionalDTO::create)
+                .toList();
+        return ResponseEntity.ok(profissionais);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProfissionalDTO> updateProfissional(@PathVariable String id,
+                                                              @Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
+        Profissional profissional = profissionalService.updateProfissional(id, saveProfissionalDTO);
+        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProfissional(@PathVariable String id) {
+        profissionalService.deleteProfissional(id);
+        return ResponseEntity.noContent().build();
+    }
 }
