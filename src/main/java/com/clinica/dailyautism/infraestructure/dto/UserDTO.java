@@ -9,13 +9,14 @@ public class UserDTO {
     private final String idUser;
     private final String nomeUser;
     private final String emailUser;
-    // senha removida daqui!
+    private final String idPessoa;
 
     public static UserDTO create(User user) {
         return new UserDTO(
                 user.getIdUser(),
                 user.getNomeUser(),
-                user.getEmailUser()
+                user.getEmailUser(),
+                user.getPessoa() != null ? user.getPessoa().getIdPessoa() : null
         );
     }
 }

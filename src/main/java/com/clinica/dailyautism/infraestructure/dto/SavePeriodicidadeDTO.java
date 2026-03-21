@@ -1,22 +1,16 @@
 package com.clinica.dailyautism.infraestructure.dto;
 
-import com.clinica.dailyautism.domain.entity.Periodicidade;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class PeriodicidadeDTO {
+public class SavePeriodicidadeDTO {
 
-    private final String idPeriodicidade;
+    @NotNull(message = "O nome da periodicidade é obrigatório")
     private final String nomePeriodicidade;
-    private final Integer diasIntervalo;
-    private final String descricaoPeriodicidade;
 
-    public static PeriodicidadeDTO create(Periodicidade periodicidade) {
-        return new PeriodicidadeDTO(
-                periodicidade.getIdPeriodicidade(),
-                periodicidade.getNomePeriodicidade(),
-                periodicidade.getDiasIntervalo(),
-                periodicidade.getDescricaoPeriodicidade()
-        );
-    }
+    //@NotNull(message = "O intervalo em dias é obrigatório")
+    private final Integer diasIntervalo;
+
+    private final String descricaoPeriodicidade;
 }

@@ -3,6 +3,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.Responsavel;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
+import com.clinica.dailyautism.domain.exception.ResponsavelNotFoundException;
 import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveResponsavelDTO;
@@ -33,7 +34,7 @@ public class ResponsavelService {
 
     public Responsavel loadResponsavel(String responsavelId) {
         return responsavelRepository.findById(responsavelId)
-                .orElseThrow(() -> new RuntimeException("Responsável não encontrado: " + responsavelId));
+                .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado: " + responsavelId));
     }
 
     public List<Responsavel> listResponsaveis() {

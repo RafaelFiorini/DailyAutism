@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.domain.entity.security;
 
+import com.clinica.dailyautism.domain.entity.Pessoa;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,10 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String passwordUser;
+
+    @OneToOne
+    @JoinColumn(name = "idPessoa", referencedColumnName = "idPessoa")
+    private Pessoa pessoa;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

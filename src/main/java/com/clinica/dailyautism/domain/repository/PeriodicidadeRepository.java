@@ -1,4 +1,8 @@
 package com.clinica.dailyautism.domain.repository;
 
-public interface PeriodicidadeRepository {
+import com.clinica.dailyautism.domain.entity.Periodicidade;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PeriodicidadeRepository extends JpaRepository<Periodicidade, String> {
+
 }

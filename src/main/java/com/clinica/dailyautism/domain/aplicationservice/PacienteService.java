@@ -36,7 +36,7 @@ public class PacienteService {
 
     public Paciente loadPaciente(String pacienteId) {
         return pacienteRepository.findById(pacienteId)
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado: " + pacienteId));
+                .orElseThrow(() -> new PessoaNotFoundException("Paciente não encontrado: " + pacienteId));
     }
 
     public List<Paciente> listPacientes() {

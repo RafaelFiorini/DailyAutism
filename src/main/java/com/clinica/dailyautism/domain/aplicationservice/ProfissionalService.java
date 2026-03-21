@@ -3,6 +3,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
+import com.clinica.dailyautism.domain.exception.ProfissionalNotFoundException;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveProfissionalDTO;
@@ -35,7 +36,7 @@ public class ProfissionalService {
 
     public Profissional loadProfissional(String profissionalId) {
         return profissionalRepository.findById(profissionalId)
-                .orElseThrow(() -> new RuntimeException("Profissional não encontrado: " + profissionalId));
+                .orElseThrow(() -> new ProfissionalNotFoundException("Profissional não encontrado: " + profissionalId));
     }
 
     public List<Profissional> listProfissionais() {
