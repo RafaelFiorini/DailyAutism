@@ -1,6 +1,8 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.TipoCompromisso;
+import com.clinica.dailyautism.domain.exception.TipoArquivoNotFoundException;
+import com.clinica.dailyautism.domain.exception.TipoCompromissoNotFoundException;
 import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveTipoCompromissoDTO;
 import jakarta.transaction.Transactional;
@@ -26,7 +28,7 @@ public class TipoCompromissoService {
 
     public TipoCompromisso loadTipoCompromisso(String tipoCompromissoId) {
         return tipoCompromissoRepository.findById(tipoCompromissoId)
-                .orElseThrow(() -> new RuntimeException("Tipo de compromisso não encontrado: " + tipoCompromissoId));
+                .orElseThrow(() -> new TipoArquivoNotFoundException("Tipo de compromisso não encontrado: " + tipoCompromissoId));
     }
 
     public List<TipoCompromisso> listTiposCompromisso() {
@@ -43,7 +45,9 @@ public class TipoCompromissoService {
 
     @Transactional
     public void deleteTipoCompromisso(String tipoCompromissoId) {
-        TipoCompromisso tipoCompromisso = loadTipoCompromisso(tipoCompromissoId);
-        tipoCompromissoRepository.delete(tipoCompromisso);
+        TipoCompromisso tipoCompromisso = tipoCompromissoRepository.findById(tipoCompromissoId)
+                .orElseThrow(() -> new TipoCompromissoNotFoundException("Tipo de compromisso não encontrado: " + tipoCompromissoId));
+        tipoCompromisso.desativar();
+        tipoCompromissoRepository.save(tipoCompromisso);
     }
 }

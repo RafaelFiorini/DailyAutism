@@ -43,7 +43,9 @@ public class ResponsavelService {
 
     @Transactional
     public void deleteResponsavel(String responsavelId) {
-        Responsavel responsavel = loadResponsavel(responsavelId);
-        responsavelRepository.delete(responsavel);
+        Responsavel responsavel = responsavelRepository.findById(responsavelId)
+                .orElseThrow(() -> new ResponsavelNotFoundException(responsavelId));
+        responsavel.desativar();
+        responsavelRepository.save(responsavel);
     }
 }

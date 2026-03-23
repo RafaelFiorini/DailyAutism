@@ -4,6 +4,7 @@ import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.EmailAlreadyExistsException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
+import com.clinica.dailyautism.domain.exception.UserNotFoundException;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveUserDTO;
@@ -39,7 +40,7 @@ public class UserService {
     @Transactional
     public User vincularPessoa(String userId, String pessoaId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + userId));
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + userId));
 
         Pessoa pessoa = pessoaRepository.findById(pessoaId)
                 .orElseThrow(() -> new PessoaNotFoundException(pessoaId));

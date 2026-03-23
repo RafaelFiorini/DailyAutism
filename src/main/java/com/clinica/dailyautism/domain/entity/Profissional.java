@@ -1,17 +1,17 @@
 package com.clinica.dailyautism.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Profissional {
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
+public class Profissional extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,5 +24,5 @@ public class Profissional {
 
     private String conselhoProf;
 
-    private boolean ativoProf;
+    // ativoProf REMOVIDO — substituído pelo campo ativo da BaseEntity
 }

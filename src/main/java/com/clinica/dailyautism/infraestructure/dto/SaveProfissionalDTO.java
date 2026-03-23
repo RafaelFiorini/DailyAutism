@@ -11,5 +11,5 @@ public class SaveProfissionalDTO {
 
     private final String conselhoProf;
 
-    private final boolean ativoProf;
+   // private final boolean ativoProf;
 }

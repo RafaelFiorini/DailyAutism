@@ -4,7 +4,9 @@ import com.clinica.dailyautism.domain.entity.Arquivo;
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.TipoArquivo;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.ArquivoNotFoundException;
 import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
+import com.clinica.dailyautism.domain.exception.TipoArquivoNotFoundException;
 import com.clinica.dailyautism.domain.repository.ArquivoRepository;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.TipoArquivoRepository;
@@ -12,6 +14,7 @@ import com.clinica.dailyautism.domain.repository.UserRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveArquivoDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,10 +35,10 @@ public class ArquivoService {
                 .orElseThrow(() -> new PacienteNotFoundException(saveArquivoDTO.getIdPaciente()));
 
         TipoArquivo tipoArquivo = tipoArquivoRepository.findById(saveArquivoDTO.getIdTipoArquivo())
-                .orElseThrow(() -> new RuntimeException("Tipo de arquivo não encontrado: " + saveArquivoDTO.getIdTipoArquivo()));
+                .orElseThrow(() -> new TipoArquivoNotFoundException("Tipo de arquivo não encontrado: " + saveArquivoDTO.getIdTipoArquivo()));
 
         User user = userRepository.findById(saveArquivoDTO.getIdUser())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + saveArquivoDTO.getIdUser()));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + saveArquivoDTO.getIdUser()));
 
         Arquivo arquivo = Arquivo.builder()
                 .nomeArquivo(saveArquivoDTO.getNomeArquivo())
@@ -54,7 +57,7 @@ public class ArquivoService {
 
     public Arquivo loadArquivo(String arquivoId) {
         return arquivoRepository.findById(arquivoId)
-                .orElseThrow(() -> new RuntimeException("Arquivo não encontrado: " + arquivoId));
+                .orElseThrow(() -> new ArquivoNotFoundException("Arquivo não encontrado: " + arquivoId));
     }
 
     public List<Arquivo> listArquivosByPaciente(String pacienteId) {
@@ -63,13 +66,15 @@ public class ArquivoService {
 
     public Arquivo loadArquivoComBase64(String arquivoId) {
         return arquivoRepository.findById(arquivoId)
-                .orElseThrow(() -> new RuntimeException("Arquivo não encontrado: " + arquivoId));
+                .orElseThrow(() -> new ArquivoNotFoundException("Arquivo não encontrado: " + arquivoId));
     }
 
     @Transactional
     public void deleteArquivo(String arquivoId) {
-        Arquivo arquivo = loadArquivo(arquivoId);
-        arquivoRepository.delete(arquivo);
+        Arquivo arquivo = arquivoRepository.findById(arquivoId)
+                .orElseThrow(() -> new ArquivoNotFoundException("Arquivo não encontrado: " + arquivoId));
+        arquivo.desativar();
+        arquivoRepository.save(arquivo);
     }
 
 }

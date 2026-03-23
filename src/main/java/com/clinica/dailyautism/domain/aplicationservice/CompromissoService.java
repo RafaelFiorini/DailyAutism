@@ -5,7 +5,10 @@ import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Periodicidade;
 import com.clinica.dailyautism.domain.entity.TipoCompromisso;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.CompromissoNotFoundException;
 import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
+import com.clinica.dailyautism.domain.exception.PeriodicidadeNotFoundException;
+import com.clinica.dailyautism.domain.exception.TipoCompromissoNotFoundException;
 import com.clinica.dailyautism.domain.repository.CompromissoRepository;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
@@ -14,6 +17,7 @@ import com.clinica.dailyautism.domain.repository.UserRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveCompromissoDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,13 +38,13 @@ public class CompromissoService {
                 .orElseThrow(() -> new PacienteNotFoundException(saveCompromissoDTO.getIdPaciente()));
 
         TipoCompromisso tipoCompromisso = tipoCompromissoRepository.findById(saveCompromissoDTO.getIdTipoCompromisso())
-                .orElseThrow(() -> new RuntimeException("Tipo de compromisso não encontrado: " + saveCompromissoDTO.getIdTipoCompromisso()));
+                .orElseThrow(() -> new TipoCompromissoNotFoundException("Tipo de compromisso não encontrado: " + saveCompromissoDTO.getIdTipoCompromisso()));
 
         Periodicidade periodicidade = periodicidadeRepository.findById(saveCompromissoDTO.getIdPeriodicidade())
-                .orElseThrow(() -> new RuntimeException("Periodicidade não encontrada: " + saveCompromissoDTO.getIdPeriodicidade()));
+                .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + saveCompromissoDTO.getIdPeriodicidade()));
 
         User user = userRepository.findById(saveCompromissoDTO.getIdUser())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + saveCompromissoDTO.getIdUser()));
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + saveCompromissoDTO.getIdUser()));
 
         Compromisso compromisso = Compromisso.builder()
                 .tituloCompromisso(saveCompromissoDTO.getTituloCompromisso())
@@ -59,7 +63,7 @@ public class CompromissoService {
 
     public Compromisso loadCompromisso(String compromissoId) {
         return compromissoRepository.findById(compromissoId)
-                .orElseThrow(() -> new RuntimeException("Compromisso não encontrado: " + compromissoId));
+                .orElseThrow(() -> new CompromissoNotFoundException("Compromisso não encontrado: " + compromissoId));
     }
 
     public List<Compromisso> listCompromissosByPaciente(String pacienteId) {
@@ -85,7 +89,9 @@ public class CompromissoService {
 
     @Transactional
     public void deleteCompromisso(String compromissoId) {
-        Compromisso compromisso = loadCompromisso(compromissoId);
-        compromissoRepository.delete(compromisso);
+        Compromisso compromisso = compromissoRepository.findById(compromissoId)
+                .orElseThrow(() -> new CompromissoNotFoundException("Compromisso não encontrado: " + compromissoId));
+        compromisso.desativar();
+        compromissoRepository.save(compromisso);
     }
 }

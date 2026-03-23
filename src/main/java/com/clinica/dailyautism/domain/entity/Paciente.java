@@ -1,11 +1,8 @@
 package com.clinica.dailyautism.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -14,7 +11,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Paciente {
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
+public class Paciente extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

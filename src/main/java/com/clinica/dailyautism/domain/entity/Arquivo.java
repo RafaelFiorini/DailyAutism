@@ -2,11 +2,8 @@ package com.clinica.dailyautism.domain.entity;
 
 import com.clinica.dailyautism.domain.entity.security.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
 
 @Entity
@@ -14,7 +11,9 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Arquivo {
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
+public class Arquivo extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,7 +35,7 @@ public class Arquivo {
     private String urlArquivo;
 
     @Column(nullable = false, length = 10)
-    private String extensaoArquivo; // "pdf", "docx", "xlsx", "jpg", "png", "tiff"
+    private String extensaoArquivo;
 
     @ManyToOne
     @JoinColumn(name = "idPaciente", nullable = false)

@@ -1,17 +1,17 @@
 package com.clinica.dailyautism.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TipoCompromisso {
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
+public class TipoCompromisso extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

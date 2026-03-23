@@ -1,12 +1,8 @@
 package com.clinica.dailyautism.domain.entity;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.util.List;
 
 @Entity
@@ -14,7 +10,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Responsavel {
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
+public class Responsavel extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

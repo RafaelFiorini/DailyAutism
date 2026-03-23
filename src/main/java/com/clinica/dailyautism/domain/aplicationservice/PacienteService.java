@@ -2,6 +2,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Pessoa;
+import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
@@ -54,7 +55,9 @@ public class PacienteService {
 
     @Transactional
     public void deletePaciente(String pacienteId) {
-        Paciente paciente = loadPaciente(pacienteId);
-        pacienteRepository.delete(paciente);
+        Paciente paciente = pacienteRepository.findById(pacienteId)
+                .orElseThrow(() -> new PacienteNotFoundException(pacienteId));
+        paciente.desativar();
+        pacienteRepository.save(paciente);
     }
 }

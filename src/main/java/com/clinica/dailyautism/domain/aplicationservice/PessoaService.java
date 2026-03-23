@@ -57,8 +57,10 @@ public class PessoaService {
 
     @Transactional
     public void deletePessoa(String pessoaId) {
-        Pessoa pessoa = loadPessoa(pessoaId);
-        pessoaRepository.delete(pessoa);
+        Pessoa pessoa = pessoaRepository.findById(pessoaId)
+                .orElseThrow(() -> new PessoaNotFoundException(pessoaId));
+        pessoa.desativar();
+        pessoaRepository.save(pessoa);
     }
 
     public List<Pessoa> listPessoas() {

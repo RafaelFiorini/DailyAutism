@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.Periodicidade;
+import com.clinica.dailyautism.domain.exception.PeriodicidadeNotFoundException;
 import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
 import com.clinica.dailyautism.infraestructure.dto.SavePeriodicidadeDTO;
 import jakarta.transaction.Transactional;
@@ -27,7 +28,7 @@ public class PeriodicidadeService {
 
     public Periodicidade loadPeriodicidade(String periodicidadeId) {
         return periodicidadeRepository.findById(periodicidadeId)
-                .orElseThrow(() -> new RuntimeException("Periodicidade não encontrada: " + periodicidadeId));
+                .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + periodicidadeId));
     }
 
     public List<Periodicidade> listPeriodicidades() {
@@ -45,7 +46,9 @@ public class PeriodicidadeService {
 
     @Transactional
     public void deletePeriodicidade(String periodicidadeId) {
-        Periodicidade periodicidade = loadPeriodicidade(periodicidadeId);
-        periodicidadeRepository.delete(periodicidade);
+        Periodicidade periodicidade = periodicidadeRepository.findById(periodicidadeId)
+                .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + periodicidadeId));
+        periodicidade.desativar();
+        periodicidadeRepository.save(periodicidade);
     }
 }

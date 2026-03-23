@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.TipoArquivo;
+import com.clinica.dailyautism.domain.exception.TipoArquivoNotFoundException;
 import com.clinica.dailyautism.domain.repository.TipoArquivoRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveTipoArquivoDTO;
 import jakarta.transaction.Transactional;
@@ -26,7 +27,7 @@ public class TipoArquivoService {
 
     public TipoArquivo loadTipoArquivo(String tipoArquivoId) {
         return tipoArquivoRepository.findById(tipoArquivoId)
-                .orElseThrow(() -> new RuntimeException("Tipo de arquivo não encontrado: " + tipoArquivoId));
+                .orElseThrow(() -> new TipoArquivoNotFoundException("Tipo de arquivo não encontrado: " + tipoArquivoId));
     }
 
     public List<TipoArquivo> listTiposArquivo() {
@@ -43,7 +44,9 @@ public class TipoArquivoService {
 
     @Transactional
     public void deleteTipoArquivo(String tipoArquivoId) {
-        TipoArquivo tipoArquivo = loadTipoArquivo(tipoArquivoId);
-        tipoArquivoRepository.delete(tipoArquivo);
+        TipoArquivo tipoArquivo = tipoArquivoRepository.findById(tipoArquivoId)
+                .orElseThrow(() -> new TipoArquivoNotFoundException("Tipo de arquivo não encontrado: " + tipoArquivoId));
+        tipoArquivo.desativar();
+        tipoArquivoRepository.save(tipoArquivo);
     }
 }

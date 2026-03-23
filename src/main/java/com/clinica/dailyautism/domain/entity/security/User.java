@@ -1,14 +1,12 @@
 package com.clinica.dailyautism.domain.entity.security;
 
+import com.clinica.dailyautism.domain.entity.BaseEntity;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -18,7 +16,9 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+@EqualsAndHashCode(callSuper = false)  // ← adicionar isso
+@SQLRestriction("ativo = true")        // ← adicionar isso
+public class User extends BaseEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -50,7 +50,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return emailUser; // usa o email como identificador
+        return emailUser;
     }
 }
 

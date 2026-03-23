@@ -1,7 +1,9 @@
 package com.clinica.dailyautism.domain.exception;
 
-public class PeriodicidadeNotFoundException extends RuntimeException {
-  public PeriodicidadeNotFoundException(String message) {
-    super(message);
-  }
+import com.clinica.dailyautism.infraestructure.exception.RequestException;
+
+public class PeriodicidadeNotFoundException extends RequestException {
+    public PeriodicidadeNotFoundException(String periodicidadeId) {
+        super("Periodicidade não encontrada: " + periodicidadeId, "PeriodicidadeNotFound");
+    }
 }

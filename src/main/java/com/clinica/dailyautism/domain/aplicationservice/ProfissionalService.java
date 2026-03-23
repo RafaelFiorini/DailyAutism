@@ -28,7 +28,7 @@ public class ProfissionalService {
         Profissional profissional = Profissional.builder()
                 .pessoaProf(pessoa)
                 .conselhoProf(saveProfissionalDTO.getConselhoProf())
-                .ativoProf(saveProfissionalDTO.isAtivoProf())
+                //.ativoProf(saveProfissionalDTO.isAtivoProf())
                 .build();
 
         return profissionalRepository.save(profissional);
@@ -47,13 +47,15 @@ public class ProfissionalService {
     public Profissional updateProfissional(String profissionalId, SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = loadProfissional(profissionalId);
         profissional.setConselhoProf(saveProfissionalDTO.getConselhoProf());
-        profissional.setAtivoProf(saveProfissionalDTO.isAtivoProf());
+        //profissional.setAtivoProf(saveProfissionalDTO.isAtivoProf());
         return profissionalRepository.save(profissional);
     }
 
     @Transactional
     public void deleteProfissional(String profissionalId) {
-        Profissional profissional = loadProfissional(profissionalId);
-        profissionalRepository.delete(profissional);
+        Profissional profissional = profissionalRepository.findById(profissionalId)
+                .orElseThrow(() -> new ProfissionalNotFoundException(profissionalId));
+        profissional.desativar();
+        profissionalRepository.save(profissional);
     }
 }
