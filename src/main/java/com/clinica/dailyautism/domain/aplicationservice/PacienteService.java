@@ -10,7 +10,6 @@ import com.clinica.dailyautism.infraestructure.dto.SavePacienteDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,8 +27,8 @@ public class PacienteService {
         Paciente paciente = Paciente.builder()
                 .pessoaPaciente(pessoa)
                 .apelidoPaciente(savePacienteDTO.getApelidoPaciente())
-                .planoPaciente(savePacienteDTO.getPlanoPaciente())
                 .isResponsavel(savePacienteDTO.isResponsavel())
+                // planoPaciente e vencimentoLiberacaoPlanoPaciente removidos
                 .build();
 
         return pacienteRepository.save(paciente);
@@ -37,7 +36,8 @@ public class PacienteService {
 
     public Paciente loadPaciente(String pacienteId) {
         return pacienteRepository.findById(pacienteId)
-                .orElseThrow(() -> new PessoaNotFoundException("Paciente não encontrado: " + pacienteId));
+                .orElseThrow(() -> new PacienteNotFoundException(pacienteId));
+        // corrigido: estava usando PessoaNotFoundException por engano!
     }
 
     public List<Paciente> listPacientes() {
@@ -48,8 +48,8 @@ public class PacienteService {
     public Paciente updatePaciente(String pacienteId, SavePacienteDTO savePacienteDTO) {
         Paciente paciente = loadPaciente(pacienteId);
         paciente.setApelidoPaciente(savePacienteDTO.getApelidoPaciente());
-        paciente.setPlanoPaciente(savePacienteDTO.getPlanoPaciente());
         paciente.setResponsavel(savePacienteDTO.isResponsavel());
+        // planoPaciente e vencimentoLiberacaoPlanoPaciente removidos
         return pacienteRepository.save(paciente);
     }
 

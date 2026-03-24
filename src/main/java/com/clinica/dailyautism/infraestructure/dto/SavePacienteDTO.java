@@ -11,9 +11,8 @@ public class SavePacienteDTO {
 
     private final String apelidoPaciente;
 
-    private final String planoPaciente;
-
-    private final String vencimentoLiberacaoPlanoPaciente;
-
     private final boolean isResponsavel;
+
+    // planoPaciente e vencimentoLiberacaoPlanoPaciente removidos
+    // agora vivem em PacientePlanoSaude
 }

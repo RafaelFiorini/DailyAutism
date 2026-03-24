@@ -3,6 +3,7 @@ package com.clinica.dailyautism.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
+import java.util.List;
 
 @Entity
 @Data
@@ -24,5 +25,6 @@ public class Profissional extends BaseEntity {
 
     private String conselhoProf;
 
-    // ativoProf REMOVIDO — substituído pelo campo ativo da BaseEntity
+    @OneToMany(mappedBy = "profissional")
+    private List<ProfissionalPaciente> pacientes;
 }
