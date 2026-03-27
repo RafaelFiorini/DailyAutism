@@ -1,4 +1,4 @@
 package com.clinica.dailyautism.domain.entity.security;
 
-public class AcaoPerfil {
+public class Acao {
 }
