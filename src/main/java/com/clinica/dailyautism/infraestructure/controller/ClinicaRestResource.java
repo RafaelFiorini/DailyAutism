@@ -7,6 +7,7 @@ import com.clinica.dailyautism.infraestructure.dto.SaveClinicaDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.List;
@@ -19,6 +20,7 @@ public class ClinicaRestResource {
     private final ClinicaService clinicaService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CRIAR_CLINICA')")
     public ResponseEntity<ClinicaDTO> createClinica(@Valid @RequestBody SaveClinicaDTO dto) {
         Clinica clinica = clinicaService.createClinica(dto);
         return ResponseEntity.created(URI.create("/clinicas/" + clinica.getIdClinica()))
@@ -26,11 +28,13 @@ public class ClinicaRestResource {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('VER_CLINICA')")
     public ResponseEntity<ClinicaDTO> loadClinica(@PathVariable String id) {
         return ResponseEntity.ok(ClinicaDTO.create(clinicaService.loadClinica(id)));
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('LISTAR_CLINICA')")
     public ResponseEntity<List<ClinicaDTO>> listClinicas() {
         List<ClinicaDTO> clinicas = clinicaService.listClinicas()
                 .stream()
@@ -40,12 +44,14 @@ public class ClinicaRestResource {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_CLINICA')")
     public ResponseEntity<ClinicaDTO> updateClinica(@PathVariable String id,
                                                     @Valid @RequestBody SaveClinicaDTO dto) {
         return ResponseEntity.ok(ClinicaDTO.create(clinicaService.updateClinica(id, dto)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETAR_CLINICA')")
     public ResponseEntity<Void> deleteClinica(@PathVariable String id) {
         clinicaService.deleteClinica(id);
         return ResponseEntity.noContent().build();

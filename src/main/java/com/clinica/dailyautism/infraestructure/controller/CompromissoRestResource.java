@@ -7,6 +7,7 @@ import com.clinica.dailyautism.infraestructure.dto.SaveCompromissoDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -20,6 +21,7 @@ public class CompromissoRestResource {
     private final CompromissoService compromissoService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CRIAR_COMPROMISSO')")
     public ResponseEntity<CompromissoDTO> createCompromisso(@Valid @RequestBody SaveCompromissoDTO saveCompromissoDTO) {
         Compromisso compromisso = compromissoService.createCompromisso(saveCompromissoDTO);
         return ResponseEntity.created(URI.create("/compromissos/" + compromisso.getIdCompromisso()))
@@ -27,12 +29,14 @@ public class CompromissoRestResource {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('VER_COMPROMISSO')")
     public ResponseEntity<CompromissoDTO> loadCompromisso(@PathVariable String id) {
         Compromisso compromisso = compromissoService.loadCompromisso(id);
         return ResponseEntity.ok(CompromissoDTO.create(compromisso));
     }
 
     @GetMapping("/paciente/{pacienteId}")
+    @PreAuthorize("hasAuthority('LISTAR_COMPROMISSO')")
     public ResponseEntity<List<CompromissoDTO>> listCompromissosByPaciente(@PathVariable String pacienteId) {
         List<CompromissoDTO> compromissos = compromissoService.listCompromissosByPaciente(pacienteId)
                 .stream()
@@ -42,6 +46,7 @@ public class CompromissoRestResource {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_COMPROMISSO')")
     public ResponseEntity<CompromissoDTO> updateCompromisso(@PathVariable String id,
                                                             @Valid @RequestBody SaveCompromissoDTO saveCompromissoDTO) {
         Compromisso compromisso = compromissoService.updateCompromisso(id, saveCompromissoDTO);
@@ -49,12 +54,14 @@ public class CompromissoRestResource {
     }
 
     @PatchMapping("/{id}/aprovar")
+    @PreAuthorize("hasAuthority('APROVAR_COMPROMISSO')")
     public ResponseEntity<CompromissoDTO> aprovarCompromisso(@PathVariable String id) {
         Compromisso compromisso = compromissoService.aprovarCompromisso(id);
         return ResponseEntity.ok(CompromissoDTO.create(compromisso));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETAR_COMPROMISSO')")
     public ResponseEntity<Void> deleteCompromisso(@PathVariable String id) {
         compromissoService.deleteCompromisso(id);
         return ResponseEntity.noContent().build();

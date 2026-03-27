@@ -8,7 +8,9 @@ import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -52,5 +54,13 @@ public class User extends BaseEntity implements UserDetails {
     public String getUsername() {
         return emailUser;
     }
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_perfil",
+            joinColumns = @JoinColumn(name = "id_user"),
+            inverseJoinColumns = @JoinColumn(name = "id_perfil")
+    )
+    private Set<Perfil> perfis = new HashSet<>();
 }
 

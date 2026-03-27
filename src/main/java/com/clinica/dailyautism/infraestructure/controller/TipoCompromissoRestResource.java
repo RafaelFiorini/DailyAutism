@@ -7,6 +7,7 @@ import com.clinica.dailyautism.infraestructure.dto.TipoCompromissoDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -20,6 +21,7 @@ public class TipoCompromissoRestResource {
     private final TipoCompromissoService tipoCompromissoService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CRIAR_TIPOCOMPROMISSO')")
     public ResponseEntity<TipoCompromissoDTO> createTipoCompromisso(@Valid @RequestBody SaveTipoCompromissoDTO saveTipoCompromissoDTO) {
         TipoCompromisso tipoCompromisso = tipoCompromissoService.createTipoCompromisso(saveTipoCompromissoDTO);
         return ResponseEntity.created(URI.create("/tipos-compromisso/" + tipoCompromisso.getIdTipoCompromisso()))
@@ -27,12 +29,14 @@ public class TipoCompromissoRestResource {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('VER_TIPOCOMPROMISSO')")
     public ResponseEntity<TipoCompromissoDTO> loadTipoCompromisso(@PathVariable String id) {
         TipoCompromisso tipoCompromisso = tipoCompromissoService.loadTipoCompromisso(id);
         return ResponseEntity.ok(TipoCompromissoDTO.create(tipoCompromisso));
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('LISTAR_TIPOCOMPROMISSO')")
     public ResponseEntity<List<TipoCompromissoDTO>> listTiposCompromisso() {
         List<TipoCompromissoDTO> tipos = tipoCompromissoService.listTiposCompromisso()
                 .stream()
@@ -42,6 +46,7 @@ public class TipoCompromissoRestResource {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_TIPOCOMPROMISSO')")
     public ResponseEntity<TipoCompromissoDTO> updateTipoCompromisso(@PathVariable String id,
                                                                     @Valid @RequestBody SaveTipoCompromissoDTO saveTipoCompromissoDTO) {
         TipoCompromisso tipoCompromisso = tipoCompromissoService.updateTipoCompromisso(id, saveTipoCompromissoDTO);
@@ -49,6 +54,7 @@ public class TipoCompromissoRestResource {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETAR_TIPOCOMPROMISSO')")
     public ResponseEntity<Void> deleteTipoCompromisso(@PathVariable String id) {
         tipoCompromissoService.deleteTipoCompromisso(id);
         return ResponseEntity.noContent().build();

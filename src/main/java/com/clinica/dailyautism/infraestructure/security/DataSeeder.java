@@ -46,14 +46,15 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_CLINICA", "VER_CLINICA", "LISTAR_CLINICA",
                 "EDITAR_CLINICA", "DELETAR_CLINICA",
                 // Plano Saude
-                "CRIAR_PLANO", "VER_PLANO", "LISTAR_PLANO",
-                "EDITAR_PLANO", "DELETAR_PLANO",
+                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
+                "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE",
                 // Vínculos
                 "VINCULAR_PLANO_SAUDE", "VER_CLINICA_PLANO_SAUDE", "DESVINCULAR_PLANO_SAUDE",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA", "DESVINCULAR_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA", "DESVINCULAR_PACIENTE_CLINICA",
-                "VINCULAR_PACIENTE_PLANO", "VER_PACIENTE_PLANO", "DESVINCULAR_PACIENTE_PLANO",
-                "VINCULAR_PROFISSIONAL_PACIENTE", "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE",
+                "VINCULAR_PACIENTE_PLANO_SAUDE", "VER_PACIENTE_PLANO_SAUDE", "DESVINCULAR_PACIENTE_PLANO_SAUDE",
+                "EDITAR_PACIENTE_PLANO_SAUDE", "VINCULAR_PROFISSIONAL_PACIENTE", "VER_PROFISSIONAL_PACIENTE",
+                "EDITAR_ANAMNESE",
                 // Usuario
                 "CRIAR_USUARIO", "VER_USUARIO", "LISTAR_USUARIO",
                 "EDITAR_USUARIO", "DELETAR_USUARIO"
@@ -61,8 +62,9 @@ public class DataSeeder implements CommandLineRunner {
 
         acoes.forEach(nome -> {
             if (acaoRepository.findByNome(nome).isEmpty()) {
-                Acao acao = new Acao();
-                acao.setNome(nome);
+                Acao acao = Acao.builder()
+                        .nome(nome)
+                        .build();
                 acaoRepository.save(acao);
             }
         });
@@ -101,8 +103,9 @@ public class DataSeeder implements CommandLineRunner {
 
     private void criarPerfilSeNaoExistir(String nome, Iterable<Acao> acoes) {
         if (perfilRepository.findByNome(nome).isEmpty()) {
-            Perfil perfil = new Perfil();
-            perfil.setNome(nome);
+            Perfil perfil = Perfil.builder()
+                    .nome(nome)
+                    .build();
             perfil.getAcoes().addAll((java.util.Collection<? extends Acao>) acoes);
             perfilRepository.save(perfil);
         }

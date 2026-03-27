@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/dailyautism
     username: teste
-    password: '#Teste123'
+    password: '#Julia0204'
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     generate-ddl: true

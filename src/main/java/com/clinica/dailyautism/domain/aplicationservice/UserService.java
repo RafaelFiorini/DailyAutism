@@ -1,10 +1,12 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.Pessoa;
+import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.EmailAlreadyExistsException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.UserNotFoundException;
+import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
 import com.clinica.dailyautism.infraestructure.dto.SaveUserDTO;
@@ -12,6 +14,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 @RequiredArgsConstructor
@@ -21,7 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PessoaRepository pessoaRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final PerfilRepository perfilRepository;
     @Transactional
     public User createUser(SaveUserDTO saveUserDTO) {
         if (userRepository.findByEmailUser(saveUserDTO.getEmailUser()).isPresent()) {
@@ -47,5 +52,14 @@ public class UserService {
 
         user.setPessoa(pessoa);
         return userRepository.save(user);
+    }
+
+    public void atualizarPerfis(String userId, Set<String> idPerfis) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        Set<Perfil> perfis = new HashSet<>(perfilRepository.findAllById(idPerfis));
+        user.setPerfis(perfis);
+        userRepository.save(user);
     }
 }

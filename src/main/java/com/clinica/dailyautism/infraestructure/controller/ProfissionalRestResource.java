@@ -7,6 +7,7 @@ import com.clinica.dailyautism.infraestructure.dto.SaveProfissionalDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -20,6 +21,7 @@ public class ProfissionalRestResource {
     private final ProfissionalService profissionalService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('CRIAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> createProfissional(@Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = profissionalService.createProfissional(saveProfissionalDTO);
         return ResponseEntity.created(URI.create("/profissionais/" + profissional.getIdProf()))
@@ -27,12 +29,14 @@ public class ProfissionalRestResource {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('VER_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> loadProfissional(@PathVariable String id) {
         Profissional profissional = profissionalService.loadProfissional(id);
         return ResponseEntity.ok(ProfissionalDTO.create(profissional));
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('LISTAR_PROFISSIONAL')")
     public ResponseEntity<List<ProfissionalDTO>> listProfissionais() {
         List<ProfissionalDTO> profissionais = profissionalService.listProfissionais()
                 .stream()
@@ -42,6 +46,7 @@ public class ProfissionalRestResource {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> updateProfissional(@PathVariable String id,
                                                               @Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = profissionalService.updateProfissional(id, saveProfissionalDTO);
@@ -49,6 +54,7 @@ public class ProfissionalRestResource {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETAR_PROFISSIONAL')")
     public ResponseEntity<Void> deleteProfissional(@PathVariable String id) {
         profissionalService.deleteProfissional(id);
         return ResponseEntity.noContent().build();
