@@ -26,7 +26,8 @@ public class Perfil extends BaseEntity {
     @Column(nullable = false, unique = true, length = 30)
     private String nome; // "ADMIN", "RESPONSAVEL", "PROFISSIONAL", "CLINICA"
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    // Na entidade Perfil
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "acao_perfil",
             joinColumns = @JoinColumn(name = "id_perfil"),

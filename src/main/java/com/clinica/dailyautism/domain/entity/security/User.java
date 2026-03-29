@@ -55,12 +55,14 @@ public class User extends BaseEntity implements UserDetails {
         return emailUser;
     }
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    // Na entidade User
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_perfil",
             joinColumns = @JoinColumn(name = "id_user"),
             inverseJoinColumns = @JoinColumn(name = "id_perfil")
     )
+    @Builder.Default
     private Set<Perfil> perfis = new HashSet<>();
 }
 
