@@ -9,7 +9,7 @@ import com.clinica.dailyautism.domain.exception.UserNotFoundException;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveUserDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveUserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -61,5 +61,9 @@ public class UserService {
         Set<Perfil> perfis = new HashSet<>(perfilRepository.findAllById(idPerfis));
         user.setPerfis(perfis);
         userRepository.save(user);
+    }
+    public User findByEmail(String email) {
+        return userRepository.findByEmailUser(email)
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + email));
     }
 }

@@ -4,7 +4,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.exception.*;
 import com.clinica.dailyautism.domain.repository.*;
-import com.clinica.dailyautism.infraestructure.dto.SaveProfissionalClinicaDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveProfissionalClinicaDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -6,7 +6,7 @@ import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
-import com.clinica.dailyautism.infraestructure.dto.SavePacienteDTO;
+import com.clinica.dailyautism.infrastructure.dto.SavePacienteDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

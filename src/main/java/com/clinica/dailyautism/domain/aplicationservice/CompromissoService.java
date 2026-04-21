@@ -1,25 +1,22 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
-import com.clinica.dailyautism.domain.entity.Compromisso;
-import com.clinica.dailyautism.domain.entity.Paciente;
-import com.clinica.dailyautism.domain.entity.Periodicidade;
-import com.clinica.dailyautism.domain.entity.TipoCompromisso;
+import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.CompromissoNotFoundException;
 import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
 import com.clinica.dailyautism.domain.exception.PeriodicidadeNotFoundException;
 import com.clinica.dailyautism.domain.exception.TipoCompromissoNotFoundException;
-import com.clinica.dailyautism.domain.repository.CompromissoRepository;
-import com.clinica.dailyautism.domain.repository.PacienteRepository;
-import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
-import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
-import com.clinica.dailyautism.domain.repository.UserRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveCompromissoDTO;
+import com.clinica.dailyautism.domain.repository.*;
+import com.clinica.dailyautism.infrastructure.dto.AgendaItemDTO;
+import com.clinica.dailyautism.infrastructure.dto.AgendaResponsavelDTO;
+import com.clinica.dailyautism.infrastructure.dto.PacienteResumoDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveCompromissoDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -31,6 +28,8 @@ public class CompromissoService {
     private final TipoCompromissoRepository tipoCompromissoRepository;
     private final PeriodicidadeRepository periodicidadeRepository;
     private final UserRepository userRepository;
+    private final ProfissionalRepository profissionalRepository;
+    private final ResponsavelRepository responsavelRepository;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO) {
@@ -51,7 +50,7 @@ public class CompromissoService {
                 .descricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso())
                 .dataHoraCompromisso(saveCompromissoDTO.getDataHoraCompromisso())
                 .localCompromisso(saveCompromissoDTO.getLocalCompromisso())
-                .aprovado(false) // sempre começa como não aprovado
+                .status(StatusCompromisso.AGENDADO) // sempre começa como não aprovado
                 .paciente(paciente)
                 .tipoCompromisso(tipoCompromisso)
                 .periodicidade(periodicidade)
@@ -83,7 +82,7 @@ public class CompromissoService {
     @Transactional
     public Compromisso aprovarCompromisso(String compromissoId) {
         Compromisso compromisso = loadCompromisso(compromissoId);
-        compromisso.setAprovado(true);
+        compromisso.setStatus(StatusCompromisso.AGENDADO);
         return compromissoRepository.save(compromisso);
     }
 
@@ -93,5 +92,61 @@ public class CompromissoService {
                 .orElseThrow(() -> new CompromissoNotFoundException("Compromisso não encontrado: " + compromissoId));
         compromisso.desativar();
         compromissoRepository.save(compromisso);
+    }
+//    public List<AgendaItemDTO> agendaResponsavel(String responsavelId, LocalDateTime de, LocalDateTime ate) {
+//        Responsavel responsavel = responsavelRepository.findById(responsavelId)
+//                .orElseThrow(() -> new RuntimeException("Responsável não encontrado: " + responsavelId));
+//
+//        List<String> idsPacientes = responsavel.getPacientes().stream()
+//                .map(Paciente::getIdPaciente)
+//                .toList();
+//
+//        return compromissoRepository
+//                .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate)
+//                .stream()
+//                .map(AgendaItemDTO::create)
+//                .toList();
+//    }
+
+    public List<AgendaItemDTO> agendaProfissional(String profissionalId, LocalDateTime de, LocalDateTime ate) {
+        Profissional profissional = profissionalRepository.findById(profissionalId)
+                .orElseThrow(() -> new RuntimeException("Profissional não encontrado: " + profissionalId));
+
+        List<String> idsPacientes = profissional.getPacientes().stream()
+                .map(ProfissionalPaciente::getPaciente)
+                .map(Paciente::getIdPaciente)
+                .toList();
+
+        return compromissoRepository
+                .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate)
+                .stream()
+                .map(AgendaItemDTO::create)
+                .toList();
+    }
+    public AgendaResponsavelDTO agendaResponsavel(String responsavelId, LocalDateTime de, LocalDateTime ate) {
+        Responsavel responsavel = responsavelRepository.findById(responsavelId)
+                .orElseThrow(() -> new RuntimeException("Responsável não encontrado: " + responsavelId));
+
+        List<Paciente> pacientes = responsavel.getPacientes();
+
+        List<PacienteResumoDTO> pacientesDTO = pacientes.stream()
+                .map(PacienteResumoDTO::create)
+                .toList();
+
+        if (pacientes.isEmpty()) {
+            return new AgendaResponsavelDTO(pacientesDTO, List.of());
+        }
+
+        List<String> idsPacientes = pacientes.stream()
+                .map(Paciente::getIdPaciente)
+                .toList();
+
+        List<AgendaItemDTO> compromissos = compromissoRepository
+                .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate)
+                .stream()
+                .map(AgendaItemDTO::create)
+                .toList();
+
+        return new AgendaResponsavelDTO(pacientesDTO, compromissos);
     }
 }

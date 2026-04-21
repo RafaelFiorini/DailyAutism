@@ -39,4 +39,10 @@ public class Pessoa extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String emailPessoa;
+
+    @OneToOne(mappedBy = "pessoaResponsavel")
+    private Responsavel responsavel;
+
+    @OneToOne(mappedBy = "pessoaProf")
+    private Profissional profissional;
 }

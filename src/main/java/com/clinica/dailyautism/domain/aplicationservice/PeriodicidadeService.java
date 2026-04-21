@@ -3,7 +3,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.Periodicidade;
 import com.clinica.dailyautism.domain.exception.PeriodicidadeNotFoundException;
 import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
-import com.clinica.dailyautism.infraestructure.dto.SavePeriodicidadeDTO;
+import com.clinica.dailyautism.infrastructure.dto.SavePeriodicidadeDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

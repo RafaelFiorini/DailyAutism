@@ -8,7 +8,7 @@ import com.clinica.dailyautism.domain.exception.ProfissionalNotFoundException;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalPacienteRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveProfissionalPacienteDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveProfissionalPacienteDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

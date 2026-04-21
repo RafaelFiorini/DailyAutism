@@ -3,7 +3,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.Clinica;
 import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
 import com.clinica.dailyautism.domain.repository.ClinicaRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveClinicaDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveClinicaDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

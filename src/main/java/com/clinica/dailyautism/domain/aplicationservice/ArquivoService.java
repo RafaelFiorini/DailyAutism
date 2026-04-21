@@ -11,7 +11,7 @@ import com.clinica.dailyautism.domain.repository.ArquivoRepository;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.TipoArquivoRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveArquivoDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveArquivoDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

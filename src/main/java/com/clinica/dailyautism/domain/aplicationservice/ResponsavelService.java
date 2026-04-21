@@ -6,7 +6,7 @@ import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ResponsavelNotFoundException;
 import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveResponsavelDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveResponsavelDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

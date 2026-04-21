@@ -2,8 +2,8 @@ package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.UserRepository;
-import com.clinica.dailyautism.infraestructure.dto.LoginDTO;
-import com.clinica.dailyautism.infraestructure.security.JwtService;
+import com.clinica.dailyautism.infrastructure.dto.LoginDTO;
+import com.clinica.dailyautism.infrastructure.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -4,7 +4,7 @@ import com.clinica.dailyautism.domain.entity.TipoCompromisso;
 import com.clinica.dailyautism.domain.exception.TipoArquivoNotFoundException;
 import com.clinica.dailyautism.domain.exception.TipoCompromissoNotFoundException;
 import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
-import com.clinica.dailyautism.infraestructure.dto.SaveTipoCompromissoDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveTipoCompromissoDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

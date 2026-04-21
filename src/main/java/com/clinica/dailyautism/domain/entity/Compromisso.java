@@ -30,7 +30,9 @@ public class Compromisso extends BaseEntity {
 
     private String localCompromisso;
 
-    private boolean aprovado;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StatusCompromisso status;
 
     @ManyToOne
     @JoinColumn(name = "idPaciente", nullable = false)

@@ -18,8 +18,8 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)  // ← adicionar isso
-@SQLRestriction("ativo = true")        // ← adicionar isso
+@EqualsAndHashCode(callSuper = false)
+@SQLRestriction("ativo = true")
 public class User extends BaseEntity implements UserDetails {
 
     @Id
