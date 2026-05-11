@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.domain.repository;
 
+import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Responsavel;
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Compromisso;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ResponsavelRepository extends JpaRepository<Responsavel, String> {
 
@@ -31,4 +33,6 @@ public interface ResponsavelRepository extends JpaRepository<Responsavel, String
             @Param("inicio") LocalDateTime inicio,
             @Param("fim") LocalDateTime fim
     );
+
+    Optional<Responsavel> findByPessoaResponsavel(Pessoa pessoa);
 }

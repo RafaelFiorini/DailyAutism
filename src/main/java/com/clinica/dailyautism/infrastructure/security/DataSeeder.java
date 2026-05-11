@@ -59,7 +59,10 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_USUARIO", "VER_USUARIO", "LISTAR_USUARIO",
                 "EDITAR_USUARIO", "DELETAR_USUARIO",
                 //agenda
-                "VER_AGENDA"
+                "VER_AGENDA",
+                // Pessoa
+                "CRIAR_PESSOA", "VER_PESSOA", "LISTAR_PESSOA",
+                "EDITAR_PESSOA", "DELETAR_PESSOA"
         );
 
         acoes.forEach(nome -> {
@@ -81,7 +84,7 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_PACIENTE", "LISTAR_PACIENTE",
                 "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
-                "CRIAR_COMPROMISSO", "VER_AGENDA"
+                "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO"
         )));
 
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
@@ -99,7 +102,8 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
-                "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA"
+                "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
+                "CRIAR_COMPROMISSO"
         )));
     }
 

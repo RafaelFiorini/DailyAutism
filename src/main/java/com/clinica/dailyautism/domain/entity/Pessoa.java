@@ -28,7 +28,7 @@ public class Pessoa extends BaseEntity {
     @Column(nullable = false)
     private LocalDate datanascPessoa;
 
-    @Column(nullable = false)
+
     private String RGPessoa;
 
     private String enderecoPessoa;
@@ -37,7 +37,7 @@ public class Pessoa extends BaseEntity {
 
     private String celularPessoa;
 
-    @Column(nullable = false, length = 255)
+    @Column( length = 255)
     private String emailPessoa;
 
     @OneToOne(mappedBy = "pessoaResponsavel")

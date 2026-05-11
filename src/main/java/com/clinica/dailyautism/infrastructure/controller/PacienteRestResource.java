@@ -3,11 +3,14 @@ package com.clinica.dailyautism.infrastructure.controller;
 import com.clinica.dailyautism.domain.aplicationservice.PacienteService;
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.infrastructure.dto.PacienteDTO;
+import com.clinica.dailyautism.infrastructure.dto.SavePacienteCompletoDTO;
 import com.clinica.dailyautism.infrastructure.dto.SavePacienteDTO;
+import com.clinica.dailyautism.infrastructure.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -58,5 +61,14 @@ public class PacienteRestResource {
     public ResponseEntity<Void> deletePaciente(@PathVariable String id) {
         pacienteService.deletePaciente(id);
         return ResponseEntity.noContent().build();
+    }
+    @PostMapping("/completo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<PacienteDTO> createPacienteCompleto(
+            @Valid @RequestBody SavePacienteCompletoDTO dto,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        Paciente paciente = pacienteService.createPacienteCompleto(dto, currentUser.getUsername());
+        return ResponseEntity.created(URI.create("/pacientes/" + paciente.getIdPaciente()))
+                .body(PacienteDTO.create(paciente));
     }
 }

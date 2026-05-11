@@ -25,7 +25,4 @@ public class SaveCompromissoDTO {
 
     @NotNull(message = "O ID da periodicidade é obrigatório")
     private final String idPeriodicidade;
-
-    @NotNull(message = "O ID do usuário é obrigatório")
-    private final String idUser;
 }

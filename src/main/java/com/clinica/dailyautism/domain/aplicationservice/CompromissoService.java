@@ -7,17 +7,18 @@ import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
 import com.clinica.dailyautism.domain.exception.PeriodicidadeNotFoundException;
 import com.clinica.dailyautism.domain.exception.TipoCompromissoNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
-import com.clinica.dailyautism.infrastructure.dto.AgendaItemDTO;
-import com.clinica.dailyautism.infrastructure.dto.AgendaResponsavelDTO;
-import com.clinica.dailyautism.infrastructure.dto.PacienteResumoDTO;
-import com.clinica.dailyautism.infrastructure.dto.SaveCompromissoDTO;
+import com.clinica.dailyautism.infrastructure.dto.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -32,7 +33,7 @@ public class CompromissoService {
     private final ResponsavelRepository responsavelRepository;
 
     @Transactional
-    public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO) {
+    public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
         Paciente paciente = pacienteRepository.findById(saveCompromissoDTO.getIdPaciente())
                 .orElseThrow(() -> new PacienteNotFoundException(saveCompromissoDTO.getIdPaciente()));
 
@@ -42,15 +43,15 @@ public class CompromissoService {
         Periodicidade periodicidade = periodicidadeRepository.findById(saveCompromissoDTO.getIdPeriodicidade())
                 .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + saveCompromissoDTO.getIdPeriodicidade()));
 
-        User user = userRepository.findById(saveCompromissoDTO.getIdUser())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + saveCompromissoDTO.getIdUser()));
+        User user = userRepository.findByEmailUser(emailDoToken)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailDoToken));
 
         Compromisso compromisso = Compromisso.builder()
                 .tituloCompromisso(saveCompromissoDTO.getTituloCompromisso())
                 .descricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso())
                 .dataHoraCompromisso(saveCompromissoDTO.getDataHoraCompromisso())
                 .localCompromisso(saveCompromissoDTO.getLocalCompromisso())
-                .status(StatusCompromisso.AGENDADO) // sempre começa como não aprovado
+                .status(StatusCompromisso.AGUARDANDO_APROVACAO)
                 .paciente(paciente)
                 .tipoCompromisso(tipoCompromisso)
                 .periodicidade(periodicidade)
@@ -79,12 +80,12 @@ public class CompromissoService {
         return compromissoRepository.save(compromisso);
     }
 
-    @Transactional
-    public Compromisso aprovarCompromisso(String compromissoId) {
-        Compromisso compromisso = loadCompromisso(compromissoId);
-        compromisso.setStatus(StatusCompromisso.AGENDADO);
-        return compromissoRepository.save(compromisso);
-    }
+//    @Transactional
+//    public Compromisso aprovarCompromisso(String compromissoId) {
+//        Compromisso compromisso = loadCompromisso(compromissoId);
+//        compromisso.setStatus(StatusCompromisso.AGENDADO);
+//        return compromissoRepository.save(compromisso);
+//    }
 
     @Transactional
     public void deleteCompromisso(String compromissoId) {
@@ -93,20 +94,12 @@ public class CompromissoService {
         compromisso.desativar();
         compromissoRepository.save(compromisso);
     }
-//    public List<AgendaItemDTO> agendaResponsavel(String responsavelId, LocalDateTime de, LocalDateTime ate) {
-//        Responsavel responsavel = responsavelRepository.findById(responsavelId)
-//                .orElseThrow(() -> new RuntimeException("Responsável não encontrado: " + responsavelId));
-//
-//        List<String> idsPacientes = responsavel.getPacientes().stream()
-//                .map(Paciente::getIdPaciente)
-//                .toList();
-//
-//        return compromissoRepository
-//                .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate)
-//                .stream()
-//                .map(AgendaItemDTO::create)
-//                .toList();
-//    }
+    @Transactional
+    public Compromisso rejeitarCompromisso(String compromissoId) {
+        Compromisso compromisso = loadCompromisso(compromissoId);
+        compromisso.setStatus(StatusCompromisso.REJEITADO);
+        return compromissoRepository.save(compromisso);
+    }
 
     public List<AgendaItemDTO> agendaProfissional(String profissionalId, LocalDateTime de, LocalDateTime ate) {
         Profissional profissional = profissionalRepository.findById(profissionalId)
@@ -148,5 +141,59 @@ public class CompromissoService {
                 .toList();
 
         return new AgendaResponsavelDTO(pacientesDTO, compromissos);
+    }
+    @Transactional
+    public List<Compromisso> aprovarCompromisso(String compromissoId, AprovarCompromissoDTO dto) {
+        Compromisso original = loadCompromisso(compromissoId);
+        original.setStatus(StatusCompromisso.AGENDADO);
+        compromissoRepository.save(original);
+
+        // descobre a data fim
+        LocalDate dataFim = resolverDataFim(original, dto.getDataFim());
+
+        if (dataFim == null) {
+            return List.of(original); // sem replicação
+        }
+
+        // replica
+        List<Compromisso> replicas = new ArrayList<>();
+        int intervalo = original.getPeriodicidade().getDiasIntervalo();
+        if (intervalo == 0) {
+            return List.of(original);
+        }
+        LocalDateTime proxima = original.getDataHoraCompromisso().plusDays(intervalo);
+
+        while (!proxima.toLocalDate().isAfter(dataFim)) {
+            Compromisso replica = Compromisso.builder()
+                    .tituloCompromisso(original.getTituloCompromisso())
+                    .descricaoCompromisso(original.getDescricaoCompromisso())
+                    .dataHoraCompromisso(proxima)
+                    .localCompromisso(original.getLocalCompromisso())
+                    .status(StatusCompromisso.AGENDADO)
+                    .paciente(original.getPaciente())
+                    .tipoCompromisso(original.getTipoCompromisso())
+                    .periodicidade(original.getPeriodicidade())
+                    .criadoPor(original.getCriadoPor())
+                    .build();
+            replicas.add(replica);
+            proxima = proxima.plusDays(intervalo);
+        }
+
+        compromissoRepository.saveAll(replicas);
+        return replicas;
+    }
+
+    private LocalDate resolverDataFim(Compromisso compromisso, LocalDate dataFimManual) {
+        // tenta pegar do plano de saúde do paciente primeiro
+        if (compromisso.getPaciente().getPlanos() != null &&
+                !compromisso.getPaciente().getPlanos().isEmpty()) {
+            return compromisso.getPaciente().getPlanos()
+                    .stream()
+                    .map(PacientePlanoSaude::getVencimentoLiberacao)
+                    .filter(Objects::nonNull)
+                    .max(Comparator.naturalOrder())
+                    .orElse(dataFimManual);
+        }
+        return dataFimManual;
     }
 }

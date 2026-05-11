@@ -14,8 +14,11 @@ public class AgendaItemDTO {
     private final String status;
     private final String idPaciente;
     private final String nomePaciente;
+    private final boolean temPlano;
 
     public static AgendaItemDTO create(Compromisso c) {
+        boolean temPlano = c.getPaciente().getPlanos() != null &&
+                !c.getPaciente().getPlanos().isEmpty();
         return new AgendaItemDTO(
                 c.getIdCompromisso(),
                 c.getTituloCompromisso(),
@@ -24,7 +27,8 @@ public class AgendaItemDTO {
                 c.getLocalCompromisso(),
                 c.getStatus().name(),
                 c.getPaciente().getIdPaciente(),
-                c.getPaciente().getPessoaPaciente().getNomePessoa()
+                c.getPaciente().getPessoaPaciente().getNomePessoa(),
+                temPlano
         );
     }
 }

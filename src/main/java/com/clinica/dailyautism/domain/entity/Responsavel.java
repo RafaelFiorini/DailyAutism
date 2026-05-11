@@ -3,6 +3,8 @@ package com.clinica.dailyautism.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -29,5 +31,6 @@ public class Responsavel extends BaseEntity {
             joinColumns = @JoinColumn(name = "idResponsavel"),
             inverseJoinColumns = @JoinColumn(name = "idPaciente")
     )
-    private List<Paciente> pacientes;
+    @Builder.Default
+    private List<Paciente> pacientes = new ArrayList<>();
 }
