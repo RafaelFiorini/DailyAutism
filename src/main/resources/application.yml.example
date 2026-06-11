@@ -5,8 +5,8 @@ spring:
     name: DailyAutism
   datasource:
     url: jdbc:mysql://localhost:3306/dailyautism
-    username: teste
-    password: '#Julia0204'
+    username: SEU USERNAME
+    password: SUA SENHA
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     generate-ddl: true
@@ -17,4 +17,4 @@ spring:
 api:
   security:
     token:
-      secret: "${JWT_SECRET:#HeatCliff789)Viviane1208##Julia0204#Emmanuel1305}"
+      secret: "SEU SECRET"
