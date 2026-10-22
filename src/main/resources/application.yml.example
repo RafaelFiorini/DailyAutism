@@ -5,8 +5,8 @@ spring:
     name: DailyAutism
   datasource:
     url: jdbc:mysql://localhost:3306/dailyautism
-    username: SEU USERNAME
-    password: SUA SENHA
+    username: admin
+    password: teste123
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     generate-ddl: true
