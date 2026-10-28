@@ -48,3 +48,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Superpowers and Node
+.superpowers/
+node_modules/
+dist/
