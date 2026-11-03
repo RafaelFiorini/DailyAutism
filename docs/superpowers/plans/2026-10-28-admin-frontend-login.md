@@ -1,6 +1,6 @@
 # Painel Administrativo DailyAutism - Frontend React com Autenticação de Administrador
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Criar o frontend administrativo do DailyAutism em React (Vite + TypeScript + Tailwind CSS), focado inicialmente no fluxo completo de autenticação de administrador (login, persistência de token JWT, validação de perfil ADMIN, rotas protegidas e dashboard administrativo inicial).
 
@@ -52,7 +52,7 @@
 - Consumes: N/A
 - Produces: Estrutura base do projeto executável e ambiente de testes Vitest configurado com `@testing-library/react`.
 
-- [ ] **Step 1: Write the failing test for App component mount**
+- [x] **Step 1: Write the failing test for App component mount**
 
 ```tsx
 // frontend/src/App.test.tsx
@@ -68,12 +68,12 @@ describe('App Component', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test` (ou `cd frontend && npm test`)
 Expected: FAIL with missing modules or files not found.
 
-- [ ] **Step 3: Setup Vite project configuration and minimal App**
+- [x] **Step 3: Setup Vite project configuration and minimal App**
 
 Criar os arquivos de configuração do Vite, Tailwind CSS, TypeScript e Vitest:
 - `package.json` com scripts `dev`, `build`, `test`.
@@ -83,12 +83,12 @@ Criar os arquivos de configuração do Vite, Tailwind CSS, TypeScript e Vitest:
 - Configurar `src/index.css` com as diretivas do Tailwind.
 - Implementar `src/App.tsx` exibindo título básico `DailyAutism Administração`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix frontend test`
 Expected: PASS (1 test passed)
 
-- [ ] **Step 5: Commit scaffolding**
+- [x] **Step 5: Commit scaffolding**
 
 ```bash
 git add frontend/
@@ -116,7 +116,7 @@ git commit -m "feat(frontend): initialize React Vite project with TypeScript, Ta
   - `authService.getMe(): Promise<UserDTO>`
   - `api`: Instância Axios configurada com interceptors de Request (Bearer token) e Response (401 handler).
 
-- [ ] **Step 1: Write the failing tests for authService**
+- [x] **Step 1: Write the failing tests for authService**
 
 ```typescript
 // frontend/src/services/authService.test.ts
@@ -164,12 +164,12 @@ describe('authService', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test -- authService.test.ts`
 Expected: FAIL with "Cannot find module './authService'".
 
-- [ ] **Step 3: Implement types, api client and authService**
+- [x] **Step 3: Implement types, api client and authService**
 
 - Criar `frontend/src/types/auth.ts` e `frontend/src/types/user.ts`.
 - Criar `frontend/src/services/api.ts` com:
@@ -178,12 +178,12 @@ Expected: FAIL with "Cannot find module './authService'".
   - Interceptor de Response que se `status === 401`, dispara evento de logout / remove token.
 - Criar `frontend/src/services/authService.ts` implementando `login` e `getMe`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix frontend test -- authService.test.ts`
 Expected: PASS (2 tests passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/types/ frontend/src/services/
@@ -212,7 +212,7 @@ git commit -m "feat(frontend): implement API client, auth service and TypeScript
     - `logout: () => void`
   - `useAuth()` hook para acesso ao contexto.
 
-- [ ] **Step 1: Write the failing tests for AuthContext**
+- [x] **Step 1: Write the failing tests for AuthContext**
 
 ```tsx
 // frontend/src/context/AuthContext.test.tsx
@@ -313,12 +313,12 @@ describe('AuthContext', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test -- AuthContext.test.tsx`
 Expected: FAIL with missing modules.
 
-- [ ] **Step 3: Implement AuthProvider and useAuth hook**
+- [x] **Step 3: Implement AuthProvider and useAuth hook**
 
 - Em `frontend/src/context/AuthContext.tsx`:
   - Definir `AuthContext` com tipos completos.
@@ -328,12 +328,12 @@ Expected: FAIL with missing modules.
 - Em `frontend/src/hooks/useAuth.ts`:
   - Hook facilitador que retorna o contexto ou lança erro se usado fora de `AuthProvider`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix frontend test -- AuthContext.test.tsx`
 Expected: PASS (3 tests passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/context/ frontend/src/hooks/
@@ -352,7 +352,7 @@ git commit -m "feat(frontend): implement AuthContext and useAuth hook with role 
 - Consumes: `useAuth()`, componentes visuais Tailwind, Lucide React (`Lock`, `Mail`, `AlertCircle`, `Loader2`).
 - Produces: Página de Login (`/login`) acessível, responsiva, com validação de formulário em tempo real e exibição de erros do backend.
 
-- [ ] **Step 1: Write the failing tests for Login page**
+- [x] **Step 1: Write the failing tests for Login page**
 
 ```tsx
 // frontend/src/pages/Login.test.tsx
@@ -456,12 +456,12 @@ describe('Login Page', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test -- Login.test.tsx`
 Expected: FAIL with "Cannot find module './Login'".
 
-- [ ] **Step 3: Implement Login page component**
+- [x] **Step 3: Implement Login page component**
 
 - Criar `frontend/src/pages/Login.tsx`:
   - Design limpo com identidade visual do DailyAutism (tons azuis/índigo acolhedores).
@@ -471,12 +471,12 @@ Expected: FAIL with "Cannot find module './Login'".
   - Alerta de erro estilizado em caso de falha de autenticação.
   - Redirecionamento automático caso `isAuthenticated && isAdmin` já seja verdadeiro.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix frontend test -- Login.test.tsx`
 Expected: PASS (4 tests passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/pages/Login.tsx frontend/src/pages/Login.test.tsx
@@ -500,7 +500,7 @@ git commit -m "feat(frontend): implement administrator login page with validatio
   - `<AdminLayout>`: Barra lateral (Sidebar) com links de navegação, cabeçalho com usuário ativo e botão de logout.
   - `<Dashboard>`: Página inicial com métricas de sistema e boas-vindas.
 
-- [ ] **Step 1: Write the failing tests for ProtectedRoute**
+- [x] **Step 1: Write the failing tests for ProtectedRoute**
 
 ```tsx
 // frontend/src/components/ProtectedRoute.test.tsx
@@ -614,12 +614,12 @@ describe('ProtectedRoute', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test -- ProtectedRoute.test.tsx`
 Expected: FAIL with missing ProtectedRoute module.
 
-- [ ] **Step 3: Implement ProtectedRoute, AdminLayout and Dashboard**
+- [x] **Step 3: Implement ProtectedRoute, AdminLayout and Dashboard**
 
 - Em `frontend/src/components/ProtectedRoute.tsx`:
   - Se `loading === true`, exibir tela de transição com spinner.
@@ -640,12 +640,12 @@ Expected: FAIL with missing ProtectedRoute module.
   - Cards de acesso rápido para as principais entidades da clínica.
   - Indicador de status do backend.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm --prefix frontend test -- ProtectedRoute.test.tsx`
 Expected: PASS (4 tests passed).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/components/ frontend/src/pages/Dashboard.tsx
@@ -664,7 +664,7 @@ git commit -m "feat(frontend): implement ProtectedRoute guard, AdminLayout and D
 - Consumes: `AuthProvider`, `BrowserRouter`, `Routes`, `Route`, `Login`, `ProtectedRoute`, `AdminLayout`, `Dashboard`.
 - Produces: Árvore completa de rotas da aplicação frontend.
 
-- [ ] **Step 1: Write integration test for App routing**
+- [x] **Step 1: Write integration test for App routing**
 
 ```tsx
 // frontend/src/App.test.tsx
@@ -705,12 +705,12 @@ describe('App Routing Integration', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm --prefix frontend test -- App.test.tsx`
 Expected: FAIL due to previous basic App implementation.
 
-- [ ] **Step 3: Update App.tsx with full routing tree**
+- [x] **Step 3: Update App.tsx with full routing tree**
 
 Configurar `frontend/src/App.tsx`:
 ```tsx
@@ -741,12 +741,12 @@ export default function App() {
 }
 ```
 
-- [ ] **Step 4: Run full test suite to verify all passes**
+- [x] **Step 4: Run full test suite to verify all passes**
 
 Run: `npm --prefix frontend test -- --run`
 Expected: PASS (All test files passing).
 
-- [ ] **Step 5: Commit and finalize**
+- [x] **Step 5: Commit and finalize**
 
 ```bash
 git add frontend/src/App.tsx frontend/src/App.test.tsx
@@ -765,11 +765,11 @@ git commit -m "feat(frontend): integrate complete admin routing and authenticati
 - Consumes: `UserRepository`, `PerfilRepository`, `PasswordEncoder`.
 - Produces: Usuário administrador padrão persistido no banco ao inicializar a aplicação para permitir o login no frontend (`admin@dailyautism.com` / `admin123`).
 
-- [ ] **Step 1: Write verification check for DataSeeder admin creation**
+- [x] **Step 1: Write verification check for DataSeeder admin creation**
 
 Verificar se o `DataSeeder.java` já checa e insere o usuário padrão `admin@dailyautism.com` caso a tabela de usuários esteja vazia.
 
-- [ ] **Step 2: Update DataSeeder.java and application.yml**
+- [x] **Step 2: Update DataSeeder.java and application.yml**
 
 1. Em `src/main/resources/application.yml`:
 Substituir o segredo fraco por uma chave de 256 bits ou variável de ambiente com fallback seguro:
@@ -796,11 +796,11 @@ private void seedAdminUser() {
 }
 ```
 
-- [ ] **Step 3: Verify build and backend readiness**
+- [x] **Step 3: Verify build and backend readiness**
 
 Confirmar que os arquivos foram salvos e compilam sem erros de sintaxe.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/resources/application.yml src/main/java/com/clinica/dailyautism/infrastructure/security/DataSeeder.java
