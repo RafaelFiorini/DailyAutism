@@ -96,3 +96,4 @@ describe('Login Page', () => {
     expect(await screen.findByText(/e-mail ou senha incorretos/i)).toBeInTheDocument();
   });
 });
+

@@ -93,3 +93,4 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('dailyautism_token')).toBeNull();
   });
 });
+

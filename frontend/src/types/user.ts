@@ -7,3 +7,4 @@ export interface UserDTO {
   idResponsavel?: string | null;
   idProfissional?: string | null;
 }
+
