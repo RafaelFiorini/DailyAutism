@@ -17,4 +17,4 @@ spring:
 api:
   security:
     token:
-      secret: "SEU SECRET"
+      secret: ${JWT_SECRET:DailyAutismSecretKeyForJwtTokenGenerationMustBe256BitsLong2026!}

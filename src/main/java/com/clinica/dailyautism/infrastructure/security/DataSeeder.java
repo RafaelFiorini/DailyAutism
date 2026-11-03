@@ -1,12 +1,14 @@
 package com.clinica.dailyautism.infrastructure.security;
 
-
 import com.clinica.dailyautism.domain.entity.security.Acao;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
+import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.AcaoRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
+import com.clinica.dailyautism.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,11 +20,27 @@ public class DataSeeder implements CommandLineRunner {
 
     private final AcaoRepository acaoRepository;
     private final PerfilRepository perfilRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
         seedAcoes();
         seedPerfis();
+        seedAdminUser();
+    }
+
+    private void seedAdminUser() {
+        if (userRepository.findByEmailUser("admin@dailyautism.com").isEmpty()) {
+            Perfil adminPerfil = perfilRepository.findByNome("ADMIN").orElseThrow();
+            User admin = User.builder()
+                    .nomeUser("Administrador DailyAutism")
+                    .emailUser("admin@dailyautism.com")
+                    .passwordUser(passwordEncoder.encode("admin123"))
+                    .perfis(Set.of(adminPerfil))
+                    .build();
+            userRepository.save(admin);
+        }
     }
 
     private void seedAcoes() {
