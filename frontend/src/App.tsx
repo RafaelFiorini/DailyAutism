@@ -1,8 +1,25 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminLayout from './components/AdminLayout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+
 export default function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100">
-      <h1 className="text-2xl font-bold text-slate-800">DailyAutism Administração</h1>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              {/* Rotas futuras: /admin/usuarios, /admin/clinicas, etc. */}
+            </Route>
+          </Route>
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
-
