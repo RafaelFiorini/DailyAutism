@@ -91,3 +91,4 @@ describe('Profissionais Page', () => {
     expect(screen.getByRole('heading', { name: /cadastrar novo profissional/i })).toBeInTheDocument();
   });
 });
+

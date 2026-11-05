@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Profissionais from './pages/Profissionais';
 
 export default function App() {
   return (
@@ -14,7 +15,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
-              {/* Rotas futuras: /admin/usuarios, /admin/clinicas, etc. */}
+              <Route path="profissionais" element={<Profissionais />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

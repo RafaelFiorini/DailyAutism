@@ -223,3 +223,4 @@ Expected: Container `java_backend` atualizado e ativo.
 git add frontend/src/App.tsx frontend/src/App.test.tsx
 git commit -m "feat(frontend): integrate professionals route in admin layout"
 ```
+

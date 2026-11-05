@@ -16,3 +16,4 @@ export const profissionalService = {
     await api.delete(`/profissionais/${id}`);
   },
 };
+

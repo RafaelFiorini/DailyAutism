@@ -162,3 +162,4 @@ public Profissional createProfissional(SaveProfissionalDTO dto) {
    - Envio bem-sucedido e atualização da lista.
 3. **Teste de Integração Real:**
    - Cadastrar um médico/terapeuta pela UI administrativa e verificar sua persistência na base e exibição na listagem.
+

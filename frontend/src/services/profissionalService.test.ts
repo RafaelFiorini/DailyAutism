@@ -64,3 +64,4 @@ describe('profissionalService', () => {
     expect(api.delete).toHaveBeenCalledWith('/profissionais/prof-1');
   });
 });
+

@@ -92,3 +92,4 @@ describe('ProfissionalModal', () => {
     expect(await screen.findByText(/erro ao cadastrar profissional/i)).toBeInTheDocument();
   });
 });
+

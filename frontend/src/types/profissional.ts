@@ -20,3 +20,4 @@ export interface SaveProfissionalInput {
   emailPessoa?: string;
   conselhoProf: string;
 }
+
