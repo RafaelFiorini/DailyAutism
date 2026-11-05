@@ -22,13 +22,32 @@ public class ProfissionalService {
 
     @Transactional
     public Profissional createProfissional(SaveProfissionalDTO saveProfissionalDTO) {
-        Pessoa pessoa = pessoaRepository.findById(saveProfissionalDTO.getIdPessoa())
-                .orElseThrow(() -> new PessoaNotFoundException(saveProfissionalDTO.getIdPessoa()));
+        Pessoa pessoa;
+        if (saveProfissionalDTO.getIdPessoa() != null && !saveProfissionalDTO.getIdPessoa().isBlank()) {
+            pessoa = pessoaRepository.findById(saveProfissionalDTO.getIdPessoa())
+                    .orElseThrow(() -> new PessoaNotFoundException(saveProfissionalDTO.getIdPessoa()));
+        } else if (saveProfissionalDTO.getCPFPessoa() != null && !saveProfissionalDTO.getCPFPessoa().isBlank()) {
+            pessoa = pessoaRepository.findByCPFPessoa(saveProfissionalDTO.getCPFPessoa())
+                    .orElseGet(() -> {
+                        Pessoa nova = Pessoa.builder()
+                                .nomePessoa(saveProfissionalDTO.getNomePessoa())
+                                .CPFPessoa(saveProfissionalDTO.getCPFPessoa())
+                                .datanascPessoa(saveProfissionalDTO.getDatanascPessoa())
+                                .RGPessoa(saveProfissionalDTO.getRGPessoa())
+                                .enderecoPessoa(saveProfissionalDTO.getEnderecoPessoa())
+                                .telefonePessoa(saveProfissionalDTO.getTelefonePessoa())
+                                .celularPessoa(saveProfissionalDTO.getCelularPessoa())
+                                .emailPessoa(saveProfissionalDTO.getEmailPessoa())
+                                .build();
+                        return pessoaRepository.save(nova);
+                    });
+        } else {
+            throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
+        }
 
         Profissional profissional = Profissional.builder()
                 .pessoaProf(pessoa)
                 .conselhoProf(saveProfissionalDTO.getConselhoProf())
-                //.ativoProf(saveProfissionalDTO.isAtivoProf())
                 .build();
 
         return profissionalRepository.save(profissional);
@@ -47,7 +66,6 @@ public class ProfissionalService {
     public Profissional updateProfissional(String profissionalId, SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = loadProfissional(profissionalId);
         profissional.setConselhoProf(saveProfissionalDTO.getConselhoProf());
-        //profissional.setAtivoProf(saveProfissionalDTO.isAtivoProf());
         return profissionalRepository.save(profissional);
     }
 
