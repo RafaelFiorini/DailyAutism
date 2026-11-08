@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profissionais from './pages/Profissionais';
 import Responsaveis from './pages/Responsaveis';
+import Pacientes from './pages/Pacientes';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="profissionais" element={<Profissionais />} />
               <Route path="responsaveis" element={<Responsaveis />} />
+              <Route path="pacientes" element={<Pacientes />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

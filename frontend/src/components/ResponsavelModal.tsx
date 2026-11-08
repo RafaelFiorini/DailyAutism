@@ -1,7 +1,9 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { X, UserCheck, Edit3, Loader2, AlertCircle } from 'lucide-react';
+import { X, UserCheck, Edit3, Loader2, AlertCircle, Plus } from 'lucide-react';
 import { responsavelService } from '../services/responsavelService';
 import type { Responsavel, SaveResponsavelInput, PacienteOption } from '../types/responsavel';
+import type { Paciente } from '../types/paciente';
+import PacienteModal from './PacienteModal';
 
 interface ResponsavelModalProps {
   isOpen: boolean;
@@ -30,6 +32,7 @@ export default function ResponsavelModal({
 
   const [availablePacientes, setAvailablePacientes] = useState<PacienteOption[]>([]);
   const [loadingPacientes, setLoadingPacientes] = useState(false);
+  const [showNewPacienteModal, setShowNewPacienteModal] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
@@ -84,6 +87,17 @@ export default function ResponsavelModal({
     setSelectedPacienteIds((prev) =>
       prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
     );
+  };
+
+  const handleNewPacienteSuccess = (newPac: Paciente) => {
+    const newOption: PacienteOption = {
+      idPaciente: newPac.idPaciente,
+      nomePessoa: newPac.nomePessoa,
+      apelidoPaciente: newPac.apelidoPaciente,
+    };
+    setAvailablePacientes((prev) => [...prev, newOption]);
+    setSelectedPacienteIds((prev) => [...prev, newPac.idPaciente]);
+    setShowNewPacienteModal(false);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -307,9 +321,19 @@ export default function ResponsavelModal({
 
           {/* Vínculo com pacientes existentes */}
           <div>
-            <label className="block text-xs font-semibold uppercase text-gray-700 mb-1">
-              Vincular Pacientes Existentes
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase text-gray-700">
+                Vincular Pacientes Existentes
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowNewPacienteModal(true)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Novo Paciente
+              </button>
+            </div>
             {loadingPacientes ? (
               <div className="p-3 text-center text-xs text-gray-500 flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
@@ -374,6 +398,14 @@ export default function ResponsavelModal({
           </div>
         </form>
       </div>
+
+      {showNewPacienteModal && (
+        <PacienteModal
+          isOpen={showNewPacienteModal}
+          onClose={() => setShowNewPacienteModal(false)}
+          onSuccess={handleNewPacienteSuccess}
+        />
+      )}
     </div>
   );
 }

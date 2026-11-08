@@ -148,4 +148,16 @@ describe('ResponsavelModal', () => {
       expect(defaultProps.onClose).toHaveBeenCalled();
     });
   });
+
+  it('permite abrir modal de novo paciente e seleciona o paciente criado', async () => {
+    render(<ResponsavelModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /novo paciente/i })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /novo paciente/i }));
+
+    expect(screen.getByText('Cadastrar Novo Paciente')).toBeDefined();
+  });
 });

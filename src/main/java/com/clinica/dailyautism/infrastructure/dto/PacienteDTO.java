@@ -1,42 +1,122 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
 import com.clinica.dailyautism.domain.entity.Paciente;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PacienteDTO {
 
-    private final String idPaciente;
-    private final String idPessoa;
-    private final String nomePessoa;
-    private final String apelidoPaciente;
-    private final boolean isResponsavel;
-    private final List<String> planos;
-    private final List<String> clinicas;
+    private String idPaciente;
+    private String idPessoa;
+    private String nomePessoa;
+    private String cpf;
+    private String apelidoPaciente;
+    private Boolean isResponsavel;
+    private String rg;
+    private String endereco;
+    private String telefone;
+    private String celular;
+    private String email;
+    private LocalDate datanasc;
+    private List<String> planos;
+    private List<String> clinicas;
+    private List<String> responsaveis;
+    private String idPlanoSaude;
+    private String numeroCarteirinha;
+    private String idClinica;
 
     public static PacienteDTO create(Paciente paciente) {
-        List<String> planos = paciente.getPlanos() != null
-                ? paciente.getPlanos().stream()
-                .map(p -> p.getPlanoSaude().getNomePlano())
-                .collect(Collectors.toList())
-                : List.of();
+        String idPessoa = null;
+        String nome = null;
+        String cpf = null;
+        String rg = null;
+        String endereco = null;
+        String telefone = null;
+        String celular = null;
+        String email = null;
+        LocalDate datanasc = null;
 
-        List<String> clinicas = paciente.getClinicas() != null
-                ? paciente.getClinicas().stream()
-                .map(c -> c.getClinica().getNomeClinica())
-                .collect(Collectors.toList())
-                : List.of();
+        if (paciente.getPessoaPaciente() != null) {
+            idPessoa = paciente.getPessoaPaciente().getIdPessoa();
+            nome = paciente.getPessoaPaciente().getNomePessoa();
+            cpf = paciente.getPessoaPaciente().getCPFPessoa();
+            rg = paciente.getPessoaPaciente().getRGPessoa();
+            endereco = paciente.getPessoaPaciente().getEnderecoPessoa();
+            telefone = paciente.getPessoaPaciente().getTelefonePessoa();
+            celular = paciente.getPessoaPaciente().getCelularPessoa();
+            email = paciente.getPessoaPaciente().getEmailPessoa();
+            datanasc = paciente.getPessoaPaciente().getDatanascPessoa();
+        }
 
-        return new PacienteDTO(
-                paciente.getIdPaciente(),
-                paciente.getPessoaPaciente().getIdPessoa(),
-                paciente.getPessoaPaciente().getNomePessoa(),
-                paciente.getApelidoPaciente(),
-                paciente.isResponsavel(),
-                planos,
-                clinicas
-        );
+        List<String> planos = new ArrayList<>();
+        String idPlano = null;
+        String numCart = null;
+        if (paciente.getPlanos() != null) {
+            for (var p : paciente.getPlanos()) {
+                if (p.getAtivo() != null && !p.getAtivo()) continue;
+                if (p.getPlanoSaude() != null) {
+                    planos.add(p.getPlanoSaude().getNomePlano());
+                    if (idPlano == null) {
+                        idPlano = p.getPlanoSaude().getIdPlanoSaude();
+                        numCart = p.getNumeroCarteirinha();
+                    }
+                }
+            }
+        }
+
+        List<String> clinicas = new ArrayList<>();
+        String idClinica = null;
+        if (paciente.getClinicas() != null) {
+            for (var c : paciente.getClinicas()) {
+                if (c.getAtivo() != null && !c.getAtivo()) continue;
+                if (c.getClinica() != null) {
+                    clinicas.add(c.getClinica().getNomeClinica());
+                    if (idClinica == null) {
+                        idClinica = c.getClinica().getIdClinica();
+                    }
+                }
+            }
+        }
+
+        List<String> responsaveis = new ArrayList<>();
+        if (paciente.getResponsaveis() != null) {
+            for (var r : paciente.getResponsaveis()) {
+                if (r.getAtivo() != null && !r.getAtivo()) continue;
+                if (r.getPessoaResponsavel() != null) {
+                    responsaveis.add(r.getPessoaResponsavel().getNomePessoa());
+                }
+            }
+        }
+
+        return PacienteDTO.builder()
+                .idPaciente(paciente.getIdPaciente())
+                .idPessoa(idPessoa)
+                .nomePessoa(nome)
+                .cpf(cpf)
+                .apelidoPaciente(paciente.getApelidoPaciente())
+                .isResponsavel(paciente.isResponsavel())
+                .rg(rg)
+                .endereco(endereco)
+                .telefone(telefone)
+                .celular(celular)
+                .email(email)
+                .datanasc(datanasc)
+                .planos(planos)
+                .clinicas(clinicas)
+                .responsaveis(responsaveis)
+                .idPlanoSaude(idPlano)
+                .numeroCarteirinha(numCart)
+                .idClinica(idClinica)
+                .build();
     }
 }
