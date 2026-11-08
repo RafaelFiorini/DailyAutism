@@ -404,6 +404,7 @@ export default function ResponsavelModal({
           isOpen={showNewPacienteModal}
           onClose={() => setShowNewPacienteModal(false)}
           onSuccess={handleNewPacienteSuccess}
+          hasOutroResponsavel={true}
         />
       )}
     </div>

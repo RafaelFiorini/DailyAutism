@@ -33,23 +33,26 @@ describe('PacienteModal', () => {
     expect(screen.getByText('Cadastrar Novo Paciente')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Ex: Gabriel Henrique da Silva')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Salvar Paciente/i })).toBeInTheDocument();
+    expect(screen.getByText(/O paciente também é seu próprio responsável legal/i)).toBeInTheDocument();
   });
 
-  it('exibe erro de validação quando o nome está vazio', async () => {
+  it('exibe erro de validação quando o nome ou CPF estão vazios', async () => {
     render(<PacienteModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Salvar Paciente/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Informe o nome completo do paciente')).toBeInTheDocument();
+      expect(screen.getByText('Informe o CPF do paciente')).toBeInTheDocument();
     });
     expect(pacienteService.create).not.toHaveBeenCalled();
   });
 
-  it('cria paciente com sucesso quando preenchido corretamente', async () => {
+  it('cria paciente com sucesso quando preenchido corretamente com CPF', async () => {
     vi.mocked(pacienteService.create).mockResolvedValueOnce({
       idPaciente: 'pac-1',
       nomePessoa: 'Gabriel Silva',
+      cpf: '12345678901',
       apelidoPaciente: 'Biel',
       isResponsavel: true,
     });
@@ -58,6 +61,9 @@ describe('PacienteModal', () => {
 
     fireEvent.change(screen.getByPlaceholderText('Ex: Gabriel Henrique da Silva'), {
       target: { value: 'Gabriel Silva' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), {
+      target: { value: '12345678901' },
     });
     fireEvent.change(screen.getByPlaceholderText('Ex: Biel, Gabi'), {
       target: { value: 'Biel' },
@@ -73,6 +79,7 @@ describe('PacienteModal', () => {
       expect(pacienteService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           nomePessoa: 'Gabriel Silva',
+          cpf: '12345678901',
           apelidoPaciente: 'Biel',
           isResponsavel: true,
         })
@@ -82,6 +89,44 @@ describe('PacienteModal', () => {
       );
       expect(mockOnClose).toHaveBeenCalled();
     });
+  });
+
+  it('não exibe a pergunta de próprio responsável se hasOutroResponsavel for true', async () => {
+    render(
+      <PacienteModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSuccess={mockOnSuccess}
+        hasOutroResponsavel={true}
+      />
+    );
+
+    expect(
+      screen.queryByText(/O paciente também é seu próprio responsável legal/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('não exibe a pergunta de próprio responsável se initialData tiver hasOutroResponsavel = true', async () => {
+    const existingComResponsavel = {
+      idPaciente: 'pac-456',
+      nomePessoa: 'Enzo Gabriel',
+      cpf: '11122233344',
+      hasOutroResponsavel: true,
+      responsaveis: ['Maria Gabriel'],
+    };
+
+    render(
+      <PacienteModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSuccess={mockOnSuccess}
+        initialData={existingComResponsavel}
+      />
+    );
+
+    expect(
+      screen.queryByText(/O paciente também é seu próprio responsável legal/i)
+    ).not.toBeInTheDocument();
   });
 
   it('renderiza campos preenchidos e atualiza no modo de edição', async () => {

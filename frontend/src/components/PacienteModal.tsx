@@ -17,6 +17,7 @@ interface PacienteModalProps {
   onClose: () => void;
   onSuccess: (paciente: Paciente) => void;
   initialData?: Paciente | null;
+  hasOutroResponsavel?: boolean;
 }
 
 export default function PacienteModal({
@@ -24,8 +25,10 @@ export default function PacienteModal({
   onClose,
   onSuccess,
   initialData,
+  hasOutroResponsavel,
 }: PacienteModalProps) {
   const isEditing = Boolean(initialData);
+  const jaTemOutroResponsavel = Boolean(hasOutroResponsavel || initialData?.hasOutroResponsavel);
 
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
@@ -94,7 +97,7 @@ export default function PacienteModal({
       setCelular(initialData.celular ? formatPhone(initialData.celular) : '');
       setTelefone(initialData.telefone ? formatPhone(initialData.telefone) : '');
       setEmail(initialData.email || '');
-      setIsResponsavel(Boolean(initialData.isResponsavel));
+      setIsResponsavel(jaTemOutroResponsavel ? false : Boolean(initialData.isResponsavel));
       setIdPlanoSaude(initialData.idPlanoSaude || '');
       setNumeroCarteirinha(initialData.numeroCarteirinha || '');
       setIdClinica(initialData.idClinica || '');
@@ -125,7 +128,9 @@ export default function PacienteModal({
       newErrors.nome = 'Informe o nome completo do paciente';
     }
     const cleanCpf = cpf.replace(/\D/g, '');
-    if (cleanCpf && cleanCpf.length !== 11) {
+    if (!cleanCpf) {
+      newErrors.cpf = 'Informe o CPF do paciente';
+    } else if (cleanCpf.length !== 11) {
       newErrors.cpf = 'CPF deve conter 11 dígitos';
     }
     setErrors(newErrors);
@@ -143,8 +148,8 @@ export default function PacienteModal({
       const cleanCpf = cpf.replace(/\D/g, '');
       const payload: SavePacienteInput = {
         nomePessoa: nome.trim(),
-        CPFPessoa: cleanCpf || undefined,
-        cpf: cleanCpf || undefined,
+        CPFPessoa: cleanCpf,
+        cpf: cleanCpf,
         apelidoPaciente: apelido.trim() || undefined,
         datanascPessoa: datanasc || undefined,
         RGPessoa: rg.trim() || undefined,
@@ -153,7 +158,7 @@ export default function PacienteModal({
         telefonePessoa: telefone.trim() || undefined,
         celularPessoa: celular.trim() || undefined,
         emailPessoa: email.trim() || undefined,
-        isResponsavel: isResponsavel,
+        isResponsavel: jaTemOutroResponsavel ? false : isResponsavel,
         idPlanoSaude: idPlanoSaude || undefined,
         numeroCarteirinha: numeroCarteirinha.trim() || undefined,
         idClinica: idClinica || undefined,
@@ -256,7 +261,7 @@ export default function PacienteModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase text-gray-700 mb-1">
-                CPF
+                CPF *
               </label>
               <input
                 type="text"
@@ -357,26 +362,28 @@ export default function PacienteModal({
             />
           </div>
 
-          {/* Marcação isResponsável */}
-          <div className="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isResponsavel}
-                onChange={(e) => setIsResponsavel(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <div className="text-xs">
-                <span className="font-semibold text-indigo-900 flex items-center gap-1.5">
-                  <UserCheck className="h-3.5 w-3.5 text-indigo-600" />
-                  O paciente também é seu próprio responsável legal?
-                </span>
-                <span className="text-indigo-700/80 block mt-0.5">
-                  Marque se o próprio paciente administra sua documentação e agenda (sincroniza a marcação com o cadastro de responsáveis).
-                </span>
-              </div>
-            </label>
-          </div>
+          {/* Marcação isResponsável (somente se não tiver outro responsável vinculado) */}
+          {!jaTemOutroResponsavel && (
+            <div className="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isResponsavel}
+                  onChange={(e) => setIsResponsavel(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div className="text-xs">
+                  <span className="font-semibold text-indigo-900 flex items-center gap-1.5">
+                    <UserCheck className="h-3.5 w-3.5 text-indigo-600" />
+                    O paciente também é seu próprio responsável legal?
+                  </span>
+                  <span className="text-indigo-700/80 block mt-0.5">
+                    Marque se o próprio paciente administra sua documentação e agenda (sincroniza a marcação com o cadastro de responsáveis).
+                  </span>
+                </div>
+              </label>
+            </div>
+          )}
 
           {/* Espera: Plano de Saúde */}
           <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/40 space-y-2.5">

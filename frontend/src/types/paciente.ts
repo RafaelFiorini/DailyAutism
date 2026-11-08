@@ -5,6 +5,7 @@ export interface Paciente {
   cpf?: string;
   apelidoPaciente?: string;
   isResponsavel?: boolean;
+  hasOutroResponsavel?: boolean;
   rg?: string;
   endereco?: string;
   telefone?: string;

@@ -22,7 +22,7 @@ public class Pessoa extends BaseEntity {
     @Column(nullable = false, length = 255)
     private String nomePessoa;
 
-    @Column(length = 11)
+    @Column(nullable = false, length = 11)
     private String CPFPessoa;
 
     private LocalDate datanascPessoa;

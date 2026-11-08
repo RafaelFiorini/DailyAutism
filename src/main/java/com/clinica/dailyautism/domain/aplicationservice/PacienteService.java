@@ -54,20 +54,8 @@ public class PacienteService {
                                 .build();
                         return pessoaRepository.save(nova);
                     });
-        } else if (savePacienteDTO.getNomePessoa() != null && !savePacienteDTO.getNomePessoa().isBlank()) {
-            Pessoa nova = Pessoa.builder()
-                    .nomePessoa(savePacienteDTO.getNomePessoa().trim())
-                    .CPFPessoa(null)
-                    .datanascPessoa(savePacienteDTO.getDatanascPessoa())
-                    .RGPessoa(savePacienteDTO.getRGPessoa())
-                    .enderecoPessoa(savePacienteDTO.getEnderecoPessoa())
-                    .telefonePessoa(savePacienteDTO.getTelefonePessoa())
-                    .celularPessoa(savePacienteDTO.getCelularPessoa())
-                    .emailPessoa(savePacienteDTO.getEmailPessoa())
-                    .build();
-            pessoa = pessoaRepository.save(nova);
         } else {
-            throw new IllegalArgumentException("Informe a pessoa existente ou o nome do paciente");
+            throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
         }
 
         if (pacienteRepository.findByPessoaPaciente(pessoa).isPresent()) {

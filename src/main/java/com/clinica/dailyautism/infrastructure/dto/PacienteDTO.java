@@ -22,6 +22,7 @@ public class PacienteDTO {
     private String cpf;
     private String apelidoPaciente;
     private Boolean isResponsavel;
+    private Boolean hasOutroResponsavel;
     private String rg;
     private String endereco;
     private String telefone;
@@ -89,11 +90,15 @@ public class PacienteDTO {
         }
 
         List<String> responsaveis = new ArrayList<>();
+        boolean temOutroResponsavel = false;
         if (paciente.getResponsaveis() != null) {
             for (var r : paciente.getResponsaveis()) {
                 if (r.getAtivo() != null && !r.getAtivo()) continue;
                 if (r.getPessoaResponsavel() != null) {
                     responsaveis.add(r.getPessoaResponsavel().getNomePessoa());
+                    if (idPessoa == null || !idPessoa.equals(r.getPessoaResponsavel().getIdPessoa())) {
+                        temOutroResponsavel = true;
+                    }
                 }
             }
         }
@@ -105,6 +110,7 @@ public class PacienteDTO {
                 .cpf(cpf)
                 .apelidoPaciente(paciente.getApelidoPaciente())
                 .isResponsavel(paciente.isResponsavel())
+                .hasOutroResponsavel(temOutroResponsavel)
                 .rg(rg)
                 .endereco(endereco)
                 .telefone(telefone)
