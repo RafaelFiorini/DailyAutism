@@ -35,4 +35,5 @@ public interface ResponsavelRepository extends JpaRepository<Responsavel, String
     );
 
     Optional<Responsavel> findByPessoaResponsavel(Pessoa pessoa);
+    boolean existsByPessoaResponsavel(Pessoa pessoa);
 }
