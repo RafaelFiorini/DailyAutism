@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Stethoscope,
   UserCheck,
+  Building2,
   Phone,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -56,8 +57,10 @@ export default function Usuarios() {
       const matchEmail = (u.emailUser || '').toLowerCase().includes(term);
       const matchCpf = (u.cpf || '').includes(term);
       const matchConselho = (u.conselhoProf || '').toLowerCase().includes(term);
+      const matchClinica = (u.nomeClinica || '').toLowerCase().includes(term);
+      const matchCargo = (u.cargoClinica || '').toLowerCase().includes(term);
       const matchPerfis = (u.perfis || []).some((p) => p.toLowerCase().includes(term));
-      return matchNome || matchEmail || matchCpf || matchConselho || matchPerfis;
+      return matchNome || matchEmail || matchCpf || matchConselho || matchClinica || matchCargo || matchPerfis;
     });
   }, [users, search]);
 
@@ -271,7 +274,22 @@ export default function Usuarios() {
                             </span>
                           )}
 
-                          {!user.isAdmin && !user.isResponsavel && !user.isProfissional && (
+                          {user.isFuncionarioClinica && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200"
+                              title={user.nomeClinica ? `Clínica: ${user.nomeClinica}${user.cargoClinica ? ` (${user.cargoClinica})` : ''}` : undefined}
+                            >
+                              <Building2 className="h-3.5 w-3.5" />
+                              {user.nomeClinica || 'Clínica'}
+                              {user.cargoClinica && (
+                                <span className="text-[10px] opacity-80">
+                                  ({user.cargoClinica})
+                                </span>
+                              )}
+                            </span>
+                          )}
+
+                          {!user.isAdmin && !user.isResponsavel && !user.isProfissional && !user.isFuncionarioClinica && (
                             <span className="text-xs text-gray-400 italic">
                               Sem papéis definidos
                             </span>

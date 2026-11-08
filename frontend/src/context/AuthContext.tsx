@@ -12,6 +12,7 @@ export interface AuthContextType {
   isAdmin: boolean;
   isResponsavel: boolean;
   isProfissional: boolean;
+  isFuncionarioClinica: boolean;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (payload: RegisterInput) => Promise<void>;
@@ -33,6 +34,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const isAdmin = !!user?.perfis?.includes('ADMIN');
   const isResponsavel = !!user?.perfis?.includes('RESPONSAVEL');
   const isProfissional = !!user?.perfis?.includes('PROFISSIONAL');
+  const isFuncionarioClinica = !!(
+    user?.perfis?.includes('CLINICA') || user?.perfis?.includes('FUNCIONARIO_CLINICA')
+  );
 
   const logout = useCallback(() => {
     setUser(null);
@@ -100,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAdmin,
         isResponsavel,
         isProfissional,
+        isFuncionarioClinica,
         loading,
         login,
         register,

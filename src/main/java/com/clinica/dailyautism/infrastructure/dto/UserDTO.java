@@ -34,10 +34,18 @@ public class UserDTO {
     private boolean isProfissional;
     private String idProfissional;
     private String conselhoProf;
+    private boolean isFuncionarioClinica;
+    private String idClinica;
+    private String nomeClinica;
+    private String cargoClinica;
     private boolean isAdmin;
     private Boolean ativo;
 
     public static UserDTO create(User user) {
+        return create(user, null);
+    }
+
+    public static UserDTO create(User user, com.clinica.dailyautism.domain.entity.FuncionarioClinica funcionario) {
         if (user == null) return null;
 
         Pessoa pessoa = user.getPessoa();
@@ -71,6 +79,21 @@ public class UserDTO {
         if (perfilNames.contains("PROFISSIONAL") || perfilNames.contains("ROLE_PROFISSIONAL")) {
             isProf = true;
         }
+        boolean isFuncClinica = funcionario != null
+                || perfilNames.contains("CLINICA")
+                || perfilNames.contains("FUNCIONARIO_CLINICA")
+                || perfilNames.contains("ROLE_CLINICA")
+                || perfilNames.contains("ROLE_FUNCIONARIO_CLINICA");
+
+        String idClinica = null;
+        String nomeClinica = null;
+        String cargoClinica = null;
+
+        if (funcionario != null && funcionario.getClinica() != null) {
+            idClinica = funcionario.getClinica().getIdClinica();
+            nomeClinica = funcionario.getClinica().getNomeClinica();
+            cargoClinica = funcionario.getCargo();
+        }
 
         return UserDTO.builder()
                 .idUser(user.getIdUser())
@@ -90,6 +113,10 @@ public class UserDTO {
                 .isProfissional(isProf)
                 .idProfissional(idProfissional)
                 .conselhoProf(conselhoProf)
+                .isFuncionarioClinica(isFuncClinica)
+                .idClinica(idClinica)
+                .nomeClinica(nomeClinica)
+                .cargoClinica(cargoClinica)
                 .isAdmin(isAdmin)
                 .ativo(user.getAtivo())
                 .build();

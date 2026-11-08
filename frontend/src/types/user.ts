@@ -26,6 +26,10 @@ export interface User {
   isProfissional: boolean;
   idProfissional?: string | null;
   conselhoProf?: string | null;
+  isFuncionarioClinica?: boolean;
+  idClinica?: string | null;
+  nomeClinica?: string | null;
+  cargoClinica?: string | null;
   isAdmin: boolean;
   ativo?: boolean;
 }
@@ -43,5 +47,8 @@ export interface SaveUserInput {
   isResponsavel: boolean;
   isProfissional: boolean;
   conselhoProf?: string;
+  isFuncionarioClinica?: boolean;
+  idClinica?: string;
+  cargoClinica?: string;
   isAdmin: boolean;
 }

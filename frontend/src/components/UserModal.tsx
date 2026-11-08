@@ -12,11 +12,14 @@ import {
   Loader2,
   Users,
   Stethoscope,
+  Building2,
   ShieldCheck,
   Info,
 } from 'lucide-react';
 import { userService } from '../services/userService';
+import { clinicaService } from '../services/clinicaService';
 import type { User, SaveUserInput } from '../types/user';
+import type { Clinica } from '../types/clinica';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -45,8 +48,17 @@ export default function UserModal({
   // Papéis de acesso
   const [isResponsavel, setIsResponsavel] = useState(false);
   const [isProfissional, setIsProfissional] = useState(false);
+  const [isFuncionarioClinica, setIsFuncionarioClinica] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Dados do Profissional
   const [conselhoProf, setConselhoProf] = useState('');
+
+  // Dados do Funcionário de Clínica
+  const [idClinica, setIdClinica] = useState('');
+  const [cargoClinica, setCargoClinica] = useState('');
+  const [clinicas, setClinicas] = useState<Clinica[]>([]);
+  const [loadingClinicas, setLoadingClinicas] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +70,17 @@ export default function UserModal({
     if (raw.length <= 9) return `${raw.slice(0, 3)}.${raw.slice(3, 6)}.${raw.slice(6)}`;
     return `${raw.slice(0, 3)}.${raw.slice(3, 6)}.${raw.slice(6, 9)}-${raw.slice(9)}`;
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingClinicas(true);
+      clinicaService
+        .list()
+        .then((data) => setClinicas(data))
+        .catch(() => setClinicas([]))
+        .finally(() => setLoadingClinicas(false));
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (initialData) {
@@ -74,8 +97,12 @@ export default function UserModal({
 
       setIsResponsavel(Boolean(initialData.isResponsavel));
       setIsProfissional(Boolean(initialData.isProfissional));
+      setIsFuncionarioClinica(Boolean(initialData.isFuncionarioClinica));
       setIsAdmin(Boolean(initialData.isAdmin));
+
       setConselhoProf(initialData.conselhoProf || '');
+      setIdClinica(initialData.idClinica || '');
+      setCargoClinica(initialData.cargoClinica || '');
     } else {
       setNome('');
       setCpf('');
@@ -90,8 +117,12 @@ export default function UserModal({
 
       setIsResponsavel(true); // padrão responsável
       setIsProfissional(false);
+      setIsFuncionarioClinica(false);
       setIsAdmin(false);
+
       setConselhoProf('');
+      setIdClinica('');
+      setCargoClinica('');
     }
     setError('');
   }, [initialData, isOpen]);
@@ -139,8 +170,13 @@ export default function UserModal({
       return;
     }
 
-    if (!isResponsavel && !isProfissional && !isAdmin) {
-      setError('Selecione pelo menos um papel de acesso (Responsável, Profissional ou Administrador).');
+    if (isFuncionarioClinica && !idClinica) {
+      setError('Selecione a clínica em que o funcionário atua.');
+      return;
+    }
+
+    if (!isResponsavel && !isProfissional && !isFuncionarioClinica && !isAdmin) {
+      setError('Selecione pelo menos um papel de acesso (Responsável, Profissional, Funcionário de Clínica ou Administrador).');
       return;
     }
 
@@ -159,6 +195,9 @@ export default function UserModal({
         isResponsavel,
         isProfissional,
         conselhoProf: isProfissional ? conselhoProf.trim() : undefined,
+        isFuncionarioClinica,
+        idClinica: isFuncionarioClinica ? idClinica : undefined,
+        cargoClinica: isFuncionarioClinica ? cargoClinica.trim() : undefined,
         isAdmin,
       };
 
@@ -221,14 +260,14 @@ export default function UserModal({
                 </label>
                 <span className="text-[11px] text-indigo-600 flex items-center gap-1">
                   <Info className="h-3.5 w-3.5" />
-                  Pode ser Responsável e Profissional ao mesmo tempo
+                  Múltiplos papéis podem ser selecionados
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* Responsável */}
                 <label
-                  className={`p-3.5 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                     isResponsavel
                       ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -245,19 +284,19 @@ export default function UserModal({
                       className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                     />
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-2">
                     <span className="font-semibold text-gray-900 text-xs block">
                       Responsável
                     </span>
-                    <span className="text-[11px] text-gray-500 block mt-0.5">
-                      Pai, mãe ou tutor legal
+                    <span className="text-[10px] text-gray-500 block mt-0.5">
+                      Pai, mãe ou tutor
                     </span>
                   </div>
                 </label>
 
                 {/* Profissional */}
                 <label
-                  className={`p-3.5 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                     isProfissional
                       ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -274,19 +313,48 @@ export default function UserModal({
                       className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                     />
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-2">
                     <span className="font-semibold text-gray-900 text-xs block">
                       Profissional
                     </span>
-                    <span className="text-[11px] text-gray-500 block mt-0.5">
-                      Terapeuta, médico, etc.
+                    <span className="text-[10px] text-gray-500 block mt-0.5">
+                      Terapeuta, médico
+                    </span>
+                  </div>
+                </label>
+
+                {/* Funcionário de Clínica */}
+                <label
+                  className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                    isFuncionarioClinica
+                      ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="p-2 rounded-lg bg-teal-100 text-teal-700">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isFuncionarioClinica}
+                      onChange={(e) => setIsFuncionarioClinica(e.target.checked)}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <span className="font-semibold text-gray-900 text-xs block">
+                      Clínica
+                    </span>
+                    <span className="text-[10px] text-gray-500 block mt-0.5">
+                      Intermedia agenda
                     </span>
                   </div>
                 </label>
 
                 {/* Administrador */}
                 <label
-                  className={`p-3.5 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
                     isAdmin
                       ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-500/20'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -303,12 +371,12 @@ export default function UserModal({
                       className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
                     />
                   </div>
-                  <div className="mt-2.5">
+                  <div className="mt-2">
                     <span className="font-semibold text-gray-900 text-xs block">
-                      Administrador
+                      Admin
                     </span>
-                    <span className="text-[11px] text-gray-500 block mt-0.5">
-                      Acesso total ao sistema
+                    <span className="text-[10px] text-gray-500 block mt-0.5">
+                      Acesso total
                     </span>
                   </div>
                 </label>
@@ -331,6 +399,56 @@ export default function UserModal({
                       className="w-full pl-9 pr-3 py-2 text-sm border border-emerald-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
+                </div>
+              )}
+
+              {/* Clínica vinculada e Cargo (exibido se for funcionário de clínica) */}
+              {isFuncionarioClinica && (
+                <div className="p-3.5 bg-teal-50/60 rounded-xl border border-teal-200 mt-2 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-teal-900 mb-1">
+                        Clínica Vinculada *
+                      </label>
+                      <div className="relative">
+                        <Building2 className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-teal-600" />
+                        <select
+                          required={isFuncionarioClinica}
+                          value={idClinica}
+                          onChange={(e) => setIdClinica(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 text-sm border border-teal-300 rounded-lg bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        >
+                          <option value="">Selecione a clínica...</option>
+                          {clinicas.map((c) => (
+                            <option key={c.idClinica} value={c.idClinica}>
+                              {c.nomeClinica}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {loadingClinicas && (
+                        <span className="text-[10px] text-teal-600 mt-1 block">
+                          Carregando clínicas...
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-teal-900 mb-1">
+                        Cargo / Função (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cargoClinica}
+                        onChange={(e) => setCargoClinica(e.target.value)}
+                        placeholder="Ex: Recepcionista, Secretária, Atendente"
+                        className="w-full px-3 py-2 text-sm border border-teal-300 rounded-lg bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-teal-700">
+                    O funcionário terá acesso restrito aos pacientes e agendamentos vinculados a esta clínica.
+                  </p>
                 </div>
               )}
             </div>

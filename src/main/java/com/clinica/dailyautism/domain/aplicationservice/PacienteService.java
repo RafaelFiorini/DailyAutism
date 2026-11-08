@@ -32,6 +32,7 @@ public class PacienteService {
     private final PacienteClinicaRepository pacienteClinicaRepository;
     private final CompromissoRepository compromissoRepository;
     private final ProfissionalPacienteRepository profissionalPacienteRepository;
+    private final FuncionarioClinicaRepository funcionarioClinicaRepository;
 
     @Transactional
     public Paciente createPaciente(SavePacienteDTO savePacienteDTO) {
@@ -208,6 +209,24 @@ public class PacienteService {
             throw new AccessDeniedException("Você não tem permissão para visualizar este paciente.");
         }
 
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+                List<String> clinicaIds = vinculos.stream()
+                        .filter(v -> v.getClinica() != null)
+                        .map(v -> v.getClinica().getIdClinica())
+                        .toList();
+                boolean pertence = paciente.getClinicas() != null && paciente.getClinicas().stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
+                if (pertence) {
+                    return paciente;
+                }
+            }
+            throw new AccessDeniedException("Você não tem permissão para visualizar pacientes de outra clínica.");
+        }
+
         return paciente;
     }
 
@@ -280,6 +299,26 @@ public class PacienteService {
             return pacienteRepository.findAllById(pacienteIds).stream()
                     .filter(p -> p.getAtivo() == null || p.getAtivo())
                     .toList();
+        }
+
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+                if (!vinculos.isEmpty()) {
+                    List<String> clinicaIds = vinculos.stream()
+                            .filter(v -> v.getClinica() != null)
+                            .map(v -> v.getClinica().getIdClinica())
+                            .toList();
+                    if (!clinicaIds.isEmpty()) {
+                        return pacienteRepository.findByClinicaIds(clinicaIds).stream()
+                                .filter(p -> p.getAtivo() == null || p.getAtivo())
+                                .toList();
+                    }
+                }
+            }
+            return List.of();
         }
 
         return listPacientes();

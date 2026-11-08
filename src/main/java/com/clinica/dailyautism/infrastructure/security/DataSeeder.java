@@ -114,15 +114,19 @@ public class DataSeeder implements CommandLineRunner {
             "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA"
         )));
 
-        // CLINICA — gerencia estrutura da clínica
-        criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(Set.of(
+        // CLINICA / FUNCIONARIO_CLINICA — gerencia estrutura da clínica e intermedia agendamentos
+        Set<String> acoesClinica = Set.of(
                 "VER_CLINICA", "EDITAR_CLINICA",
                 "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
                 "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
-                "CRIAR_COMPROMISSO"
-        )));
+                "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
+                "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
+                "LISTAR_PACIENTE", "VER_PACIENTE", "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL"
+        );
+        criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));
+        criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));
     }
 
     private void criarPerfilSeNaoExistir(String nome, Iterable<Acao> acoes) {

@@ -34,7 +34,7 @@ public class ClinicaRestResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('LISTAR_CLINICA')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('LISTAR_CLINICA')")
     public ResponseEntity<List<ClinicaDTO>> listClinicas() {
         List<ClinicaDTO> clinicas = clinicaService.listClinicas()
                 .stream()

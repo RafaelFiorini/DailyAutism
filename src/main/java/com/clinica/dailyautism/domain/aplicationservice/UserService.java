@@ -1,13 +1,18 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
+import com.clinica.dailyautism.domain.entity.Clinica;
+import com.clinica.dailyautism.domain.entity.FuncionarioClinica;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
 import com.clinica.dailyautism.domain.entity.Responsavel;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
 import com.clinica.dailyautism.domain.exception.EmailAlreadyExistsException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.UserNotFoundException;
+import com.clinica.dailyautism.domain.repository.ClinicaRepository;
+import com.clinica.dailyautism.domain.repository.FuncionarioClinicaRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
@@ -35,6 +40,8 @@ public class UserService {
     private final PerfilRepository perfilRepository;
     private final ResponsavelRepository responsavelRepository;
     private final ProfissionalRepository profissionalRepository;
+    private final ClinicaRepository clinicaRepository;
+    private final FuncionarioClinicaRepository funcionarioClinicaRepository;
 
     @Transactional
     public User createUser(SaveUserDTO saveUserDTO) {
@@ -51,16 +58,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    private UserDTO mapUserToDTO(User user) {
+        FuncionarioClinica func = null;
+        if (user.getPessoa() != null) {
+            var list = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+            if (!list.isEmpty()) {
+                func = list.get(0);
+            }
+        }
+        return UserDTO.create(user, func);
+    }
+
     public List<UserDTO> listUsers() {
         return userRepository.findAll().stream()
-                .map(UserDTO::create)
+                .map(this::mapUserToDTO)
                 .toList();
     }
 
     public UserDTO getUserById(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + id));
-        return UserDTO.create(user);
+        return mapUserToDTO(user);
     }
 
     @Transactional
@@ -81,6 +99,10 @@ public class UserService {
 
         if (Boolean.TRUE.equals(dto.getIsProfissional()) && (dto.getConselhoProf() == null || dto.getConselhoProf().isBlank())) {
             throw new IllegalArgumentException("Informe o registro no conselho profissional");
+        }
+
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica()) && (dto.getIdClinica() == null || dto.getIdClinica().isBlank())) {
+            throw new IllegalArgumentException("Selecione a clínica para vincular o funcionário");
         }
 
         // 1. Pessoa
@@ -134,6 +156,11 @@ public class UserService {
         if (Boolean.TRUE.equals(dto.getIsProfissional())) {
             perfilRepository.findByNome("PROFISSIONAL").ifPresent(perfis::add);
         }
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica())) {
+            perfilRepository.findByNome("CLINICA")
+                    .or(() -> perfilRepository.findByNome("FUNCIONARIO_CLINICA"))
+                    .ifPresent(perfis::add);
+        }
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);
         }
@@ -168,7 +195,27 @@ public class UserService {
             }
         }
 
-        return UserDTO.create(user);
+        // 7. Funcionário de Clínica
+        FuncionarioClinica funcSalvo = null;
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica()) && dto.getIdClinica() != null && !dto.getIdClinica().isBlank()) {
+            Clinica clinica = clinicaRepository.findById(dto.getIdClinica().trim())
+                    .orElseThrow(() -> new ClinicaNotFoundException(dto.getIdClinica()));
+
+            var optFunc = funcionarioClinicaRepository.findByPessoaAndClinica(pessoa, clinica);
+            if (optFunc.isPresent()) {
+                funcSalvo = optFunc.get();
+                funcSalvo.setCargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário");
+            } else {
+                funcSalvo = FuncionarioClinica.builder()
+                        .pessoa(pessoa)
+                        .clinica(clinica)
+                        .cargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário")
+                        .build();
+            }
+            funcSalvo = funcionarioClinicaRepository.save(funcSalvo);
+        }
+
+        return UserDTO.create(user, funcSalvo);
     }
 
     @Transactional
@@ -205,6 +252,10 @@ public class UserService {
             throw new IllegalArgumentException("Informe o registro no conselho profissional");
         }
 
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica()) && (dto.getIdClinica() == null || dto.getIdClinica().isBlank())) {
+            throw new IllegalArgumentException("Selecione a clínica para vincular o funcionário");
+        }
+
         // Pessoa
         Pessoa pessoa = user.getPessoa();
         if (pessoa == null) {
@@ -236,6 +287,11 @@ public class UserService {
         }
         if (Boolean.TRUE.equals(dto.getIsProfissional())) {
             perfilRepository.findByNome("PROFISSIONAL").ifPresent(perfis::add);
+        }
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica())) {
+            perfilRepository.findByNome("CLINICA")
+                    .or(() -> perfilRepository.findByNome("FUNCIONARIO_CLINICA"))
+                    .ifPresent(perfis::add);
         }
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);
@@ -271,7 +327,34 @@ public class UserService {
             }
         }
 
-        return UserDTO.create(user);
+        // Funcionário de Clínica
+        FuncionarioClinica funcSalvo = null;
+        if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica()) && dto.getIdClinica() != null && !dto.getIdClinica().isBlank()) {
+            Clinica clinica = clinicaRepository.findById(dto.getIdClinica().trim())
+                    .orElseThrow(() -> new ClinicaNotFoundException(dto.getIdClinica()));
+
+            var listFunc = funcionarioClinicaRepository.findByPessoa(pessoa);
+            if (!listFunc.isEmpty()) {
+                funcSalvo = listFunc.get(0);
+                funcSalvo.setClinica(clinica);
+                funcSalvo.setCargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário");
+            } else {
+                funcSalvo = FuncionarioClinica.builder()
+                        .pessoa(pessoa)
+                        .clinica(clinica)
+                        .cargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário")
+                        .build();
+            }
+            funcSalvo = funcionarioClinicaRepository.save(funcSalvo);
+        } else if (Boolean.FALSE.equals(dto.getIsFuncionarioClinica())) {
+            var listFunc = funcionarioClinicaRepository.findByPessoa(pessoa);
+            for (FuncionarioClinica f : listFunc) {
+                f.desativar();
+                funcionarioClinicaRepository.save(f);
+            }
+        }
+
+        return UserDTO.create(user, funcSalvo);
     }
 
     @Transactional

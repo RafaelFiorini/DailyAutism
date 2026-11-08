@@ -71,6 +71,17 @@ public class SaveUserFullDTO {
     @JsonProperty("isAdmin")
     private Boolean isAdmin;
 
+    @JsonProperty("isFuncionarioClinica")
+    @JsonAlias({"isClinica", "funcionarioClinica"})
+    private Boolean isFuncionarioClinica;
+
+    @JsonProperty("idClinica")
+    private String idClinica;
+
+    @JsonProperty("cargoClinica")
+    @JsonAlias({"cargo"})
+    private String cargoClinica;
+
     @JsonProperty("perfis")
     private List<String> perfis;
 }

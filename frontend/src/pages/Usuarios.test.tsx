@@ -39,6 +39,20 @@ const mockUsers = [
     isProfissional: false,
     isAdmin: false,
   },
+  {
+    idUser: '3',
+    nomeUser: 'Mariana Recepcionista',
+    emailUser: 'mariana@clinicaesperanca.com',
+    cpf: '11122233344',
+    celular: '11977776666',
+    perfis: ['CLINICA'],
+    isResponsavel: false,
+    isProfissional: false,
+    isFuncionarioClinica: true,
+    nomeClinica: 'Clínica Esperança',
+    cargoClinica: 'Secretária',
+    isAdmin: false,
+  },
 ];
 
 describe('Usuarios Page', () => {
@@ -54,6 +68,7 @@ describe('Usuarios Page', () => {
       isAdmin: false,
       isResponsavel: true,
       isProfissional: false,
+      isFuncionarioClinica: false,
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
@@ -72,6 +87,7 @@ describe('Usuarios Page', () => {
       isAdmin: true,
       isResponsavel: false,
       isProfissional: false,
+      isFuncionarioClinica: false,
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
@@ -85,10 +101,14 @@ describe('Usuarios Page', () => {
     await waitFor(() => {
       expect(screen.getByText('Dra. Ana Paula')).toBeInTheDocument();
       expect(screen.getByText('Carlos Silva')).toBeInTheDocument();
+      expect(screen.getByText('Mariana Recepcionista')).toBeInTheDocument();
       // Dra. Ana Paula tem ambos os perfis:
       expect(screen.getAllByText(/Responsável/).length).toBeGreaterThanOrEqual(1);
       expect(screen.getAllByText(/Profissional/).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('(CRP 06/1234)')).toBeInTheDocument();
+      // Mariana é funcionária de clínica:
+      expect(screen.getByText('Clínica Esperança')).toBeInTheDocument();
+      expect(screen.getByText('(Secretária)')).toBeInTheDocument();
     });
   });
 
@@ -100,6 +120,7 @@ describe('Usuarios Page', () => {
       isAdmin: true,
       isResponsavel: false,
       isProfissional: false,
+      isFuncionarioClinica: false,
       loading: false,
       login: vi.fn(),
       register: vi.fn(),

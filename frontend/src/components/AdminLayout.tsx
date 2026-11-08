@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { user, logout, isAdmin, isResponsavel, isProfissional } = useAuth();
+  const { user, logout, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica } = useAuth();
 
   const navigation = useMemo(() => {
     if (isAdmin) {
@@ -26,6 +26,14 @@ export default function AdminLayout() {
         { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
+      ];
+    }
+
+    if (isFuncionarioClinica) {
+      return [
+        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
+        { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
       ];
     }
 
@@ -47,7 +55,7 @@ export default function AdminLayout() {
       { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
       { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
     ];
-  }, [isAdmin, isResponsavel, isProfissional]);
+  }, [isAdmin, isResponsavel, isProfissional, isFuncionarioClinica]);
 
   const initials = user?.nomeUser
     ? user.nomeUser
@@ -60,6 +68,8 @@ export default function AdminLayout() {
 
   const roleLabel = isAdmin
     ? 'Admin'
+    : isFuncionarioClinica
+    ? 'Clínica'
     : isResponsavel
     ? 'Responsável'
     : isProfissional
