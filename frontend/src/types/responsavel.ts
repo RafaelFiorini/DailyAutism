@@ -12,6 +12,9 @@ export interface Responsavel {
   email?: string;
   telefone?: string;
   isPaciente?: boolean;
+  rg?: string;
+  endereco?: string;
+  datanasc?: string;
   pacientes?: PacienteVinculado[];
 }
 

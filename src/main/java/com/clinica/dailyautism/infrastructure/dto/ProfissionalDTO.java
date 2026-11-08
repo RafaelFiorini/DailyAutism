@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,6 +21,9 @@ public class ProfissionalDTO {
     private String email;
     private String telefone;
     private String conselhoProf;
+    private String rg;
+    private String endereco;
+    private LocalDate datanasc;
 
     public static ProfissionalDTO create(Profissional profissional) {
         String idPessoa = null;
@@ -26,6 +31,9 @@ public class ProfissionalDTO {
         String cpf = null;
         String email = null;
         String telefone = null;
+        String rg = null;
+        String endereco = null;
+        LocalDate datanasc = null;
 
         if (profissional.getPessoaProf() != null) {
             idPessoa = profissional.getPessoaProf().getIdPessoa();
@@ -35,6 +43,9 @@ public class ProfissionalDTO {
             telefone = profissional.getPessoaProf().getCelularPessoa() != null
                     ? profissional.getPessoaProf().getCelularPessoa()
                     : profissional.getPessoaProf().getTelefonePessoa();
+            rg = profissional.getPessoaProf().getRGPessoa();
+            endereco = profissional.getPessoaProf().getEnderecoPessoa();
+            datanasc = profissional.getPessoaProf().getDatanascPessoa();
         }
 
         return new ProfissionalDTO(
@@ -44,7 +55,10 @@ public class ProfissionalDTO {
                 cpf,
                 email,
                 telefone,
-                profissional.getConselhoProf()
+                profissional.getConselhoProf(),
+                rg,
+                endereco,
+                datanasc
         );
     }
 }

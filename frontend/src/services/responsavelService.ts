@@ -12,6 +12,11 @@ export const responsavelService = {
     return response.data;
   },
 
+  async update(id: string, payload: SaveResponsavelInput): Promise<Responsavel> {
+    const response = await api.put<Responsavel>(`/responsaveis/${id}`, payload);
+    return response.data;
+  },
+
   async delete(id: string): Promise<void> {
     await api.delete(`/responsaveis/${id}`);
   },

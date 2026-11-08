@@ -1,15 +1,23 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { X, UserCheck, Loader2, AlertCircle } from 'lucide-react';
+import { X, UserCheck, Edit3, Loader2, AlertCircle } from 'lucide-react';
 import { responsavelService } from '../services/responsavelService';
 import type { Responsavel, SaveResponsavelInput, PacienteOption } from '../types/responsavel';
 
 interface ResponsavelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (novo: Responsavel) => void;
+  onSuccess: (item: Responsavel) => void;
+  initialData?: Responsavel | null;
 }
 
-export default function ResponsavelModal({ isOpen, onClose, onSuccess }: ResponsavelModalProps) {
+export default function ResponsavelModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+}: ResponsavelModalProps) {
+  const isEditing = Boolean(initialData);
+
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [email, setEmail] = useState('');
@@ -35,8 +43,32 @@ export default function ResponsavelModal({ isOpen, onClose, onSuccess }: Respons
         .then((data) => setAvailablePacientes(data || []))
         .catch(() => setAvailablePacientes([]))
         .finally(() => setLoadingPacientes(false));
+
+      if (initialData) {
+        setNome(initialData.nomeResponsavel || '');
+        setCpf(initialData.cpf || '');
+        setEmail(initialData.email || '');
+        setCelular(initialData.telefone || '');
+        setDatanasc(initialData.datanasc || '');
+        setRg(initialData.rg || '');
+        setEndereco(initialData.endereco || '');
+        setIsPacienteTambem(Boolean(initialData.isPaciente));
+        setSelectedPacienteIds(initialData.pacientes?.map((p) => p.idPaciente) || []);
+      } else {
+        setNome('');
+        setCpf('');
+        setEmail('');
+        setCelular('');
+        setDatanasc('');
+        setRg('');
+        setEndereco('');
+        setIsPacienteTambem(false);
+        setSelectedPacienteIds([]);
+      }
+      setErrors({});
+      setApiError('');
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -77,11 +109,14 @@ export default function ResponsavelModal({ isOpen, onClose, onSuccess }: Respons
         pacienteIds: selectedPacienteIds.length > 0 ? selectedPacienteIds : undefined,
       };
 
-      const created = await responsavelService.create(payload);
-      onSuccess(created);
+      const result = isEditing && initialData
+        ? await responsavelService.update(initialData.idResponsavel, payload)
+        : await responsavelService.create(payload);
+
+      onSuccess(result);
       onClose();
     } catch (err: unknown) {
-      let msg = 'Erro ao cadastrar responsável. Verifique os dados informados.';
+      let msg = isEditing ? 'Erro ao atualizar responsável.' : 'Erro ao cadastrar responsável.';
       if (err && typeof err === 'object' && 'response' in err) {
         const res = (err as { response?: { data?: { errorMessage?: string; message?: string; details?: string[] } } }).response;
         if (res?.data) {
@@ -107,11 +142,17 @@ export default function ResponsavelModal({ isOpen, onClose, onSuccess }: Respons
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-              <UserCheck className="h-5 w-5" />
+              {isEditing ? <Edit3 className="h-5 w-5" /> : <UserCheck className="h-5 w-5" />}
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-lg">Cadastrar Novo Responsável</h3>
-              <p className="text-xs text-gray-500">Pai, mãe, tutor ou o próprio paciente</p>
+              <h3 className="font-bold text-gray-900 text-lg">
+                {isEditing ? 'Editar Responsável' : 'Cadastrar Novo Responsável'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {isEditing
+                  ? 'Atualize os dados e vínculos de pacientes'
+                  : 'Pai, mãe, tutor ou o próprio paciente'}
+              </p>
             </div>
           </div>
           <button
@@ -161,9 +202,10 @@ export default function ResponsavelModal({ isOpen, onClose, onSuccess }: Respons
               onChange={(e) => setCpf(e.target.value)}
               placeholder="000.000.000-00"
               maxLength={14}
+              disabled={isEditing}
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors ${
                 errors.cpf ? 'border-red-400 bg-red-50/30' : 'border-gray-300'
-              }`}
+              } ${isEditing ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
             />
             {errors.cpf && <p className="text-xs text-red-600 mt-1">{errors.cpf}</p>}
           </div>
@@ -323,10 +365,10 @@ export default function ResponsavelModal({ isOpen, onClose, onSuccess }: Respons
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvando...
+                  {isEditing ? 'Atualizando...' : 'Salvando...'}
                 </>
               ) : (
-                'Salvar Responsável'
+                isEditing ? 'Salvar Alterações' : 'Salvar Responsável'
               )}
             </button>
           </div>

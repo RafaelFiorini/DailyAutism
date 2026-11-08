@@ -6,6 +6,9 @@ export interface Profissional {
   email?: string;
   telefone?: string;
   conselhoProf: string;
+  rg?: string;
+  endereco?: string;
+  datanasc?: string;
 }
 
 export interface SaveProfissionalInput {

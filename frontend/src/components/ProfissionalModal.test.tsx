@@ -91,5 +91,35 @@ describe('ProfissionalModal', () => {
 
     expect(await screen.findByText(/erro ao cadastrar profissional/i)).toBeInTheDocument();
   });
+
+  it('pre-fills fields and calls update in edit mode', async () => {
+    const existing = {
+      idProf: '123',
+      idPessoa: 'p-123',
+      nomeProfissional: 'Dr. Lucas Santos',
+      cpf: '12345678901',
+      email: 'lucas@clinica.com',
+      telefone: '11988887777',
+      conselhoProf: 'CRM/SP 99999',
+    };
+    vi.mocked(profissionalService.update).mockResolvedValueOnce(existing);
+
+    render(<ProfissionalModal {...defaultProps} initialData={existing} />);
+
+    expect(screen.getByRole('heading', { name: /editar profissional/i })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Dr. Lucas Santos')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('CRM/SP 99999')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+    await waitFor(() => {
+      expect(profissionalService.update).toHaveBeenCalledWith('123', expect.objectContaining({
+        nomePessoa: 'Dr. Lucas Santos',
+        conselhoProf: 'CRM/SP 99999',
+      }));
+      expect(defaultProps.onSuccess).toHaveBeenCalledWith(existing);
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
 });
 

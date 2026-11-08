@@ -9,6 +9,7 @@ import {
   Mail,
   Trash2,
   HeartPulse,
+  Pencil,
 } from 'lucide-react';
 import { responsavelService } from '../services/responsavelService';
 import type { Responsavel } from '../types/responsavel';
@@ -20,6 +21,7 @@ export default function Responsaveis() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingResponsavel, setEditingResponsavel] = useState<Responsavel | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchResponsaveis = useCallback(async () => {
@@ -54,8 +56,16 @@ export default function Responsaveis() {
     });
   }, [responsaveis, search]);
 
-  const handleCreated = (novo: Responsavel) => {
-    setResponsaveis((prev) => [novo, ...prev]);
+  const handleSaved = (item: Responsavel) => {
+    setResponsaveis((prev) => {
+      const index = prev.findIndex((r) => r.idResponsavel === item.idResponsavel);
+      if (index >= 0) {
+        const copy = [...prev];
+        copy[index] = item;
+        return copy;
+      }
+      return [item, ...prev];
+    });
   };
 
   const handleDelete = async (id: string, nome: string) => {
@@ -89,7 +99,10 @@ export default function Responsaveis() {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingResponsavel(null);
+            setIsModalOpen(true);
+          }}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto"
         >
           <UserPlus className="h-4 w-4" />
@@ -237,18 +250,30 @@ export default function Responsaveis() {
 
                       {/* Ações */}
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleDelete(resp.idResponsavel, resp.nomeResponsavel)}
-                          disabled={deletingId === resp.idResponsavel}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Excluir Responsável"
-                        >
-                          {deletingId === resp.idResponsavel ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => {
+                              setEditingResponsavel(resp);
+                              setIsModalOpen(true);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Editar Responsável"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(resp.idResponsavel, resp.nomeResponsavel)}
+                            disabled={deletingId === resp.idResponsavel}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Excluir Responsável"
+                          >
+                            {deletingId === resp.idResponsavel ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -259,11 +284,15 @@ export default function Responsaveis() {
         )}
       </div>
 
-      {/* Modal de Cadastro */}
+      {/* Modal de Cadastro/Edição */}
       <ResponsavelModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={handleCreated}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingResponsavel(null);
+        }}
+        onSuccess={handleSaved}
+        initialData={editingResponsavel}
       />
     </div>
   );

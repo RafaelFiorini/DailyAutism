@@ -119,4 +119,33 @@ describe('ResponsavelModal', () => {
       expect(screen.getByText('Esta pessoa já está cadastrada como responsável.')).toBeDefined();
     });
   });
+
+  it('pre-fills fields and calls update in edit mode', async () => {
+    const existing = {
+      idResponsavel: 'resp-99',
+      idPessoa: 'p-99',
+      nomeResponsavel: 'Ana Lima',
+      cpf: '12345678901',
+      email: 'ana@email.com',
+      telefone: '11988887777',
+      isPaciente: true,
+      pacientes: [{ idPaciente: 'pac-1', nomePaciente: 'Lucas Silva' }],
+    };
+    vi.mocked(responsavelService.update).mockResolvedValueOnce(existing);
+
+    render(<ResponsavelModal {...defaultProps} initialData={existing} />);
+
+    expect(screen.getByText(/editar responsável/i)).toBeDefined();
+    expect(screen.getByDisplayValue('Ana Lima')).toBeDefined();
+
+    fireEvent.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+    await waitFor(() => {
+      expect(responsavelService.update).toHaveBeenCalledWith('resp-99', expect.objectContaining({
+        nomePessoa: 'Ana Lima',
+      }));
+      expect(defaultProps.onSuccess).toHaveBeenCalledWith(existing);
+      expect(defaultProps.onClose).toHaveBeenCalled();
+    });
+  });
 });

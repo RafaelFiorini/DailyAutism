@@ -74,7 +74,36 @@ public class ProfissionalService {
     @Transactional
     public Profissional updateProfissional(String profissionalId, SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = loadProfissional(profissionalId);
-        profissional.setConselhoProf(saveProfissionalDTO.getConselhoProf());
+        if (saveProfissionalDTO.getConselhoProf() != null && !saveProfissionalDTO.getConselhoProf().isBlank()) {
+            profissional.setConselhoProf(saveProfissionalDTO.getConselhoProf().trim());
+        }
+
+        Pessoa pessoa = profissional.getPessoaProf();
+        if (pessoa != null) {
+            if (saveProfissionalDTO.getNomePessoa() != null && !saveProfissionalDTO.getNomePessoa().isBlank()) {
+                pessoa.setNomePessoa(saveProfissionalDTO.getNomePessoa().trim());
+            }
+            if (saveProfissionalDTO.getEmailPessoa() != null) {
+                pessoa.setEmailPessoa(saveProfissionalDTO.getEmailPessoa().trim());
+            }
+            if (saveProfissionalDTO.getCelularPessoa() != null) {
+                pessoa.setCelularPessoa(saveProfissionalDTO.getCelularPessoa().trim());
+            }
+            if (saveProfissionalDTO.getTelefonePessoa() != null) {
+                pessoa.setTelefonePessoa(saveProfissionalDTO.getTelefonePessoa().trim());
+            }
+            if (saveProfissionalDTO.getEnderecoPessoa() != null) {
+                pessoa.setEnderecoPessoa(saveProfissionalDTO.getEnderecoPessoa().trim());
+            }
+            if (saveProfissionalDTO.getRGPessoa() != null) {
+                pessoa.setRGPessoa(saveProfissionalDTO.getRGPessoa().trim());
+            }
+            if (saveProfissionalDTO.getDatanascPessoa() != null) {
+                pessoa.setDatanascPessoa(saveProfissionalDTO.getDatanascPessoa());
+            }
+            pessoaRepository.save(pessoa);
+        }
+
         return profissionalRepository.save(profissional);
     }
 

@@ -1,15 +1,23 @@
-import { useState, FormEvent } from 'react';
-import { X, UserPlus, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect, FormEvent } from 'react';
+import { X, UserPlus, Edit3, Loader2, AlertCircle } from 'lucide-react';
 import { profissionalService } from '../services/profissionalService';
 import type { Profissional, SaveProfissionalInput } from '../types/profissional';
 
 interface ProfissionalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (novo: Profissional) => void;
+  onSuccess: (item: Profissional) => void;
+  initialData?: Profissional | null;
 }
 
-export default function ProfissionalModal({ isOpen, onClose, onSuccess }: ProfissionalModalProps) {
+export default function ProfissionalModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialData,
+}: ProfissionalModalProps) {
+  const isEditing = Boolean(initialData);
+
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [conselho, setConselho] = useState('');
@@ -22,6 +30,32 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        setNome(initialData.nomeProfissional || '');
+        setCpf(initialData.cpf || '');
+        setConselho(initialData.conselhoProf || '');
+        setEmail(initialData.email || '');
+        setCelular(initialData.telefone || '');
+        setDatanasc(initialData.datanasc || '');
+        setRg(initialData.rg || '');
+        setEndereco(initialData.endereco || '');
+      } else {
+        setNome('');
+        setCpf('');
+        setConselho('');
+        setEmail('');
+        setCelular('');
+        setDatanasc('');
+        setRg('');
+        setEndereco('');
+      }
+      setErrors({});
+      setApiError('');
+    }
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
@@ -56,11 +90,14 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
         enderecoPessoa: endereco.trim() || undefined,
       };
 
-      const created = await profissionalService.create(payload);
-      onSuccess(created);
+      const result = isEditing && initialData
+        ? await profissionalService.update(initialData.idProf, payload)
+        : await profissionalService.create(payload);
+
+      onSuccess(result);
       onClose();
     } catch (err: unknown) {
-      let msg = 'Erro ao cadastrar profissional. Verifique os dados informados.';
+      let msg = isEditing ? 'Erro ao atualizar profissional.' : 'Erro ao cadastrar profissional.';
       if (err && typeof err === 'object' && 'response' in err) {
         const res = (err as { response?: { data?: { errorMessage?: string; message?: string; details?: string[] } } }).response;
         if (res?.data) {
@@ -81,16 +118,22 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-              <UserPlus className="h-5 w-5" />
+              {isEditing ? <Edit3 className="h-5 w-5" /> : <UserPlus className="h-5 w-5" />}
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 text-lg">Cadastrar Novo Profissional</h3>
-              <p className="text-xs text-gray-500">Médico, Psicólogo, Terapeuta Ocupacional, etc.</p>
+              <h3 className="font-bold text-gray-900 text-lg">
+                {isEditing ? 'Editar Profissional' : 'Cadastrar Novo Profissional'}
+              </h3>
+              <p className="text-xs text-gray-500">
+                {isEditing
+                  ? 'Atualize os dados cadastrais e de contato'
+                  : 'Médico, Psicólogo, Terapeuta Ocupacional, etc.'}
+              </p>
             </div>
           </div>
           <button
@@ -102,7 +145,7 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {apiError && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-red-700 text-sm">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -120,7 +163,7 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Ex: Dra. Mariana Costa"
+              placeholder="Ex: Dra. Ana Paula Costa"
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors ${
                 errors.nome ? 'border-red-400 bg-red-50/30' : 'border-gray-300'
               }`}
@@ -128,7 +171,7 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
             {errors.nome && <p className="text-xs text-red-600 mt-1">{errors.nome}</p>}
           </div>
 
-          {/* CPF e Conselho */}
+          {/* Grid CPF e Conselho */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="cpf" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
@@ -140,9 +183,11 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
                 value={cpf}
                 onChange={(e) => setCpf(e.target.value)}
                 placeholder="000.000.000-00"
+                maxLength={14}
+                disabled={isEditing}
                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors ${
                   errors.cpf ? 'border-red-400 bg-red-50/30' : 'border-gray-300'
-                }`}
+                } ${isEditing ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}`}
               />
               {errors.cpf && <p className="text-xs text-red-600 mt-1">{errors.cpf}</p>}
             </div>
@@ -165,7 +210,7 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
             </div>
           </div>
 
-          {/* E-mail e Celular */}
+          {/* Grid Contatos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="email" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
@@ -241,7 +286,7 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -258,10 +303,10 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Salvando...
+                  {isEditing ? 'Atualizando...' : 'Salvando...'}
                 </>
               ) : (
-                'Salvar Profissional'
+                isEditing ? 'Salvar Alterações' : 'Salvar Profissional'
               )}
             </button>
           </div>
@@ -270,4 +315,3 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
     </div>
   );
 }
-

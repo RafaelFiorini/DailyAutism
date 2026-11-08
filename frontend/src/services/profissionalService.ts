@@ -12,6 +12,11 @@ export const profissionalService = {
     return response.data;
   },
 
+  async update(id: string, input: SaveProfissionalInput): Promise<Profissional> {
+    const response = await api.put<Profissional>(`/profissionais/${id}`, input);
+    return response.data;
+  },
+
   async delete(id: string): Promise<void> {
     await api.delete(`/profissionais/${id}`);
   },

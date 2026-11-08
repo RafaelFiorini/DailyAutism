@@ -46,6 +46,14 @@ public class ResponsavelRestResource {
         return ResponseEntity.ok(responsaveis);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('EDITAR_RESPONSAVEL')")
+    public ResponseEntity<ResponsavelDTO> updateResponsavel(@PathVariable String id,
+                                                            @Valid @RequestBody SaveResponsavelDTO saveResponsavelDTO) {
+        Responsavel responsavel = responsavelService.updateResponsavel(id, saveResponsavelDTO);
+        return ResponseEntity.ok(ResponsavelDTO.create(responsavel));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('DELETAR_RESPONSAVEL')")
     public ResponseEntity<Void> deleteResponsavel(@PathVariable String id) {

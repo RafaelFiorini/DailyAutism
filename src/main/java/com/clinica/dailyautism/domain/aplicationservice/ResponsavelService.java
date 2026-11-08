@@ -101,6 +101,72 @@ public class ResponsavelService {
     }
 
     @Transactional
+    public Responsavel updateResponsavel(String responsavelId, SaveResponsavelDTO saveResponsavelDTO) {
+        Responsavel responsavel = loadResponsavel(responsavelId);
+        Pessoa pessoa = responsavel.getPessoaResponsavel();
+
+        if (pessoa != null) {
+            if (saveResponsavelDTO.getNomePessoa() != null && !saveResponsavelDTO.getNomePessoa().isBlank()) {
+                pessoa.setNomePessoa(saveResponsavelDTO.getNomePessoa().trim());
+            }
+            if (saveResponsavelDTO.getEmailPessoa() != null) {
+                pessoa.setEmailPessoa(saveResponsavelDTO.getEmailPessoa().trim());
+            }
+            if (saveResponsavelDTO.getCelularPessoa() != null) {
+                pessoa.setCelularPessoa(saveResponsavelDTO.getCelularPessoa().trim());
+            }
+            if (saveResponsavelDTO.getTelefonePessoa() != null) {
+                pessoa.setTelefonePessoa(saveResponsavelDTO.getTelefonePessoa().trim());
+            }
+            if (saveResponsavelDTO.getEnderecoPessoa() != null) {
+                pessoa.setEnderecoPessoa(saveResponsavelDTO.getEnderecoPessoa().trim());
+            }
+            if (saveResponsavelDTO.getRGPessoa() != null) {
+                pessoa.setRGPessoa(saveResponsavelDTO.getRGPessoa().trim());
+            }
+            if (saveResponsavelDTO.getDatanascPessoa() != null) {
+                pessoa.setDatanascPessoa(saveResponsavelDTO.getDatanascPessoa());
+            }
+            pessoaRepository.save(pessoa);
+        }
+
+        // Se marcou que também é paciente
+        if (Boolean.TRUE.equals(saveResponsavelDTO.getIsPacienteTambem())) {
+            Paciente pacProprio = pacienteRepository.findByPessoaPaciente(pessoa)
+                    .orElseGet(() -> {
+                        Paciente novoPac = Paciente.builder()
+                                .pessoaPaciente(pessoa)
+                                .isResponsavel(true)
+                                .build();
+                        return pacienteRepository.save(novoPac);
+                    });
+            if (!responsavel.getPacientes().contains(pacProprio)) {
+                responsavel.getPacientes().add(pacProprio);
+            }
+        }
+
+        // Atualizar lista de pacientes vinculados
+        if (saveResponsavelDTO.getPacienteIds() != null) {
+            List<Paciente> novosPacientes = new ArrayList<>();
+            // Se o responsável também é paciente, garante que ele continua na lista
+            if (Boolean.TRUE.equals(saveResponsavelDTO.getIsPacienteTambem())) {
+                pacienteRepository.findByPessoaPaciente(pessoa).ifPresent(novosPacientes::add);
+            }
+            for (String idPac : saveResponsavelDTO.getPacienteIds()) {
+                if (idPac != null && !idPac.isBlank()) {
+                    Paciente pac = pacienteRepository.findById(idPac.trim()).orElse(null);
+                    if (pac != null && !novosPacientes.contains(pac)) {
+                        novosPacientes.add(pac);
+                    }
+                }
+            }
+            responsavel.setPacientes(novosPacientes);
+        }
+
+        return responsavelRepository.save(responsavel);
+    }
+
+    @Transactional
     public void deleteResponsavel(String responsavelId) {
         Responsavel responsavel = responsavelRepository.findById(responsavelId)
                 .orElseThrow(() -> new ResponsavelNotFoundException(responsavelId));

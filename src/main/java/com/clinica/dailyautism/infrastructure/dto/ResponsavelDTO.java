@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,9 @@ public class ResponsavelDTO {
     private String email;
     private String telefone;
     private Boolean isPaciente;
+    private String rg;
+    private String endereco;
+    private LocalDate datanasc;
     private List<PacienteResumoDTO> pacientes;
 
     @Data
@@ -40,6 +44,9 @@ public class ResponsavelDTO {
         String cpf = null;
         String email = null;
         String telefone = null;
+        String rg = null;
+        String endereco = null;
+        LocalDate datanasc = null;
         boolean isPac = false;
 
         if (responsavel.getPessoaResponsavel() != null) {
@@ -50,6 +57,9 @@ public class ResponsavelDTO {
             telefone = responsavel.getPessoaResponsavel().getCelularPessoa() != null
                     ? responsavel.getPessoaResponsavel().getCelularPessoa()
                     : responsavel.getPessoaResponsavel().getTelefonePessoa();
+            rg = responsavel.getPessoaResponsavel().getRGPessoa();
+            endereco = responsavel.getPessoaResponsavel().getEnderecoPessoa();
+            datanasc = responsavel.getPessoaResponsavel().getDatanascPessoa();
         }
 
         List<PacienteResumoDTO> listaPacientes = new ArrayList<>();
@@ -75,6 +85,9 @@ public class ResponsavelDTO {
                 email,
                 telefone,
                 isPac,
+                rg,
+                endereco,
+                datanasc,
                 listaPacientes
         );
     }
