@@ -36,6 +36,13 @@ public class ResponsavelRestResource {
         return ResponseEntity.ok(ResponsavelDTO.create(responsavel));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ResponsavelDTO> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal com.clinica.dailyautism.infrastructure.security.UserDetailsImpl currentUser) {
+        Responsavel responsavel = responsavelService.findByEmail(currentUser.getUsername());
+        return ResponseEntity.ok(ResponsavelDTO.create(responsavel));
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('LISTAR_RESPONSAVEL')")
     public ResponseEntity<List<ResponsavelDTO>> listResponsaveis() {

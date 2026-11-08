@@ -35,6 +35,13 @@ public class ProfissionalRestResource {
         return ResponseEntity.ok(ProfissionalDTO.create(profissional));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ProfissionalDTO> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal com.clinica.dailyautism.infrastructure.security.UserDetailsImpl currentUser) {
+        Profissional profissional = profissionalService.findByEmail(currentUser.getUsername());
+        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('LISTAR_PROFISSIONAL')")
     public ResponseEntity<List<ProfissionalDTO>> listProfissionais() {

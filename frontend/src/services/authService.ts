@@ -1,10 +1,15 @@
 import api, { TOKEN_STORAGE_KEY } from './api';
-import { LoginCredentials, AuthResponse } from '../types/auth';
+import { LoginCredentials, AuthResponse, RegisterInput } from '../types/auth';
 import { UserDTO } from '../types/user';
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/login', credentials);
+    return response.data;
+  },
+
+  async register(payload: RegisterInput): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/register', payload);
     return response.data;
   },
 
@@ -25,4 +30,3 @@ export const authService = {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
   },
 };
-

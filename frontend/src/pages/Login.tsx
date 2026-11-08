@@ -1,10 +1,11 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, Brain } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, Brain, UserPlus } from 'lucide-react';
+import RegisterModal from '../components/RegisterModal';
 
 export default function Login() {
-  const { login, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -13,12 +14,13 @@ export default function Login() {
   const [error, setError] = useState('');
   const [validationError, setValidationError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
+    if (isAuthenticated) {
       navigate('/admin', { replace: true });
     }
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -140,12 +142,32 @@ export default function Login() {
             </button>
           </form>
 
+          {/* Divisor Primeiro Acesso */}
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-500 mb-3">
+              É responsável por um paciente ou profissional de saúde?
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsRegisterOpen(true)}
+              className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <UserPlus className="h-4 w-4" />
+              Primeiro Acesso / Cadastre-se
+            </button>
+          </div>
+
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-gray-400">
-            Acesso restrito a administradores do sistema
+            DailyAutism © {new Date().getFullYear()} — Plataforma de Apoio e Gestão TEA
           </p>
         </div>
       </div>
+
+      <RegisterModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface ProfissionalRepository extends JpaRepository<Profissional, String> {
 
     Optional<Profissional> findByPessoaProf(Pessoa pessoa);
+    Optional<Profissional> findByPessoaProfEmailPessoa(String email);
     boolean existsByPessoaProf(Pessoa pessoa);
 
     // Agenda da semana do profissional

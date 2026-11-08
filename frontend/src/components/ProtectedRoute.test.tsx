@@ -13,8 +13,11 @@ describe('ProtectedRoute', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: true,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -37,8 +40,11 @@ describe('ProtectedRoute', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -57,14 +63,17 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('Conteúdo Privado')).not.toBeInTheDocument();
   });
 
-  it('displays access denied when authenticated but not ADMIN', () => {
+  it('allows access when authenticated even if not ADMIN (e.g. RESPONSAVEL)', () => {
     vi.spyOn(useAuthModule, 'useAuth').mockReturnValue({
       user: { idUser: '1', nomeUser: 'Pai Responsavel', emailUser: 'pai@test.com', perfis: ['RESPONSAVEL'] },
       token: 'valid-token',
       isAuthenticated: true,
       isAdmin: false,
+      isResponsavel: true,
+      isProfissional: false,
       loading: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -78,8 +87,7 @@ describe('ProtectedRoute', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/acesso negado/i)).toBeInTheDocument();
-    expect(screen.queryByText('Conteúdo Privado')).not.toBeInTheDocument();
+    expect(screen.getByText('Conteúdo Privado')).toBeInTheDocument();
   });
 
   it('renders child routes when user is authenticated and ADMIN', () => {
@@ -88,8 +96,11 @@ describe('ProtectedRoute', () => {
       token: 'valid-token',
       isAuthenticated: true,
       isAdmin: true,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
     });
 

@@ -15,3 +15,25 @@ export interface ApiErrorResponse {
   path?: string;
 }
 
+export interface PacienteInicialInput {
+  nome: string;
+  cpf: string;
+  apelido?: string;
+  datanasc?: string;
+}
+
+export interface RegisterInput {
+  tipo: 'RESPONSAVEL' | 'PROFISSIONAL';
+  nome: string;
+  email: string;
+  senha: string;
+  cpf: string;
+  telefone?: string;
+  celular?: string;
+  rg?: string;
+  datanasc?: string;
+  endereco?: string;
+  conselhoProf?: string;
+  isPacienteTambem?: boolean;
+  pacientes?: PacienteInicialInput[];
+}

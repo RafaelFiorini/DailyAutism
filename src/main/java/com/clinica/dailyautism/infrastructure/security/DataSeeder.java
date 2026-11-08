@@ -97,9 +97,9 @@ public class DataSeeder implements CommandLineRunner {
         // ADMIN — acesso total
         criarPerfilSeNaoExistir("ADMIN", acaoRepository.findAll());
 
-        // RESPONSAVEL — vê agenda, arquivos e dados do paciente
+        // RESPONSAVEL — vê agenda, arquivos e dados do paciente, e cadastra/edita seus pacientes
         criarPerfilSeNaoExistir("RESPONSAVEL", acaoRepository.findAllByNomeIn(Set.of(
-                "VER_PACIENTE", "LISTAR_PACIENTE",
+                "VER_PACIENTE", "LISTAR_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
                 "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO"

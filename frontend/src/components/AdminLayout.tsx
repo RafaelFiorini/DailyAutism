@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -13,17 +14,40 @@ import {
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, isResponsavel, isProfissional } = useAuth();
 
-  const navigation = [
-    { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
-    { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
-    { name: 'Clínicas', href: '/admin/clinicas', icon: Building2, end: false },
-    { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
-    { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
-    { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
-    { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
-  ];
+  const navigation = useMemo(() => {
+    if (isAdmin) {
+      return [
+        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
+        { name: 'Clínicas', href: '/admin/clinicas', icon: Building2, end: false },
+        { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+        { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
+        { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
+        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
+      ];
+    }
+
+    if (isResponsavel) {
+      return [
+        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Meus Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+      ];
+    }
+
+    if (isProfissional) {
+      return [
+        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
+      ];
+    }
+
+    return [
+      { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+      { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+    ];
+  }, [isAdmin, isResponsavel, isProfissional]);
 
   const initials = user?.nomeUser
     ? user.nomeUser
@@ -32,7 +56,15 @@ export default function AdminLayout() {
         .slice(0, 2)
         .join('')
         .toUpperCase()
-    : 'AD';
+    : 'DA';
+
+  const roleLabel = isAdmin
+    ? 'Admin'
+    : isResponsavel
+    ? 'Responsável'
+    : isProfissional
+    ? 'Profissional'
+    : 'Portal';
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -44,7 +76,9 @@ export default function AdminLayout() {
           </div>
           <div>
             <span className="font-bold text-gray-900 leading-tight block">DailyAutism</span>
-            <span className="text-xs text-indigo-600 font-semibold uppercase tracking-wider block">Admin</span>
+            <span className="text-xs text-indigo-600 font-semibold uppercase tracking-wider block">
+              {roleLabel}
+            </span>
           </div>
         </div>
 
@@ -87,7 +121,9 @@ export default function AdminLayout() {
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-0">
           <div>
-            <h2 className="text-lg font-semibold text-gray-800">Painel de Controle</h2>
+            <h2 className="text-lg font-semibold text-gray-800">
+              {isAdmin ? 'Painel de Controle' : `Portal do ${roleLabel}`}
+            </h2>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
@@ -100,7 +136,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        {/* Page Body */}
+        {/* Page Content */}
         <main className="flex-1 p-8">
           <Outlet />
         </main>
@@ -108,4 +144,3 @@ export default function AdminLayout() {
     </div>
   );
 }
-

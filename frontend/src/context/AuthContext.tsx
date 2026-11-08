@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authService } from '../services/authService';
-import type { LoginCredentials } from '../types/auth';
+import type { LoginCredentials, RegisterInput } from '../types/auth';
 import type { UserDTO } from '../types/user';
 
 const TOKEN_KEY = 'dailyautism_token';
@@ -10,8 +10,11 @@ export interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isResponsavel: boolean;
+  isProfissional: boolean;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (payload: RegisterInput) => Promise<void>;
   logout: () => void;
 }
 
@@ -28,6 +31,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const isAuthenticated = !!token && !!user;
   const isAdmin = !!user?.perfis?.includes('ADMIN');
+  const isResponsavel = !!user?.perfis?.includes('RESPONSAVEL');
+  const isProfissional = !!user?.perfis?.includes('PROFISSIONAL');
 
   const logout = useCallback(() => {
     setUser(null);
@@ -37,6 +42,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const response = await authService.login(credentials);
+    const newToken = response.token;
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+
+    const userProfile = await authService.getMe();
+    setUser(userProfile);
+  }, []);
+
+  const register = useCallback(async (payload: RegisterInput) => {
+    const response = await authService.register(payload);
     const newToken = response.token;
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
@@ -83,8 +98,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         token,
         isAuthenticated,
         isAdmin,
+        isResponsavel,
+        isProfissional,
         loading,
         login,
+        register,
         logout,
       }}
     >
@@ -92,4 +110,3 @@ export function AuthProvider({ children }: AuthProviderProps) {
     </AuthContext.Provider>
   );
 }
-

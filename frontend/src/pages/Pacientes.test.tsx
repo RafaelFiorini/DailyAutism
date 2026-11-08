@@ -3,6 +3,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Pacientes from './Pacientes';
 import { pacienteService } from '../services/pacienteService';
 
+vi.mock('../hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { idUser: '1', nomeUser: 'Admin', perfis: ['ADMIN'] },
+    isAdmin: true,
+    isResponsavel: false,
+    isProfissional: false,
+    isAuthenticated: true,
+    loading: false,
+  }),
+}));
+
 vi.mock('../services/pacienteService', () => ({
   pacienteService: {
     list: vi.fn(),

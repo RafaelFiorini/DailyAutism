@@ -11,11 +11,13 @@ import {
   CreditCard,
   Building2,
 } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { pacienteService } from '../services/pacienteService';
 import type { Paciente } from '../types/paciente';
 import PacienteModal from '../components/PacienteModal';
 
 export default function Pacientes() {
+  const { isAdmin, isResponsavel, isProfissional } = useAuth();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -95,26 +97,38 @@ export default function Pacientes() {
       <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isResponsavel
+                ? 'Meus Pacientes'
+                : isProfissional
+                ? 'Pacientes em Atendimento'
+                : 'Pacientes'}
+            </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
               {pacientes.length} cadastrado{pacientes.length === 1 ? '' : 's'}
             </span>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.
+            {isResponsavel
+              ? 'Pacientes sob sua responsabilidade e acompanhamento.'
+              : isProfissional
+              ? 'Pacientes com agendamentos e consultas vinculados a você.'
+              : 'Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.'}
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingPaciente(null);
-            setIsModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto"
-        >
-          <UserPlus className="h-4 w-4" />
-          Novo Paciente
-        </button>
+        {(isAdmin || isResponsavel) && (
+          <button
+            onClick={() => {
+              setEditingPaciente(null);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm self-start sm:self-auto"
+          >
+            <UserPlus className="h-4 w-4" />
+            Novo Paciente
+          </button>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -283,18 +297,20 @@ export default function Pacientes() {
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => handleDelete(pac.idPaciente, pac.nomePessoa)}
-                            disabled={deletingId === pac.idPaciente}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Excluir Paciente"
-                          >
-                            {deletingId === pac.idPaciente ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleDelete(pac.idPaciente, pac.nomePessoa)}
+                              disabled={deletingId === pac.idPaciente}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Excluir Paciente"
+                            >
+                              {deletingId === pac.idPaciente ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

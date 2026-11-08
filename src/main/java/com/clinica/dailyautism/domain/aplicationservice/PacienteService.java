@@ -9,11 +9,14 @@ import com.clinica.dailyautism.infrastructure.dto.SavePacienteCompletoDTO;
 import com.clinica.dailyautism.infrastructure.dto.SavePacienteDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -27,9 +30,16 @@ public class PacienteService {
     private final ClinicaRepository clinicaRepository;
     private final PacientePlanoSaudeRepository pacientePlanoSaudeRepository;
     private final PacienteClinicaRepository pacienteClinicaRepository;
+    private final CompromissoRepository compromissoRepository;
+    private final ProfissionalPacienteRepository profissionalPacienteRepository;
 
     @Transactional
     public Paciente createPaciente(SavePacienteDTO savePacienteDTO) {
+        return createPaciente(savePacienteDTO, null);
+    }
+
+    @Transactional
+    public Paciente createPaciente(SavePacienteDTO savePacienteDTO, String emailDoUsuario) {
         Pessoa pessoa;
         String idPessoa = savePacienteDTO.getIdPessoa();
         String rawCpf = savePacienteDTO.getCPFPessoa();
@@ -73,6 +83,7 @@ public class PacienteService {
                 .build();
 
         paciente = pacienteRepository.save(paciente);
+        final Paciente finalPaciente = paciente;
 
         // Se marcado como isResponsavel, garante o registro em Responsavel
         if (isResp) {
@@ -94,7 +105,27 @@ public class PacienteService {
             }
         }
 
-        // Vínculo opcional inicial com Plano de Saúde se idPlanoSaude informado
+        // Se o usuário logado for RESPONSAVEL, vincula automaticamente o paciente a ele
+        if (emailDoUsuario != null && !emailDoUsuario.isBlank()) {
+            userRepository.findByEmailUser(emailDoUsuario).ifPresent(u -> {
+                boolean userIsResp = u.getPerfis() != null && u.getPerfis().stream()
+                        .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+                if (userIsResp && u.getPessoa() != null) {
+                    Responsavel respLogado = responsavelRepository.findByPessoaResponsavel(u.getPessoa()).orElse(null);
+                    if (respLogado != null) {
+                        if (respLogado.getPacientes() == null) {
+                            respLogado.setPacientes(new ArrayList<>());
+                        }
+                        if (!respLogado.getPacientes().contains(finalPaciente)) {
+                            respLogado.getPacientes().add(finalPaciente);
+                            responsavelRepository.save(respLogado);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Vínculo opcional inicial com Plano de Saúde
         if (savePacienteDTO.getIdPlanoSaude() != null && !savePacienteDTO.getIdPlanoSaude().isBlank()) {
             PlanoSaude plano = planoSaudeRepository.findById(savePacienteDTO.getIdPlanoSaude().trim()).orElse(null);
             if (plano != null) {
@@ -107,7 +138,7 @@ public class PacienteService {
             }
         }
 
-        // Vínculo opcional inicial com Clínica se idClinica informado
+        // Vínculo opcional inicial com Clínica
         if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
             Clinica clinica = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
             if (clinica != null) {
@@ -128,13 +159,144 @@ public class PacienteService {
                 .orElseThrow(() -> new PacienteNotFoundException(pacienteId));
     }
 
+    public Paciente loadPacienteForUser(String pacienteId, String email) {
+        Paciente paciente = loadPaciente(pacienteId);
+        if (email == null || email.isBlank()) {
+            return paciente;
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return paciente;
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return paciente;
+        }
+
+        boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+        if (isResponsavel) {
+            if (user.getPessoa() != null) {
+                Responsavel resp = responsavelRepository.findByPessoaResponsavel(user.getPessoa()).orElse(null);
+                if (resp != null && resp.getPacientes() != null) {
+                    boolean autorizado = resp.getPacientes().stream()
+                            .anyMatch(p -> p.getIdPaciente().equals(pacienteId));
+                    if (autorizado) {
+                        return paciente;
+                    }
+                }
+            }
+            throw new AccessDeniedException("Você não tem permissão para visualizar este paciente.");
+        }
+
+        boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+        if (isProfissional) {
+            boolean temCompromisso = compromissoRepository.findByCriadoPorIdUser(user.getIdUser()).stream()
+                    .anyMatch(c -> c.getPaciente() != null && c.getPaciente().getIdPaciente().equals(pacienteId));
+            boolean temVinculo = false;
+            if (user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+                String idProf = user.getPessoa().getProfissional().getIdProf();
+                temVinculo = profissionalPacienteRepository.existsByProfissionalIdProfAndPacienteIdPaciente(idProf, pacienteId);
+            }
+            if (temCompromisso || temVinculo) {
+                return paciente;
+            }
+            throw new AccessDeniedException("Você não tem permissão para visualizar este paciente.");
+        }
+
+        return paciente;
+    }
+
     public List<Paciente> listPacientes() {
         return pacienteRepository.findAll();
     }
 
+    public List<Paciente> listPacientesForUser(String email) {
+        if (email == null || email.isBlank()) {
+            return listPacientes();
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return listPacientes();
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return listPacientes();
+        }
+
+        boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+        if (isResponsavel) {
+            if (user.getPessoa() == null) {
+                return List.of();
+            }
+            Responsavel resp = responsavelRepository.findByPessoaResponsavel(user.getPessoa()).orElse(null);
+            if (resp == null || resp.getPacientes() == null) {
+                return List.of();
+            }
+            return resp.getPacientes().stream()
+                    .filter(p -> p.getAtivo() == null || p.getAtivo())
+                    .toList();
+        }
+
+        boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+        if (isProfissional) {
+            Set<String> pacienteIds = new HashSet<>();
+
+            // 1. Pacientes dos compromissos agendados pelo profissional
+            List<Compromisso> compromissos = compromissoRepository.findByCriadoPorIdUser(user.getIdUser());
+            if (compromissos != null) {
+                for (Compromisso c : compromissos) {
+                    if (c.getPaciente() != null && (c.getAtivo() == null || c.getAtivo())) {
+                        pacienteIds.add(c.getPaciente().getIdPaciente());
+                    }
+                }
+            }
+
+            // 2. Pacientes vinculados diretamente via ProfissionalPaciente
+            if (user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+                String idProf = user.getPessoa().getProfissional().getIdProf();
+                List<ProfissionalPaciente> vinculos = profissionalPacienteRepository.findByProfissionalIdProf(idProf);
+                if (vinculos != null) {
+                    for (ProfissionalPaciente vp : vinculos) {
+                        if (vp.getPaciente() != null && (vp.getAtivo() == null || vp.getAtivo())) {
+                            pacienteIds.add(vp.getPaciente().getIdPaciente());
+                        }
+                    }
+                }
+            }
+
+            if (pacienteIds.isEmpty()) {
+                return List.of();
+            }
+            return pacienteRepository.findAllById(pacienteIds).stream()
+                    .filter(p -> p.getAtivo() == null || p.getAtivo())
+                    .toList();
+        }
+
+        return listPacientes();
+    }
+
     @Transactional
     public Paciente updatePaciente(String pacienteId, SavePacienteDTO savePacienteDTO) {
-        Paciente paciente = loadPaciente(pacienteId);
+        return updatePaciente(pacienteId, savePacienteDTO, null);
+    }
+
+    @Transactional
+    public Paciente updatePaciente(String pacienteId, SavePacienteDTO savePacienteDTO, String emailDoUsuario) {
+        // Valida se o usuário tem permissão para acessar e atualizar este paciente
+        Paciente paciente = (emailDoUsuario != null && !emailDoUsuario.isBlank())
+                ? loadPacienteForUser(pacienteId, emailDoUsuario)
+                : loadPaciente(pacienteId);
+
         paciente.setApelidoPaciente(savePacienteDTO.getApelidoPaciente());
         boolean isResp = Boolean.TRUE.equals(savePacienteDTO.getIsResponsavel());
         paciente.setResponsavel(isResp);

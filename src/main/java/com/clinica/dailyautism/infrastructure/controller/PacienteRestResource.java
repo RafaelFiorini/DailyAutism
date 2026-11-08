@@ -25,23 +25,30 @@ public class PacienteRestResource {
 
     @PostMapping
     @PreAuthorize("hasAuthority('CRIAR_PACIENTE')")
-    public ResponseEntity<PacienteDTO> createPaciente(@Valid @RequestBody SavePacienteDTO savePacienteDTO) {
-        Paciente paciente = pacienteService.createPaciente(savePacienteDTO);
+    public ResponseEntity<PacienteDTO> createPaciente(
+            @Valid @RequestBody SavePacienteDTO savePacienteDTO,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Paciente paciente = pacienteService.createPaciente(savePacienteDTO, email);
         return ResponseEntity.created(URI.create("/pacientes/" + paciente.getIdPaciente()))
                 .body(PacienteDTO.create(paciente));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('VER_PACIENTE')")
-    public ResponseEntity<PacienteDTO> loadPaciente(@PathVariable String id) {
-        Paciente paciente = pacienteService.loadPaciente(id);
+    public ResponseEntity<PacienteDTO> loadPaciente(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Paciente paciente = pacienteService.loadPacienteForUser(id, email);
         return ResponseEntity.ok(PacienteDTO.create(paciente));
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('LISTAR_PACIENTE')")
-    public ResponseEntity<List<PacienteDTO>> listPacientes() {
-        List<PacienteDTO> pacientes = pacienteService.listPacientes()
+    public ResponseEntity<List<PacienteDTO>> listPacientes(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<PacienteDTO> pacientes = pacienteService.listPacientesForUser(email)
                 .stream()
                 .map(PacienteDTO::create)
                 .toList();
@@ -50,9 +57,12 @@ public class PacienteRestResource {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EDITAR_PACIENTE')")
-    public ResponseEntity<PacienteDTO> updatePaciente(@PathVariable String id,
-                                                      @Valid @RequestBody SavePacienteDTO savePacienteDTO) {
-        Paciente paciente = pacienteService.updatePaciente(id, savePacienteDTO);
+    public ResponseEntity<PacienteDTO> updatePaciente(
+            @PathVariable String id,
+            @Valid @RequestBody SavePacienteDTO savePacienteDTO,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Paciente paciente = pacienteService.updatePaciente(id, savePacienteDTO, email);
         return ResponseEntity.ok(PacienteDTO.create(paciente));
     }
 
@@ -62,6 +72,7 @@ public class PacienteRestResource {
         pacienteService.deletePaciente(id);
         return ResponseEntity.noContent().build();
     }
+
     @PostMapping("/completo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PacienteDTO> createPacienteCompleto(

@@ -3,18 +3,25 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Responsavel;
+import com.clinica.dailyautism.domain.entity.security.Perfil;
+import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ResponsavelNotFoundException;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
+import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
+import com.clinica.dailyautism.domain.repository.UserRepository;
 import com.clinica.dailyautism.infrastructure.dto.SaveResponsavelDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -23,6 +30,9 @@ public class ResponsavelService {
     private final ResponsavelRepository responsavelRepository;
     private final PessoaRepository pessoaRepository;
     private final PacienteRepository pacienteRepository;
+    private final UserRepository userRepository;
+    private final PerfilRepository perfilRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public Responsavel createResponsavel(SaveResponsavelDTO saveResponsavelDTO) {
@@ -88,7 +98,12 @@ public class ResponsavelService {
             }
         }
 
-        return responsavelRepository.save(responsavel);
+        Responsavel saved = responsavelRepository.save(responsavel);
+
+        // Auto-criação do usuário para o responsável
+        criarOuAtualizarUsuarioResponsavel(pessoa, saveResponsavelDTO.getEmailPessoa());
+
+        return saved;
     }
 
     public Responsavel loadResponsavel(String responsavelId) {
@@ -128,6 +143,9 @@ public class ResponsavelService {
                 pessoa.setDatanascPessoa(saveResponsavelDTO.getDatanascPessoa());
             }
             pessoaRepository.save(pessoa);
+
+            // Mantém usuário sincronizado
+            criarOuAtualizarUsuarioResponsavel(pessoa, saveResponsavelDTO.getEmailPessoa());
         }
 
         // Se marcou que também é paciente
@@ -172,5 +190,51 @@ public class ResponsavelService {
                 .orElseThrow(() -> new ResponsavelNotFoundException(responsavelId));
         responsavel.desativar();
         responsavelRepository.save(responsavel);
+    }
+
+    public Responsavel findByEmail(String email) {
+        return responsavelRepository.findByPessoaResponsavelEmailPessoa(email)
+                .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado para o e-mail: " + email));
+    }
+
+    private void criarOuAtualizarUsuarioResponsavel(Pessoa pessoa, String emailInformado) {
+        String email = (emailInformado != null && !emailInformado.isBlank())
+                ? emailInformado.trim().toLowerCase()
+                : (pessoa.getEmailPessoa() != null ? pessoa.getEmailPessoa().trim().toLowerCase() : null);
+
+        if (email == null || email.isBlank()) {
+            return;
+        }
+
+        Perfil perfilResp = perfilRepository.findByNome("RESPONSAVEL").orElse(null);
+        Set<Perfil> perfis = new HashSet<>();
+        if (perfilResp != null) perfis.add(perfilResp);
+
+        userRepository.findByEmailUser(email).ifPresentOrElse(
+                userExistente -> {
+                    userExistente.setPessoa(pessoa);
+                    if (perfilResp != null) {
+                        if (userExistente.getPerfis() == null) {
+                            userExistente.setPerfis(new HashSet<>());
+                        }
+                        userExistente.getPerfis().add(perfilResp);
+                    }
+                    userRepository.save(userExistente);
+                },
+                () -> {
+                    String rawCpf = pessoa.getCPFPessoa();
+                    String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
+                            ? rawCpf.replaceAll("\\D", "")
+                            : "Daily@123";
+                    User novoUser = User.builder()
+                            .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Responsável")
+                            .emailUser(email)
+                            .passwordUser(passwordEncoder.encode(senhaPadrao))
+                            .pessoa(pessoa)
+                            .perfis(perfis)
+                            .build();
+                    userRepository.save(novoUser);
+                }
+        );
     }
 }

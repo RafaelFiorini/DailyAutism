@@ -17,8 +17,11 @@ describe('Login Page', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: vi.fn(),
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -37,8 +40,11 @@ describe('Login Page', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: mockLogin,
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -56,8 +62,11 @@ describe('Login Page', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: mockLogin,
+      register: vi.fn(),
       logout: vi.fn(),
     });
 
@@ -83,8 +92,11 @@ describe('Login Page', () => {
       token: null,
       isAuthenticated: false,
       isAdmin: false,
+      isResponsavel: false,
+      isProfissional: false,
       loading: false,
       login: mockLogin,
+      register: vi.fn(),
       logout: vi.fn(),
     });
 

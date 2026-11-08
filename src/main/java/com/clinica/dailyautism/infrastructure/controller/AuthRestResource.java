@@ -3,6 +3,8 @@ package com.clinica.dailyautism.infrastructure.controller;
 import com.clinica.dailyautism.domain.aplicationservice.AuthService;
 import com.clinica.dailyautism.infrastructure.dto.AuthResponseDTO;
 import com.clinica.dailyautism.infrastructure.dto.LoginDTO;
+import com.clinica.dailyautism.infrastructure.dto.RegisterDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +22,12 @@ public class AuthRestResource {
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginDTO loginDTO) {
         String token = authService.login(loginDTO);
+        return ResponseEntity.ok(new AuthResponseDTO(token));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterDTO registerDTO) {
+        String token = authService.register(registerDTO);
         return ResponseEntity.ok(new AuthResponseDTO(token));
     }
 }
