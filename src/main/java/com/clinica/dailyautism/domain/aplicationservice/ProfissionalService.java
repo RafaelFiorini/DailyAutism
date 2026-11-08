@@ -23,15 +23,20 @@ public class ProfissionalService {
     @Transactional
     public Profissional createProfissional(SaveProfissionalDTO saveProfissionalDTO) {
         Pessoa pessoa;
-        if (saveProfissionalDTO.getIdPessoa() != null && !saveProfissionalDTO.getIdPessoa().isBlank()) {
-            pessoa = pessoaRepository.findById(saveProfissionalDTO.getIdPessoa())
-                    .orElseThrow(() -> new PessoaNotFoundException(saveProfissionalDTO.getIdPessoa()));
-        } else if (saveProfissionalDTO.getCPFPessoa() != null && !saveProfissionalDTO.getCPFPessoa().isBlank()) {
-            pessoa = pessoaRepository.findByCPFPessoa(saveProfissionalDTO.getCPFPessoa())
+        String idPessoa = saveProfissionalDTO.getIdPessoa();
+        String rawCpf = saveProfissionalDTO.getCPFPessoa();
+        String cpf = (rawCpf != null) ? rawCpf.replaceAll("\\D", "").trim() : "";
+
+        if (idPessoa != null && !idPessoa.isBlank()) {
+            pessoa = pessoaRepository.findById(idPessoa.trim())
+                    .orElseThrow(() -> new PessoaNotFoundException(idPessoa));
+        } else if (!cpf.isBlank()) {
+            final String cpfLimpo = cpf;
+            pessoa = pessoaRepository.findByCPFPessoa(cpfLimpo)
                     .orElseGet(() -> {
                         Pessoa nova = Pessoa.builder()
-                                .nomePessoa(saveProfissionalDTO.getNomePessoa())
-                                .CPFPessoa(saveProfissionalDTO.getCPFPessoa())
+                                .nomePessoa(saveProfissionalDTO.getNomePessoa() != null ? saveProfissionalDTO.getNomePessoa().trim() : "")
+                                .CPFPessoa(cpfLimpo)
                                 .datanascPessoa(saveProfissionalDTO.getDatanascPessoa())
                                 .RGPessoa(saveProfissionalDTO.getRGPessoa())
                                 .enderecoPessoa(saveProfissionalDTO.getEnderecoPessoa())

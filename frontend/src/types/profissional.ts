@@ -12,8 +12,10 @@ export interface SaveProfissionalInput {
   idPessoa?: string;
   nomePessoa?: string;
   CPFPessoa?: string;
+  cpf?: string;
   datanascPessoa?: string;
   RGPessoa?: string;
+  rg?: string;
   enderecoPessoa?: string;
   telefonePessoa?: string;
   celularPessoa?: string;

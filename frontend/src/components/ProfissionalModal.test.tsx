@@ -66,13 +66,13 @@ describe('ProfissionalModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /salvar profissional/i }));
 
     await waitFor(() => {
-      expect(profissionalService.create).toHaveBeenCalledWith({
+      expect(profissionalService.create).toHaveBeenCalledWith(expect.objectContaining({
         nomePessoa: 'Dra. Julia Santos',
         CPFPessoa: '12345678901',
         conselhoProf: 'CRM/SP 54321',
         emailPessoa: 'julia@clinica.com',
         celularPessoa: '11987654321',
-      });
+      }));
       expect(defaultProps.onSuccess).toHaveBeenCalledWith(mockCreated);
       expect(defaultProps.onClose).toHaveBeenCalled();
     });

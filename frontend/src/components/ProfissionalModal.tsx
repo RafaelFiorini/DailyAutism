@@ -42,14 +42,17 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
 
     setSubmitting(true);
     try {
+      const cleanCpf = cpf.replace(/\D/g, '');
       const payload: SaveProfissionalInput = {
         nomePessoa: nome.trim(),
-        CPFPessoa: cpf.replace(/\D/g, ''),
+        CPFPessoa: cleanCpf,
+        cpf: cleanCpf,
         conselhoProf: conselho.trim(),
         emailPessoa: email.trim() || undefined,
         celularPessoa: celular.trim() || undefined,
         datanascPessoa: datanasc || undefined,
         RGPessoa: rg.trim() || undefined,
+        rg: rg.trim() || undefined,
         enderecoPessoa: endereco.trim() || undefined,
       };
 
