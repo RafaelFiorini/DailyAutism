@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { X, UserCheck, Loader2, AlertCircle, HeartPulse } from 'lucide-react';
+import { X, UserCheck, Loader2, AlertCircle } from 'lucide-react';
 import { responsavelService } from '../services/responsavelService';
 import type { Responsavel, SaveResponsavelInput, PacienteOption } from '../types/responsavel';
 

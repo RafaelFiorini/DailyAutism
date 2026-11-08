@@ -5,6 +5,7 @@ import AdminLayout from './components/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Profissionais from './pages/Profissionais';
+import Responsaveis from './pages/Responsaveis';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="profissionais" element={<Profissionais />} />
+              <Route path="responsaveis" element={<Responsaveis />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

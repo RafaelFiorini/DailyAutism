@@ -6,6 +6,7 @@ import {
   Users,
   Building2,
   HeartPulse,
+  UserCheck,
   Briefcase,
   CreditCard,
   LogOut,
@@ -19,6 +20,7 @@ export default function AdminLayout() {
     { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
     { name: 'Clínicas', href: '/admin/clinicas', icon: Building2, end: false },
     { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+    { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
     { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
     { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
   ];
