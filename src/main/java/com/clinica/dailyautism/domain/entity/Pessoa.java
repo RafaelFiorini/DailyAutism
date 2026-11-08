@@ -25,7 +25,6 @@ public class Pessoa extends BaseEntity {
     @Column(nullable = false, length = 11)
     private String CPFPessoa;
 
-    @Column(nullable = false)
     private LocalDate datanascPessoa;
 
 

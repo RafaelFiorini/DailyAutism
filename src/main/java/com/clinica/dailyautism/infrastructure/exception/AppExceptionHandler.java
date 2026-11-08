@@ -25,6 +25,11 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
                 return handleException(ex, ex.getErrorCode(), ex.getMessage(), null, BAD_REQUEST, request);
         }
 
+        @ExceptionHandler(value = IllegalArgumentException.class)
+        public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+                return handleException(ex, "BAD_REQUEST", ex.getMessage(), null, BAD_REQUEST, request);
+        }
+
         @ExceptionHandler(value = Exception.class)
         public ResponseEntity<Object> handleGenericException(Exception ex, WebRequest request) {
                 return handleException(ex, null, ex.getMessage(), null, INTERNAL_SERVER_ERROR, request);

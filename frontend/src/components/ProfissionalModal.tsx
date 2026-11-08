@@ -16,6 +16,8 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
   const [email, setEmail] = useState('');
   const [celular, setCelular] = useState('');
   const [datanasc, setDatanasc] = useState('');
+  const [rg, setRg] = useState('');
+  const [endereco, setEndereco] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
@@ -47,13 +49,28 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
         emailPessoa: email.trim() || undefined,
         celularPessoa: celular.trim() || undefined,
         datanascPessoa: datanasc || undefined,
+        RGPessoa: rg.trim() || undefined,
+        enderecoPessoa: endereco.trim() || undefined,
       };
 
       const created = await profissionalService.create(payload);
       onSuccess(created);
       onClose();
-    } catch {
-      setApiError('Erro ao cadastrar profissional. Verifique os dados informados.');
+    } catch (err: unknown) {
+      let msg = 'Erro ao cadastrar profissional. Verifique os dados informados.';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { data?: { errorMessage?: string; message?: string; details?: string[] } } }).response;
+        if (res?.data) {
+          if (Array.isArray(res.data.details) && res.data.details.length > 0) {
+            msg = res.data.details.join(', ');
+          } else if (res.data.errorMessage) {
+            msg = res.data.errorMessage;
+          } else if (res.data.message) {
+            msg = res.data.message;
+          }
+        }
+      }
+      setApiError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -176,16 +193,46 @@ export default function ProfissionalModal({ isOpen, onClose, onSuccess }: Profis
             </div>
           </div>
 
-          {/* Data de Nascimento */}
+          {/* RG e Data de Nascimento */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="rg" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
+                RG
+              </label>
+              <input
+                id="rg"
+                type="text"
+                value={rg}
+                onChange={(e) => setRg(e.target.value)}
+                placeholder="00.000.000-0"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label htmlFor="datanasc" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
+                Data de Nascimento
+              </label>
+              <input
+                id="datanasc"
+                type="date"
+                value={datanasc}
+                onChange={(e) => setDatanasc(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Endereço */}
           <div>
-            <label htmlFor="datanasc" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
-              Data de Nascimento
+            <label htmlFor="endereco" className="block text-xs font-semibold uppercase text-gray-700 mb-1">
+              Endereço
             </label>
             <input
-              id="datanasc"
-              type="date"
-              value={datanasc}
-              onChange={(e) => setDatanasc(e.target.value)}
+              id="endereco"
+              type="text"
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+              placeholder="Rua, número, bairro, cidade - UF"
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
             />
           </div>

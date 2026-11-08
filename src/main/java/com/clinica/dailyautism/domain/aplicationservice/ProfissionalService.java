@@ -45,6 +45,10 @@ public class ProfissionalService {
             throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
         }
 
+        if (profissionalRepository.existsByPessoaProf(pessoa)) {
+            throw new IllegalArgumentException("Esta pessoa já está cadastrada como profissional.");
+        }
+
         Profissional profissional = Profissional.builder()
                 .pessoaProf(pessoa)
                 .conselhoProf(saveProfissionalDTO.getConselhoProf())

@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.domain.repository;
 
+import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
 import com.clinica.dailyautism.domain.entity.Compromisso;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,8 +8,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProfissionalRepository extends JpaRepository<Profissional, String> {
+
+    Optional<Profissional> findByPessoaProf(Pessoa pessoa);
+    boolean existsByPessoaProf(Pessoa pessoa);
 
     // Agenda da semana do profissional
     @Query("""
