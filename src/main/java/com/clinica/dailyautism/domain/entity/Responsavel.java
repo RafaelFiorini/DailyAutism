@@ -12,7 +12,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idResponsavel", callSuper = false)
+@ToString(exclude = {"pessoaResponsavel", "pacientes"})
 @SQLRestriction("ativo = true")
 public class Responsavel extends BaseEntity {
 

@@ -9,7 +9,8 @@ import org.hibernate.annotations.SQLRestriction;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idFuncionarioClinica", callSuper = false)
+@ToString(exclude = {"pessoa", "clinica"})
 @SQLRestriction("ativo = true")
 public class FuncionarioClinica extends BaseEntity {
 

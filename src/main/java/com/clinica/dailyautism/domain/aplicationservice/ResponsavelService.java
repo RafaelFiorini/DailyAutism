@@ -259,17 +259,26 @@ public class ResponsavelService {
                 return List.of();
             }
 
-            Set<Responsavel> resultado = new HashSet<>(responsavelClinicaRepository.findResponsaveisByClinicaIds(clinicaIds));
+            Map<String, Responsavel> resultado = new LinkedHashMap<>();
+            for (Responsavel r : responsavelClinicaRepository.findResponsaveisByClinicaIds(clinicaIds)) {
+                if (r != null && r.getIdResponsavel() != null) {
+                    resultado.put(r.getIdResponsavel(), r);
+                }
+            }
 
             // Também inclui responsáveis cujos dependentes atendem na clínica
             List<Paciente> pacientesDaClinica = pacienteRepository.findByClinicaIds(clinicaIds);
             for (Paciente pac : pacientesDaClinica) {
                 if (pac.getResponsaveis() != null) {
-                    resultado.addAll(pac.getResponsaveis());
+                    for (Responsavel r : pac.getResponsaveis()) {
+                        if (r != null && r.getIdResponsavel() != null) {
+                            resultado.put(r.getIdResponsavel(), r);
+                        }
+                    }
                 }
             }
 
-            return new ArrayList<>(resultado);
+            return new ArrayList<>(resultado.values());
         }
 
         boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()

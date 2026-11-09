@@ -10,7 +10,8 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idPessoa", callSuper = false)
+@ToString(exclude = {"responsavel", "profissional"})
 @SQLRestriction("ativo = true")
 public class Pessoa extends BaseEntity {
 

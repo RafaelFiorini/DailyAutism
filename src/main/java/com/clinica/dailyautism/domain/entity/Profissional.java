@@ -10,7 +10,8 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idProf", callSuper = false)
+@ToString(exclude = {"pessoaProf", "pacientes"})
 @SQLRestriction("ativo = true")
 public class Profissional extends BaseEntity {
 
