@@ -20,7 +20,7 @@ public class PlanoSaudeRestResource {
     private final PlanoSaudeService planoSaudeService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CRIAR_PLANO_SAUDE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PlanoSaudeDTO> createPlanoSaude(@Valid @RequestBody SavePlanoSaudeDTO dto) {
         PlanoSaude plano = planoSaudeService.createPlanoSaude(dto);
         return ResponseEntity.created(URI.create("/planos-saude/" + plano.getIdPlanoSaude()))
@@ -28,13 +28,13 @@ public class PlanoSaudeRestResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('VER_PLANO_SAUDE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PlanoSaudeDTO> loadPlanoSaude(@PathVariable String id) {
         return ResponseEntity.ok(PlanoSaudeDTO.create(planoSaudeService.loadPlanoSaude(id)));
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('LISTAR_PLANO_SAUDE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PlanoSaudeDTO>> listPlanosSaude() {
         List<PlanoSaudeDTO> planos = planoSaudeService.listPlanosSaude()
                 .stream()
@@ -44,14 +44,14 @@ public class PlanoSaudeRestResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_PLANO_SAUDE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PlanoSaudeDTO> updatePlanoSaude(@PathVariable String id,
                                                           @Valid @RequestBody SavePlanoSaudeDTO dto) {
         return ResponseEntity.ok(PlanoSaudeDTO.create(planoSaudeService.updatePlanoSaude(id, dto)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('DELETAR_PLANO_SAUDE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deletePlanoSaude(@PathVariable String id) {
         planoSaudeService.deletePlanoSaude(id);
         return ResponseEntity.noContent().build();

@@ -102,7 +102,8 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_PACIENTE", "LISTAR_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
                 "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
-                "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO"
+                "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO",
+                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
         )));
 
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
@@ -111,7 +112,8 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
-            "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA"
+                "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA",
+                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
         )));
 
         // CLINICA / FUNCIONARIO_CLINICA — gerencia estrutura da clínica e intermedia agendamentos
@@ -123,7 +125,8 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
-                "LISTAR_PACIENTE", "VER_PACIENTE", "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL"
+                "LISTAR_PACIENTE", "VER_PACIENTE", "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL",
+                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
         );
         criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));
         criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));

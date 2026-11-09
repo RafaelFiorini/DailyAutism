@@ -35,6 +35,7 @@ export default function AdminLayout() {
         { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
+        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
     }
 
@@ -42,6 +43,7 @@ export default function AdminLayout() {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Meus Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
     }
 
@@ -49,12 +51,14 @@ export default function AdminLayout() {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
+        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
     }
 
     return [
       { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
       { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
+      { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
     ];
   }, [isAdmin, isResponsavel, isProfissional, isFuncionarioClinica]);
 
