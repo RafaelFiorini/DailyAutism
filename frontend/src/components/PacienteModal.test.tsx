@@ -9,6 +9,7 @@ vi.mock('../services/pacienteService', () => ({
     update: vi.fn(),
     listPlanos: vi.fn().mockResolvedValue([]),
     listClinicas: vi.fn().mockResolvedValue([]),
+    listResponsaveis: vi.fn().mockResolvedValue([]),
   },
 }));
 

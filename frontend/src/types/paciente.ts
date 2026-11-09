@@ -18,6 +18,7 @@ export interface Paciente {
   idPlanoSaude?: string;
   numeroCarteirinha?: string;
   idClinica?: string;
+  idResponsavel?: string;
 }
 
 export interface SavePacienteInput {
@@ -37,6 +38,8 @@ export interface SavePacienteInput {
   idPlanoSaude?: string;
   numeroCarteirinha?: string;
   idClinica?: string;
+  idResponsavel?: string;
+  vincularAoUsuarioLogado?: boolean;
 }
 
 export interface ClinicaOption {
@@ -48,5 +51,13 @@ export interface ClinicaOption {
 export interface PlanoSaudeOption {
   idPlanoSaude: string;
   nomePlano: string;
+  operadora?: string;
+}
+
+export interface ResponsavelOption {
+  idResponsavel: string;
+  nome: string;
+  cpf?: string;
+}
   operadora?: string;
 }

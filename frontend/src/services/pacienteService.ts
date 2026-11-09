@@ -1,5 +1,5 @@
 import api from './api';
-import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption } from '../types/paciente';
+import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption, ResponsavelOption } from '../types/paciente';
 
 export const pacienteService = {
   async list(): Promise<Paciente[]> {
@@ -39,6 +39,19 @@ export const pacienteService = {
     try {
       const response = await api.get<ClinicaOption[]>('/clinicas');
       return response.data;
+    } catch {
+      return [];
+    }
+  },
+
+  async listResponsaveis(): Promise<ResponsavelOption[]> {
+    try {
+      const response = await api.get<any[]>('/responsaveis');
+      return response.data.map((r) => ({
+        idResponsavel: r.idResponsavel,
+        nome: r.nomePessoa || r.pessoaResponsavel?.nomePessoa || 'Responsável sem nome',
+        cpf: r.cpf || r.pessoaResponsavel?.cpfpessoa,
+      }));
     } catch {
       return [];
     }

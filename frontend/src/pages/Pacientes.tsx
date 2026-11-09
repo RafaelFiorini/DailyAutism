@@ -68,6 +68,7 @@ export default function Pacientes() {
       }
       return [item, ...prev];
     });
+    fetchPacientes();
   };
 
   const handleDelete = async (id: string, nome: string) => {

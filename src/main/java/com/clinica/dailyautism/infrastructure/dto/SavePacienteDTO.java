@@ -59,6 +59,13 @@ public class SavePacienteDTO {
     @JsonAlias({"responsavel", "is_responsavel"})
     private Boolean isResponsavel;
 
+    @JsonProperty("idResponsavel")
+    @JsonAlias({"responsavelId", "idPessoaResponsavel"})
+    private String idResponsavel;
+
+    @JsonProperty("vincularAoUsuarioLogado")
+    private Boolean vincularAoUsuarioLogado;
+
     // Espera para Plano de Saúde e Clínica:
     @JsonProperty("idPlanoSaude")
     @JsonAlias({"planoSaudeId", "idPlano"})

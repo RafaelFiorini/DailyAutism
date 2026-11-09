@@ -35,6 +35,7 @@ public class PacienteDTO {
     private String idPlanoSaude;
     private String numeroCarteirinha;
     private String idClinica;
+    private String idResponsavel;
 
     public static PacienteDTO create(Paciente paciente) {
         String idPessoa = null;
@@ -91,6 +92,7 @@ public class PacienteDTO {
 
         List<String> responsaveis = new ArrayList<>();
         boolean temOutroResponsavel = false;
+        String idResp = null;
         if (paciente.getResponsaveis() != null) {
             for (var r : paciente.getResponsaveis()) {
                 if (r.getAtivo() != null && !r.getAtivo()) continue;
@@ -98,6 +100,11 @@ public class PacienteDTO {
                     responsaveis.add(r.getPessoaResponsavel().getNomePessoa());
                     if (idPessoa == null || !idPessoa.equals(r.getPessoaResponsavel().getIdPessoa())) {
                         temOutroResponsavel = true;
+                        if (idResp == null) {
+                            idResp = r.getIdResponsavel();
+                        }
+                    } else if (idResp == null) {
+                        idResp = r.getIdResponsavel();
                     }
                 }
             }
@@ -123,6 +130,7 @@ public class PacienteDTO {
                 .idPlanoSaude(idPlano)
                 .numeroCarteirinha(numCart)
                 .idClinica(idClinica)
+                .idResponsavel(idResp)
                 .build();
     }
 }

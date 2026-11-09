@@ -7,6 +7,7 @@ import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
 import com.clinica.dailyautism.infrastructure.dto.SavePacienteCompletoDTO;
 import com.clinica.dailyautism.infrastructure.dto.SavePacienteDTO;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,6 +34,7 @@ public class PacienteService {
     private final CompromissoRepository compromissoRepository;
     private final ProfissionalPacienteRepository profissionalPacienteRepository;
     private final FuncionarioClinicaRepository funcionarioClinicaRepository;
+    private final EntityManager entityManager;
 
     @Transactional
     public Paciente createPaciente(SavePacienteDTO savePacienteDTO) {
@@ -131,44 +133,73 @@ public class PacienteService {
         paciente = pacienteRepository.save(paciente);
         final Paciente finalPaciente = paciente;
 
-        // Se marcado como isResponsavel, garante o registro em Responsavel
+        // Vínculo com Responsável:
         if (isResp) {
-            if (!responsavelRepository.existsByPessoaResponsavel(pessoa)) {
-                Responsavel resp = Responsavel.builder()
-                        .pessoaResponsavel(pessoa)
-                        .pacientes(new ArrayList<>(List.of(paciente)))
-                        .build();
-                responsavelRepository.save(resp);
-            } else {
-                Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa).orElse(null);
-                if (resp != null && (resp.getPacientes() == null || !resp.getPacientes().contains(paciente))) {
+            // Se marcado como isResponsavel, garante o registro em Responsavel para o próprio paciente
+            Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa)
+                    .orElseGet(() -> Responsavel.builder().pessoaResponsavel(pessoa).pacientes(new ArrayList<>()).build());
+            if (resp.getPacientes() == null) {
+                resp.setPacientes(new ArrayList<>());
+            }
+            if (!resp.getPacientes().contains(finalPaciente)) {
+                resp.getPacientes().add(finalPaciente);
+            }
+            responsavelRepository.save(resp);
+        } else {
+            // O paciente possui outro responsável
+            if (savePacienteDTO.getIdResponsavel() != null && !savePacienteDTO.getIdResponsavel().isBlank()) {
+                responsavelRepository.findById(savePacienteDTO.getIdResponsavel().trim()).ifPresent(resp -> {
                     if (resp.getPacientes() == null) {
                         resp.setPacientes(new ArrayList<>());
                     }
-                    resp.getPacientes().add(paciente);
-                    responsavelRepository.save(resp);
-                }
-            }
-        }
-
-        // Se o usuário logado for RESPONSAVEL, vincula automaticamente o paciente a ele
-        if (emailDoUsuario != null && !emailDoUsuario.isBlank()) {
-            userRepository.findByEmailUser(emailDoUsuario).ifPresent(u -> {
-                boolean userIsResp = u.getPerfis() != null && u.getPerfis().stream()
-                        .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
-                if (userIsResp && u.getPessoa() != null) {
-                    Responsavel respLogado = responsavelRepository.findByPessoaResponsavel(u.getPessoa()).orElse(null);
-                    if (respLogado != null) {
-                        if (respLogado.getPacientes() == null) {
-                            respLogado.setPacientes(new ArrayList<>());
+                    if (!resp.getPacientes().contains(finalPaciente)) {
+                        resp.getPacientes().add(finalPaciente);
+                        responsavelRepository.save(resp);
+                    }
+                });
+            } else if (Boolean.TRUE.equals(savePacienteDTO.getVincularAoUsuarioLogado())) {
+                if (emailDoUsuario != null && !emailDoUsuario.isBlank()) {
+                    userRepository.findByEmailUser(emailDoUsuario).ifPresent(u -> {
+                        if (u.getPessoa() != null) {
+                            Responsavel respLogado = responsavelRepository.findByPessoaResponsavel(u.getPessoa()).orElse(null);
+                            if (respLogado != null) {
+                                if (respLogado.getPacientes() == null) {
+                                    respLogado.setPacientes(new ArrayList<>());
+                                }
+                                if (!respLogado.getPacientes().contains(finalPaciente)) {
+                                    respLogado.getPacientes().add(finalPaciente);
+                                    responsavelRepository.save(respLogado);
+                                }
+                            }
                         }
-                        if (!respLogado.getPacientes().contains(finalPaciente)) {
-                            respLogado.getPacientes().add(finalPaciente);
-                            responsavelRepository.save(respLogado);
+                    });
+                }
+            } else if (emailDoUsuario != null && !emailDoUsuario.isBlank()) {
+                // Usuário logado é EXCLUSIVAMENTE responsável (não é ADMIN nem CLINICA nem FUNCIONARIO)
+                userRepository.findByEmailUser(emailDoUsuario).ifPresent(u -> {
+                    boolean isStaffOrAdmin = u.getPerfis() != null && u.getPerfis().stream()
+                            .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()) ||
+                                           "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()) ||
+                                           "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) ||
+                                           "CLINICA".equalsIgnoreCase(p.getNome()));
+                    if (!isStaffOrAdmin) {
+                        boolean userIsResp = u.getPerfis() != null && u.getPerfis().stream()
+                                .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+                        if (userIsResp && u.getPessoa() != null) {
+                            Responsavel respLogado = responsavelRepository.findByPessoaResponsavel(u.getPessoa()).orElse(null);
+                            if (respLogado != null) {
+                                if (respLogado.getPacientes() == null) {
+                                    respLogado.setPacientes(new ArrayList<>());
+                                }
+                                if (!respLogado.getPacientes().contains(finalPaciente)) {
+                                    respLogado.getPacientes().add(finalPaciente);
+                                    responsavelRepository.save(respLogado);
+                                }
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
 
         // Vínculo opcional inicial com Plano de Saúde
@@ -192,9 +223,21 @@ public class PacienteService {
                     .dataInicioAtendimento(LocalDate.now())
                     .build();
             pacienteClinicaRepository.save(pc);
+        } else if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
+            Clinica clinicaSelecionada = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
+            if (clinicaSelecionada != null) {
+                PacienteClinica pc = PacienteClinica.builder()
+                        .paciente(paciente)
+                        .clinica(clinicaSelecionada)
+                        .dataInicioAtendimento(LocalDate.now())
+                        .build();
+                pacienteClinicaRepository.save(pc);
+            }
         }
 
-        return paciente;
+        entityManager.flush();
+        entityManager.clear();
+        return pacienteRepository.findById(paciente.getIdPaciente()).orElse(paciente);
     }
 
     public Paciente loadPaciente(String pacienteId) {
@@ -408,20 +451,36 @@ public class PacienteService {
             pessoaRepository.save(pessoa);
 
             if (isResp) {
-                if (!responsavelRepository.existsByPessoaResponsavel(pessoa)) {
-                    Responsavel resp = Responsavel.builder()
-                            .pessoaResponsavel(pessoa)
-                            .pacientes(new ArrayList<>(List.of(paciente)))
-                            .build();
-                    responsavelRepository.save(resp);
-                } else {
-                    Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa).orElse(null);
-                    if (resp != null && (resp.getPacientes() == null || !resp.getPacientes().contains(paciente))) {
-                        if (resp.getPacientes() == null) {
-                            resp.setPacientes(new ArrayList<>());
+                Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa)
+                        .orElseGet(() -> Responsavel.builder().pessoaResponsavel(pessoa).pacientes(new ArrayList<>()).build());
+                if (resp.getPacientes() == null) {
+                    resp.setPacientes(new ArrayList<>());
+                }
+                if (!resp.getPacientes().contains(paciente)) {
+                    resp.getPacientes().add(paciente);
+                }
+                responsavelRepository.save(resp);
+            } else if (savePacienteDTO.getIdResponsavel() != null && !savePacienteDTO.getIdResponsavel().isBlank()) {
+                String novoRespId = savePacienteDTO.getIdResponsavel().trim();
+                // Desvincula de outros responsáveis
+                var todosResps = responsavelRepository.findAll();
+                for (var r : todosResps) {
+                    if (r.getPacientes() != null && r.getPacientes().contains(paciente)) {
+                        if (!r.getIdResponsavel().equals(novoRespId)) {
+                            r.getPacientes().remove(paciente);
+                            responsavelRepository.save(r);
                         }
-                        resp.getPacientes().add(paciente);
-                        responsavelRepository.save(resp);
+                    }
+                }
+                var optNovoResp = responsavelRepository.findById(novoRespId);
+                if (optNovoResp.isPresent()) {
+                    Responsavel r = optNovoResp.get();
+                    if (r.getPacientes() == null) {
+                        r.setPacientes(new ArrayList<>());
+                    }
+                    if (!r.getPacientes().contains(paciente)) {
+                        r.getPacientes().add(paciente);
+                        responsavelRepository.save(r);
                     }
                 }
             }
@@ -431,9 +490,20 @@ public class PacienteService {
         if (savePacienteDTO.getIdPlanoSaude() != null && !savePacienteDTO.getIdPlanoSaude().isBlank()) {
             PlanoSaude plano = planoSaudeRepository.findById(savePacienteDTO.getIdPlanoSaude().trim()).orElse(null);
             if (plano != null) {
-                boolean jaTem = paciente.getPlanos() != null && paciente.getPlanos().stream()
-                        .anyMatch(p -> p.getPlanoSaude() != null && p.getPlanoSaude().getIdPlanoSaude().equals(plano.getIdPlanoSaude()));
-                if (!jaTem) {
+                var planosAtuais = pacientePlanoSaudeRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
+                boolean achou = false;
+                for (var pps : planosAtuais) {
+                    if (pps.getPlanoSaude() != null && pps.getPlanoSaude().getIdPlanoSaude().equals(plano.getIdPlanoSaude())) {
+                        pps.setNumeroCarteirinha(savePacienteDTO.getNumeroCarteirinha());
+                        pps.setAtivo(true);
+                        pacientePlanoSaudeRepository.save(pps);
+                        achou = true;
+                    } else {
+                        pps.desativar();
+                        pacientePlanoSaudeRepository.save(pps);
+                    }
+                }
+                if (!achou) {
                     PacientePlanoSaude pps = PacientePlanoSaude.builder()
                             .paciente(paciente)
                             .planoSaude(plano)
@@ -448,8 +518,15 @@ public class PacienteService {
         if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
             Clinica clinica = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
             if (clinica != null) {
-                boolean jaTem = paciente.getClinicas() != null && paciente.getClinicas().stream()
-                        .anyMatch(c -> c.getClinica() != null && c.getClinica().getIdClinica().equals(clinica.getIdClinica()));
+                var clinicasAtuais = pacienteClinicaRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
+                boolean jaTem = false;
+                for (var pc : clinicasAtuais) {
+                    if (pc.getClinica() != null && pc.getClinica().getIdClinica().equals(clinica.getIdClinica())) {
+                        pc.setAtivo(true);
+                        pacienteClinicaRepository.save(pc);
+                        jaTem = true;
+                    }
+                }
                 if (!jaTem) {
                     PacienteClinica pc = PacienteClinica.builder()
                             .paciente(paciente)
@@ -461,7 +538,10 @@ public class PacienteService {
             }
         }
 
-        return pacienteRepository.save(paciente);
+        paciente = pacienteRepository.save(paciente);
+        entityManager.flush();
+        entityManager.clear();
+        return pacienteRepository.findById(paciente.getIdPaciente()).orElse(paciente);
     }
 
     @Transactional

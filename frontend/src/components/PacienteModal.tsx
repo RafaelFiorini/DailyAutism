@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useContext, type FormEvent } from 'react';
 import {
   X,
   HeartPulse,
@@ -8,9 +8,12 @@ import {
   Building2,
   CreditCard,
   UserCheck,
+  Users,
+  RefreshCw,
 } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 import { pacienteService } from '../services/pacienteService';
-import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption } from '../types/paciente';
+import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption, ResponsavelOption } from '../types/paciente';
 
 interface PacienteModalProps {
   isOpen: boolean;
@@ -27,6 +30,9 @@ export default function PacienteModal({
   initialData,
   hasOutroResponsavel,
 }: PacienteModalProps) {
+  const auth = useContext(AuthContext);
+  const user = auth?.user;
+  const userIsResponsavel = Boolean(auth?.isResponsavel);
   const isEditing = Boolean(initialData);
   const jaTemOutroResponsavel = Boolean(hasOutroResponsavel || initialData?.hasOutroResponsavel);
 
@@ -39,15 +45,17 @@ export default function PacienteModal({
   const [celular, setCelular] = useState('');
   const [telefone, setTelefone] = useState('');
   const [email, setEmail] = useState('');
-  const [isResponsavel, setIsResponsavel] = useState(false);
+  const [isProprioResponsavel, setIsProprioResponsavel] = useState(false);
+  const [idResponsavel, setIdResponsavel] = useState('');
 
-  // Espera para Plano de Saúde e Clínica
+  // Plano de Saúde e Clínica
   const [idPlanoSaude, setIdPlanoSaude] = useState('');
   const [numeroCarteirinha, setNumeroCarteirinha] = useState('');
   const [idClinica, setIdClinica] = useState('');
 
   const [planosOptions, setPlanosOptions] = useState<PlanoSaudeOption[]>([]);
   const [clinicasOptions, setClinicasOptions] = useState<ClinicaOption[]>([]);
+  const [responsaveisOptions, setResponsaveisOptions] = useState<ResponsavelOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -70,22 +78,27 @@ export default function PacienteModal({
     return raw.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
   };
 
+  const loadOptions = useCallback(async () => {
+    setLoadingOptions(true);
+    try {
+      const [planos, clinicas, resps] = await Promise.all([
+        pacienteService.listPlanos(),
+        pacienteService.listClinicas(),
+        pacienteService.listResponsaveis(),
+      ]);
+      setPlanosOptions(planos);
+      setClinicasOptions(clinicas);
+      setResponsaveisOptions(resps);
+    } catch {
+      // Ignora erros de carregamento secundário
+    } finally {
+      setLoadingOptions(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
-
-    // Carregar opções de planos e clínicas disponíveis para vinculo
-    setLoadingOptions(true);
-    Promise.all([pacienteService.listPlanos(), pacienteService.listClinicas()])
-      .then(([planos, clinicas]) => {
-        setPlanosOptions(planos);
-        setClinicasOptions(clinicas);
-      })
-      .catch(() => {
-        // Ignora erros de carregamento secundário
-      })
-      .finally(() => {
-        setLoadingOptions(false);
-      });
+    loadOptions();
 
     if (initialData) {
       setNome(initialData.nomePessoa || '');
@@ -97,7 +110,8 @@ export default function PacienteModal({
       setCelular(initialData.celular ? formatPhone(initialData.celular) : '');
       setTelefone(initialData.telefone ? formatPhone(initialData.telefone) : '');
       setEmail(initialData.email || '');
-      setIsResponsavel(jaTemOutroResponsavel ? false : Boolean(initialData.isResponsavel));
+      setIsProprioResponsavel(jaTemOutroResponsavel ? false : Boolean(initialData.isResponsavel));
+      setIdResponsavel(initialData.idResponsavel || '');
       setIdPlanoSaude(initialData.idPlanoSaude || '');
       setNumeroCarteirinha(initialData.numeroCarteirinha || '');
       setIdClinica(initialData.idClinica || '');
@@ -111,14 +125,15 @@ export default function PacienteModal({
       setCelular('');
       setTelefone('');
       setEmail('');
-      setIsResponsavel(false);
+      setIsProprioResponsavel(false);
+      setIdResponsavel(userIsResponsavel && user?.idResponsavel ? user.idResponsavel : '');
       setIdPlanoSaude('');
       setNumeroCarteirinha('');
       setIdClinica('');
     }
     setErrors({});
     setApiError('');
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, loadOptions, jaTemOutroResponsavel, userIsResponsavel, user]);
 
   if (!isOpen) return null;
 
@@ -158,7 +173,8 @@ export default function PacienteModal({
         telefonePessoa: telefone.trim() || undefined,
         celularPessoa: celular.trim() || undefined,
         emailPessoa: email.trim() || undefined,
-        isResponsavel: jaTemOutroResponsavel ? false : isResponsavel,
+        isResponsavel: isProprioResponsavel,
+        idResponsavel: !isProprioResponsavel && idResponsavel ? idResponsavel : undefined,
         idPlanoSaude: idPlanoSaude || undefined,
         numeroCarteirinha: numeroCarteirinha.trim() || undefined,
         idClinica: idClinica || undefined,
@@ -362,28 +378,90 @@ export default function PacienteModal({
             />
           </div>
 
-          {/* Marcação isResponsável (somente se não tiver outro responsável vinculado) */}
-          {!jaTemOutroResponsavel && (
-            <div className="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isResponsavel}
-                  onChange={(e) => setIsResponsavel(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <div className="text-xs">
-                  <span className="font-semibold text-indigo-900 flex items-center gap-1.5">
-                    <UserCheck className="h-3.5 w-3.5 text-indigo-600" />
-                    O paciente também é seu próprio responsável legal?
-                  </span>
-                  <span className="text-indigo-700/80 block mt-0.5">
-                    Marque se o próprio paciente administra sua documentação e agenda (sincroniza a marcação com o cadastro de responsáveis).
-                  </span>
-                </div>
-              </label>
+          {/* Seção Responsável Legal */}
+          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/40 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-indigo-600" />
+                <span className="text-xs font-semibold text-gray-800 uppercase tracking-wide">
+                  Responsável Legal
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={loadOptions}
+                disabled={loadingOptions}
+                title="Atualizar opções"
+                className="text-gray-400 hover:text-indigo-600 p-1 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loadingOptions ? 'animate-spin text-indigo-600' : ''}`} />
+              </button>
             </div>
-          )}
+
+            {/* Checkbox: Paciente é seu próprio responsável (somente se não tiver outro responsável pré-vinculado) */}
+            {!jaTemOutroResponsavel && (
+              <div className="bg-white p-2.5 rounded-lg border border-gray-200">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isProprioResponsavel}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsProprioResponsavel(checked);
+                      if (checked) {
+                        setIdResponsavel('');
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-gray-800 flex items-center gap-1.5">
+                      <UserCheck className="h-3.5 w-3.5 text-indigo-600" />
+                      O paciente também é seu próprio responsável legal?
+                    </span>
+                    <span className="text-gray-500 block text-[11px] mt-0.5">
+                      Marque caso o paciente seja maior de idade e responda por si mesmo.
+                    </span>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {/* Caso o paciente tenha outro responsável (criança/adolescente/dependente) */}
+            {!isProprioResponsavel && (
+              <div>
+                <label className="block text-[11px] font-medium text-gray-700 mb-1">
+                  Selecione o Responsável Legal
+                </label>
+                <select
+                  value={idResponsavel}
+                  onChange={(e) => setIdResponsavel(e.target.value)}
+                  disabled={loadingOptions}
+                  className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="">Selecione um responsável cadastrado...</option>
+                  {userIsResponsavel && user?.idResponsavel && (
+                    <option value={user.idResponsavel}>
+                      Eu mesmo ({user.nomeUser || user.emailUser})
+                    </option>
+                  )}
+                  {responsaveisOptions.map((resp) => {
+                    if (userIsResponsavel && user?.idResponsavel && resp.idResponsavel === user.idResponsavel) {
+                      return null;
+                    }
+                    return (
+                      <option key={resp.idResponsavel} value={resp.idResponsavel}>
+                        {resp.nome} {resp.cpf ? `(CPF: ${resp.cpf})` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1 italic">
+                  Caso o responsável ainda não esteja na lista, cadastre-o no menu Responsáveis e clique no botão de atualizar ao lado.
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Espera: Plano de Saúde */}
           <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/40 space-y-2.5">
