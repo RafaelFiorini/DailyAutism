@@ -1,12 +1,14 @@
 package com.clinica.dailyautism.infrastructure.security;
 
 import com.clinica.dailyautism.domain.entity.Periodicidade;
+import com.clinica.dailyautism.domain.entity.TipoCompromisso;
 import com.clinica.dailyautism.domain.entity.security.Acao;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.AcaoRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
+import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -24,6 +26,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PerfilRepository perfilRepository;
     private final UserRepository userRepository;
     private final PeriodicidadeRepository periodicidadeRepository;
+    private final TipoCompromissoRepository tipoCompromissoRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -32,6 +35,7 @@ public class DataSeeder implements CommandLineRunner {
         seedPerfis();
         seedAdminUser();
         seedPeriodicidades();
+        seedTiposCompromisso();
     }
 
     private void seedAdminUser() {
@@ -64,6 +68,9 @@ public class DataSeeder implements CommandLineRunner {
                 // Compromisso
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "DELETAR_COMPROMISSO", "APROVAR_COMPROMISSO",
+                // Tipo de Compromisso
+                "CRIAR_TIPOCOMPROMISSO", "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO",
+                "EDITAR_TIPOCOMPROMISSO", "DELETAR_TIPOCOMPROMISSO",
                 // Clinica
                 "CRIAR_CLINICA", "VER_CLINICA", "LISTAR_CLINICA",
                 "EDITAR_CLINICA", "DELETAR_CLINICA",
@@ -111,7 +118,8 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO",
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
-                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE"
+                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
+                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
         )));
 
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
@@ -122,7 +130,8 @@ public class DataSeeder implements CommandLineRunner {
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
                 "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA",
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
-                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE"
+                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
+                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
         )));
 
         // ADMIN_CLINICA — administrador/gestor da clínica (gestão completa da unidade, planos e periodicidades)
@@ -137,7 +146,8 @@ public class DataSeeder implements CommandLineRunner {
                 "LISTAR_PACIENTE", "VER_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
                 "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
                 "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE",
-                "CRIAR_PERIODICIDADE", "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE", "EDITAR_PERIODICIDADE", "DELETAR_PERIODICIDADE"
+                "CRIAR_PERIODICIDADE", "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE", "EDITAR_PERIODICIDADE", "DELETAR_PERIODICIDADE",
+                "CRIAR_TIPOCOMPROMISSO", "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO", "EDITAR_TIPOCOMPROMISSO", "DELETAR_TIPOCOMPROMISSO"
         );
         criarPerfilSeNaoExistir("ADMIN_CLINICA", acaoRepository.findAllByNomeIn(acoesAdminClinica));
 
@@ -153,7 +163,8 @@ public class DataSeeder implements CommandLineRunner {
                 "LISTAR_PACIENTE", "VER_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
                 "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
-                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE"
+                "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
+                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
         );
         criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
         criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
@@ -192,6 +203,49 @@ public class DataSeeder implements CommandLineRunner {
                 if (p.getAtivo() == null) p.setAtivo(true);
             });
             periodicidadeRepository.saveAll(padroes);
+        }
+    }
+
+    private void seedTiposCompromisso() {
+        if (tipoCompromissoRepository.count() == 0) {
+            List<TipoCompromisso> padroes = List.of(
+                    TipoCompromisso.builder()
+                            .nomeTipo("Terapia Ocupacional")
+                            .descricaoTipo("Integração sensorial, autonomia nas atividades diárias e coordenação motora")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Fonoaudiologia")
+                            .descricaoTipo("Desenvolvimento de fala, linguagem, comunicação verbal/alternativa e deglutição")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Psicologia / ABA")
+                            .descricaoTipo("Intervenção comportamental baseada em ABA, regulação emocional e habilidades sociais")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Fisioterapia")
+                            .descricaoTipo("Reabilitação física, coordenação motora global e psicomotricidade")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Psicopedagogia")
+                            .descricaoTipo("Acompanhamento escolar, processos cognitivos e mediação de aprendizagem")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Neuropediatria")
+                            .descricaoTipo("Avaliação médica especializada, diagnóstico neurológico e prescrição clínica")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Musicoterapia")
+                            .descricaoTipo("Estimulação sensorial e sócio-comunicativa através da vivência musical")
+                            .build(),
+                    TipoCompromisso.builder()
+                            .nomeTipo("Nutrição")
+                            .descricaoTipo("Orientação alimentar individualizada e manejo de seletividade alimentar")
+                            .build()
+            );
+            padroes.forEach(t -> {
+                if (t.getAtivo() == null) t.setAtivo(true);
+            });
+            tipoCompromissoRepository.saveAll(padroes);
         }
     }
 

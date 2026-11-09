@@ -11,6 +11,7 @@ import {
   Briefcase,
   CreditCard,
   CalendarClock,
+  Calendar,
   LogOut,
 } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export default function AdminLayout() {
     if (isAdmin) {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
         { name: 'Clínicas', href: '/admin/clinicas', icon: Building2, end: false },
         { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
@@ -34,6 +36,7 @@ export default function AdminLayout() {
     if (isFuncionarioClinica) {
       const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
@@ -50,6 +53,7 @@ export default function AdminLayout() {
     if (isResponsavel) {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Meus Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
@@ -58,6 +62,7 @@ export default function AdminLayout() {
     if (isProfissional) {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
@@ -65,10 +70,11 @@ export default function AdminLayout() {
 
     return [
       { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
+      { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
       { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
       { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
     ];
-  }, [isAdmin, isResponsavel, isProfissional, isFuncionarioClinica]);
+  }, [isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica]);
 
   const initials = user?.nomeUser
     ? user.nomeUser

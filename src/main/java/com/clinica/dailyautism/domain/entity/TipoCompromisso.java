@@ -9,7 +9,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idTipoCompromisso", callSuper = false)
 @SQLRestriction("ativo = true")
 public class TipoCompromisso extends BaseEntity {
 

@@ -11,6 +11,7 @@ import Usuarios from './pages/Usuarios';
 import Clinicas from './pages/Clinicas';
 import PlanosSaude from './pages/PlanosSaude';
 import Periodicidades from './pages/Periodicidades';
+import Agenda from './pages/Agenda';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
               <Route path="pacientes" element={<Pacientes />} />
               <Route path="planos" element={<PlanosSaude />} />
               <Route path="periodicidades" element={<Periodicidades />} />
+              <Route path="agenda" element={<Agenda />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

@@ -2,9 +2,11 @@ package com.clinica.dailyautism.infrastructure.controller;
 
 import com.clinica.dailyautism.domain.aplicationservice.CompromissoService;
 import com.clinica.dailyautism.domain.entity.Compromisso;
+import com.clinica.dailyautism.domain.entity.StatusCompromisso;
 import com.clinica.dailyautism.infrastructure.dto.AprovarCompromissoDTO;
 import com.clinica.dailyautism.infrastructure.dto.CompromissoDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveCompromissoDTO;
+import com.clinica.dailyautism.infrastructure.dto.UpdateStatusCompromissoDTO;
 import com.clinica.dailyautism.infrastructure.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,20 @@ public class CompromissoRestResource {
         Compromisso compromisso = compromissoService.createCompromisso(saveCompromissoDTO, currentUser.getUsername());
         return ResponseEntity.created(URI.create("/compromissos/" + compromisso.getIdCompromisso()))
                 .body(CompromissoDTO.create(compromisso));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAuthority('LISTAR_COMPROMISSO')")
+    public ResponseEntity<List<CompromissoDTO>> listCompromissos(
+            @RequestParam(required = false) String pacienteId,
+            @RequestParam(required = false) StatusCompromisso status,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<CompromissoDTO> compromissos = compromissoService.listCompromissosForUser(email, pacienteId, status)
+                .stream()
+                .map(CompromissoDTO::create)
+                .toList();
+        return ResponseEntity.ok(compromissos);
     }
 
     @GetMapping("/{id}")
@@ -64,6 +80,15 @@ public class CompromissoRestResource {
 //        Compromisso compromisso = compromissoService.aprovarCompromisso(id);
 //        return ResponseEntity.ok(CompromissoDTO.create(compromisso));
 //    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAuthority('EDITAR_COMPROMISSO') or hasAuthority('APROVAR_COMPROMISSO')")
+    public ResponseEntity<CompromissoDTO> updateStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateStatusCompromissoDTO dto) {
+        Compromisso compromisso = compromissoService.updateStatus(id, dto.getStatus());
+        return ResponseEntity.ok(CompromissoDTO.create(compromisso));
+    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('DELETAR_COMPROMISSO')")

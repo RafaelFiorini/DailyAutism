@@ -12,6 +12,10 @@ import java.util.List;
 public interface CompromissoRepository extends JpaRepository<Compromisso, String> {
     List<Compromisso> findByPacienteIdPacienteOrderByDataHoraCompromissoAsc(String pacienteId);
 
+    List<Compromisso> findAllByOrderByDataHoraCompromissoDesc();
+
+    List<Compromisso> findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(List<String> pacienteIds);
+
     List<Compromisso> findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(
             List<String> pacienteIds,
             LocalDateTime de,

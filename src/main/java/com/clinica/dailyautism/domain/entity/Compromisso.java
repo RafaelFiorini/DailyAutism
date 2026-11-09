@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idCompromisso", callSuper = false)
 @SQLRestriction("ativo = true")
 public class Compromisso extends BaseEntity {
 

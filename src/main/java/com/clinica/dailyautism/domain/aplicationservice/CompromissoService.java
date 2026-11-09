@@ -31,6 +31,7 @@ public class CompromissoService {
     private final UserRepository userRepository;
     private final ProfissionalRepository profissionalRepository;
     private final ResponsavelRepository responsavelRepository;
+    private final PacienteService pacienteService;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
@@ -70,6 +71,40 @@ public class CompromissoService {
         return compromissoRepository.findByPacienteIdPacienteOrderByDataHoraCompromissoAsc(pacienteId);
     }
 
+    public List<Compromisso> listCompromissosForUser(String email, String pacienteId, StatusCompromisso status) {
+        List<Compromisso> listaBase;
+
+        if (email == null || email.isBlank()) {
+            listaBase = compromissoRepository.findAllByOrderByDataHoraCompromissoDesc();
+        } else {
+            User user = userRepository.findByEmailUser(email).orElse(null);
+            if (user == null) {
+                listaBase = compromissoRepository.findAllByOrderByDataHoraCompromissoDesc();
+            } else {
+                boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                        .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+                if (isAdmin) {
+                    listaBase = compromissoRepository.findAllByOrderByDataHoraCompromissoDesc();
+                } else {
+                    List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
+                    if (pacientesPermitidos.isEmpty()) {
+                        listaBase = List.of();
+                    } else {
+                        List<String> ids = pacientesPermitidos.stream()
+                                .map(Paciente::getIdPaciente)
+                                .toList();
+                        listaBase = compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(ids);
+                    }
+                }
+            }
+        }
+
+        return listaBase.stream()
+                .filter(c -> pacienteId == null || pacienteId.isBlank() || (c.getPaciente() != null && pacienteId.equals(c.getPaciente().getIdPaciente())))
+                .filter(c -> status == null || c.getStatus() == status)
+                .toList();
+    }
+
     @Transactional
     public Compromisso updateCompromisso(String compromissoId, SaveCompromissoDTO saveCompromissoDTO) {
         Compromisso compromisso = loadCompromisso(compromissoId);
@@ -77,6 +112,32 @@ public class CompromissoService {
         compromisso.setDescricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso());
         compromisso.setDataHoraCompromisso(saveCompromissoDTO.getDataHoraCompromisso());
         compromisso.setLocalCompromisso(saveCompromissoDTO.getLocalCompromisso());
+
+        if (saveCompromissoDTO.getIdPaciente() != null && !saveCompromissoDTO.getIdPaciente().isBlank()) {
+            Paciente paciente = pacienteRepository.findById(saveCompromissoDTO.getIdPaciente())
+                    .orElseThrow(() -> new PacienteNotFoundException(saveCompromissoDTO.getIdPaciente()));
+            compromisso.setPaciente(paciente);
+        }
+
+        if (saveCompromissoDTO.getIdTipoCompromisso() != null && !saveCompromissoDTO.getIdTipoCompromisso().isBlank()) {
+            TipoCompromisso tipo = tipoCompromissoRepository.findById(saveCompromissoDTO.getIdTipoCompromisso())
+                    .orElseThrow(() -> new TipoCompromissoNotFoundException("Tipo de compromisso não encontrado: " + saveCompromissoDTO.getIdTipoCompromisso()));
+            compromisso.setTipoCompromisso(tipo);
+        }
+
+        if (saveCompromissoDTO.getIdPeriodicidade() != null && !saveCompromissoDTO.getIdPeriodicidade().isBlank()) {
+            Periodicidade periodicidade = periodicidadeRepository.findById(saveCompromissoDTO.getIdPeriodicidade())
+                    .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + saveCompromissoDTO.getIdPeriodicidade()));
+            compromisso.setPeriodicidade(periodicidade);
+        }
+
+        return compromissoRepository.save(compromisso);
+    }
+
+    @Transactional
+    public Compromisso updateStatus(String compromissoId, StatusCompromisso novoStatus) {
+        Compromisso compromisso = loadCompromisso(compromissoId);
+        compromisso.setStatus(novoStatus);
         return compromissoRepository.save(compromisso);
     }
 

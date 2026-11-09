@@ -59,5 +59,3 @@ export interface ResponsavelOption {
   nome: string;
   cpf?: string;
 }
-  operadora?: string;
-}
