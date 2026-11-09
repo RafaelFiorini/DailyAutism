@@ -16,6 +16,7 @@ export interface Responsavel {
   endereco?: string;
   datanasc?: string;
   pacientes?: PacienteVinculado[];
+  idClinica?: string;
 }
 
 export interface SaveResponsavelInput {
@@ -32,6 +33,7 @@ export interface SaveResponsavelInput {
   emailPessoa?: string;
   isPacienteTambem?: boolean;
   pacienteIds?: string[];
+  idClinica?: string;
 }
 
 export interface PacienteOption {

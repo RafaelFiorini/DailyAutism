@@ -1,14 +1,15 @@
 package com.clinica.dailyautism.infrastructure.controller;
 
-
 import com.clinica.dailyautism.domain.aplicationservice.ResponsavelService;
 import com.clinica.dailyautism.domain.entity.Responsavel;
 import com.clinica.dailyautism.infrastructure.dto.ResponsavelDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveResponsavelDTO;
+import com.clinica.dailyautism.infrastructure.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,30 +24,35 @@ public class ResponsavelRestResource {
 
     @PostMapping
     @PreAuthorize("hasAuthority('CRIAR_RESPONSAVEL')")
-    public ResponseEntity<ResponsavelDTO> createResponsavel(@Valid @RequestBody SaveResponsavelDTO saveResponsavelDTO) {
-        Responsavel responsavel = responsavelService.createResponsavel(saveResponsavelDTO);
+    public ResponseEntity<ResponsavelDTO> createResponsavel(@Valid @RequestBody SaveResponsavelDTO saveResponsavelDTO,
+                                                            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Responsavel responsavel = responsavelService.createResponsavel(saveResponsavelDTO, email);
         return ResponseEntity.created(URI.create("/responsaveis/" + responsavel.getIdResponsavel()))
                 .body(ResponsavelDTO.create(responsavel));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('VER_RESPONSAVEL')")
-    public ResponseEntity<ResponsavelDTO> loadResponsavel(@PathVariable String id) {
-        Responsavel responsavel = responsavelService.loadResponsavel(id);
+    public ResponseEntity<ResponsavelDTO> loadResponsavel(@PathVariable String id,
+                                                          @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Responsavel responsavel = responsavelService.loadResponsavelForUser(id, email);
         return ResponseEntity.ok(ResponsavelDTO.create(responsavel));
     }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ResponsavelDTO> getMe(@org.springframework.security.core.annotation.AuthenticationPrincipal com.clinica.dailyautism.infrastructure.security.UserDetailsImpl currentUser) {
+    public ResponseEntity<ResponsavelDTO> getMe(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         Responsavel responsavel = responsavelService.findByEmail(currentUser.getUsername());
         return ResponseEntity.ok(ResponsavelDTO.create(responsavel));
     }
 
     @GetMapping
     @PreAuthorize("hasAuthority('LISTAR_RESPONSAVEL')")
-    public ResponseEntity<List<ResponsavelDTO>> listResponsaveis() {
-        List<ResponsavelDTO> responsaveis = responsavelService.listResponsaveis()
+    public ResponseEntity<List<ResponsavelDTO>> listResponsaveis(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<ResponsavelDTO> responsaveis = responsavelService.listResponsaveisForUser(email)
                 .stream()
                 .map(ResponsavelDTO::create)
                 .toList();

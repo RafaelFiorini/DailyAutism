@@ -56,4 +56,14 @@ public class SaveProfissionalDTO {
     @JsonProperty("conselhoProf")
     @JsonAlias({"conselho", "registroConselho"})
     private String conselhoProf;
+
+    @JsonProperty("idClinica")
+    @JsonAlias({"clinicaId", "clinica"})
+    private String idClinica;
+
+    @JsonProperty("diasAtendimento")
+    private String diasAtendimento;
+
+    @JsonProperty("horariosAtendimento")
+    private String horariosAtendimento;
 }

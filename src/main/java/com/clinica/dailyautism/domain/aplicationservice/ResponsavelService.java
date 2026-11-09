@@ -1,27 +1,20 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
-import com.clinica.dailyautism.domain.entity.Paciente;
-import com.clinica.dailyautism.domain.entity.Pessoa;
-import com.clinica.dailyautism.domain.entity.Responsavel;
+import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ResponsavelNotFoundException;
-import com.clinica.dailyautism.domain.repository.PacienteRepository;
-import com.clinica.dailyautism.domain.repository.PerfilRepository;
-import com.clinica.dailyautism.domain.repository.PessoaRepository;
-import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
-import com.clinica.dailyautism.domain.repository.UserRepository;
+import com.clinica.dailyautism.domain.repository.*;
 import com.clinica.dailyautism.infrastructure.dto.SaveResponsavelDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -33,9 +26,17 @@ public class ResponsavelService {
     private final UserRepository userRepository;
     private final PerfilRepository perfilRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ResponsavelClinicaRepository responsavelClinicaRepository;
+    private final ClinicaRepository clinicaRepository;
+    private final FuncionarioClinicaRepository funcionarioClinicaRepository;
 
     @Transactional
     public Responsavel createResponsavel(SaveResponsavelDTO saveResponsavelDTO) {
+        return createResponsavel(saveResponsavelDTO, null);
+    }
+
+    @Transactional
+    public Responsavel createResponsavel(SaveResponsavelDTO saveResponsavelDTO, String emailDoUsuario) {
         Pessoa pessoa;
         String idPessoa = saveResponsavelDTO.getIdPessoa();
         String rawCpf = saveResponsavelDTO.getCPFPessoa();
@@ -64,8 +65,58 @@ public class ResponsavelService {
             throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
         }
 
-        if (responsavelRepository.existsByPessoaResponsavel(pessoa)) {
-            throw new IllegalArgumentException("Esta pessoa já está cadastrada como responsável.");
+        // Descobrir a clínica alvo
+        String idClinicaAlvo = saveResponsavelDTO.getIdClinica();
+        if ((idClinicaAlvo == null || idClinicaAlvo.isBlank()) && emailDoUsuario != null) {
+            User userLogado = userRepository.findByEmailUser(emailDoUsuario).orElse(null);
+            if (userLogado != null && userLogado.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(userLogado.getPessoa());
+                if (!vinculos.isEmpty() && vinculos.get(0).getClinica() != null) {
+                    idClinicaAlvo = vinculos.get(0).getClinica().getIdClinica();
+                }
+            }
+        }
+
+        Clinica clinicaAlvo = null;
+        if (idClinicaAlvo != null && !idClinicaAlvo.isBlank()) {
+            final String idParaBuscar = idClinicaAlvo.trim();
+            clinicaAlvo = clinicaRepository.findById(idParaBuscar)
+                    .orElseThrow(() -> new ClinicaNotFoundException(idParaBuscar));
+        }
+
+        Optional<Responsavel> respExistenteOpt = responsavelRepository.findByPessoaResponsavel(pessoa);
+
+        if (respExistenteOpt.isPresent()) {
+            Responsavel respExistente = respExistenteOpt.get();
+            if (clinicaAlvo != null) {
+                if (responsavelClinicaRepository.existsByResponsavelAndClinica(respExistente, clinicaAlvo)) {
+                    throw new IllegalArgumentException("Este responsável já está vinculado a esta clínica.");
+                }
+                ResponsavelClinica rc = ResponsavelClinica.builder()
+                        .responsavel(respExistente)
+                        .clinica(clinicaAlvo)
+                        .build();
+                responsavelClinicaRepository.save(rc);
+
+                // Vincula pacientes adicionais se passados
+                if (saveResponsavelDTO.getPacienteIds() != null) {
+                    for (String idPac : saveResponsavelDTO.getPacienteIds()) {
+                        if (idPac != null && !idPac.isBlank()) {
+                            pacienteRepository.findById(idPac.trim()).ifPresent(pac -> {
+                                if (!respExistente.getPacientes().contains(pac)) {
+                                    respExistente.getPacientes().add(pac);
+                                }
+                            });
+                        }
+                    }
+                    responsavelRepository.save(respExistente);
+                }
+
+                criarOuAtualizarUsuarioResponsavel(pessoa, saveResponsavelDTO.getEmailPessoa());
+                return respExistente;
+            } else {
+                throw new IllegalArgumentException("Esta pessoa já está cadastrada como responsável.");
+            }
         }
 
         Responsavel responsavel = Responsavel.builder()
@@ -100,6 +151,14 @@ public class ResponsavelService {
 
         Responsavel saved = responsavelRepository.save(responsavel);
 
+        if (clinicaAlvo != null) {
+            ResponsavelClinica rc = ResponsavelClinica.builder()
+                    .responsavel(saved)
+                    .clinica(clinicaAlvo)
+                    .build();
+            responsavelClinicaRepository.save(rc);
+        }
+
         // Auto-criação do usuário para o responsável
         criarOuAtualizarUsuarioResponsavel(pessoa, saveResponsavelDTO.getEmailPessoa());
 
@@ -111,8 +170,117 @@ public class ResponsavelService {
                 .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado: " + responsavelId));
     }
 
+    public Responsavel loadResponsavelForUser(String responsavelId, String email) {
+        Responsavel responsavel = loadResponsavel(responsavelId);
+        if (email == null || email.isBlank()) {
+            return responsavel;
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return responsavel;
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return responsavel;
+        }
+
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() != null) {
+                var vinculosFunc = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+                List<String> clinicaIds = vinculosFunc.stream()
+                        .filter(v -> v.getClinica() != null)
+                        .map(v -> v.getClinica().getIdClinica())
+                        .toList();
+
+                // 1. Vinculado diretamente à clínica
+                List<ResponsavelClinica> vinculosResp = responsavelClinicaRepository.findByResponsavelIdResponsavel(responsavelId);
+                boolean vinculadoDireto = vinculosResp.stream()
+                        .anyMatch(rc -> rc.getClinica() != null && clinicaIds.contains(rc.getClinica().getIdClinica()));
+                if (vinculadoDireto) {
+                    return responsavel;
+                }
+
+                // 2. Ou algum paciente dele está na clínica
+                if (responsavel.getPacientes() != null) {
+                    for (Paciente pac : responsavel.getPacientes()) {
+                        if (pac.getClinicas() != null) {
+                            boolean pacienteNaClinica = pac.getClinicas().stream()
+                                    .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
+                            if (pacienteNaClinica) {
+                                return responsavel;
+                            }
+                        }
+                    }
+                }
+            }
+            throw new AccessDeniedException("Você não tem permissão para visualizar responsáveis de outra clínica.");
+        }
+
+        return responsavel;
+    }
+
     public List<Responsavel> listResponsaveis() {
         return responsavelRepository.findAll();
+    }
+
+    public List<Responsavel> listResponsaveisForUser(String email) {
+        if (email == null || email.isBlank()) {
+            return listResponsaveis();
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return listResponsaveis();
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return listResponsaveis();
+        }
+
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() == null) {
+                return List.of();
+            }
+            var vinculosFunc = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+            List<String> clinicaIds = vinculosFunc.stream()
+                    .filter(v -> v.getClinica() != null)
+                    .map(v -> v.getClinica().getIdClinica())
+                    .toList();
+            if (clinicaIds.isEmpty()) {
+                return List.of();
+            }
+
+            Set<Responsavel> resultado = new HashSet<>(responsavelClinicaRepository.findResponsaveisByClinicaIds(clinicaIds));
+
+            // Também inclui responsáveis cujos dependentes atendem na clínica
+            List<Paciente> pacientesDaClinica = pacienteRepository.findByClinicaIds(clinicaIds);
+            for (Paciente pac : pacientesDaClinica) {
+                if (pac.getResponsaveis() != null) {
+                    resultado.addAll(pac.getResponsaveis());
+                }
+            }
+
+            return new ArrayList<>(resultado);
+        }
+
+        boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+        if (isResponsavel && user.getPessoa() != null) {
+            return responsavelRepository.findByPessoaResponsavel(user.getPessoa())
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+        return listResponsaveis();
     }
 
     @Transactional
@@ -179,6 +347,18 @@ public class ResponsavelService {
                 }
             }
             responsavel.setPacientes(novosPacientes);
+        }
+
+        // Vínculo com clínica na edição se informado
+        if (saveResponsavelDTO.getIdClinica() != null && !saveResponsavelDTO.getIdClinica().isBlank()) {
+            Clinica clinica = clinicaRepository.findById(saveResponsavelDTO.getIdClinica().trim()).orElse(null);
+            if (clinica != null && !responsavelClinicaRepository.existsByResponsavelAndClinica(responsavel, clinica)) {
+                ResponsavelClinica rc = ResponsavelClinica.builder()
+                        .responsavel(responsavel)
+                        .clinica(clinica)
+                        .build();
+                responsavelClinicaRepository.save(rc);
+            }
         }
 
         return responsavelRepository.save(responsavel);

@@ -69,8 +69,53 @@ public class PacienteService {
             throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
         }
 
-        if (pacienteRepository.findByPessoaPaciente(pessoa).isPresent()) {
-            throw new IllegalArgumentException("Esta pessoa já está cadastrada como paciente.");
+        // Descobrir a clínica alvo
+        String idClinicaAlvo = savePacienteDTO.getIdClinica();
+        if ((idClinicaAlvo == null || idClinicaAlvo.isBlank()) && emailDoUsuario != null) {
+            User userLogado = userRepository.findByEmailUser(emailDoUsuario).orElse(null);
+            if (userLogado != null && userLogado.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(userLogado.getPessoa());
+                if (!vinculos.isEmpty() && vinculos.get(0).getClinica() != null) {
+                    idClinicaAlvo = vinculos.get(0).getClinica().getIdClinica();
+                }
+            }
+        }
+
+        Clinica clinicaAlvo = null;
+        if (idClinicaAlvo != null && !idClinicaAlvo.isBlank()) {
+            clinicaAlvo = clinicaRepository.findById(idClinicaAlvo.trim()).orElse(null);
+        }
+
+        var pacExistenteOpt = pacienteRepository.findByPessoaPaciente(pessoa);
+        if (pacExistenteOpt.isPresent()) {
+            Paciente pacExistente = pacExistenteOpt.get();
+            if (clinicaAlvo != null) {
+                if (pacienteClinicaRepository.existsByPacienteAndClinica(pacExistente, clinicaAlvo)) {
+                    throw new IllegalArgumentException("Este paciente já está cadastrado nesta clínica.");
+                }
+                PacienteClinica pc = PacienteClinica.builder()
+                        .paciente(pacExistente)
+                        .clinica(clinicaAlvo)
+                        .dataInicioAtendimento(LocalDate.now())
+                        .build();
+                pacienteClinicaRepository.save(pc);
+
+                // Plano de saúde opcional
+                if (savePacienteDTO.getIdPlanoSaude() != null && !savePacienteDTO.getIdPlanoSaude().isBlank()) {
+                    PlanoSaude plano = planoSaudeRepository.findById(savePacienteDTO.getIdPlanoSaude().trim()).orElse(null);
+                    if (plano != null) {
+                        PacientePlanoSaude pps = PacientePlanoSaude.builder()
+                                .paciente(pacExistente)
+                                .planoSaude(plano)
+                                .numeroCarteirinha(savePacienteDTO.getNumeroCarteirinha())
+                                .build();
+                        pacientePlanoSaudeRepository.save(pps);
+                    }
+                }
+                return pacExistente;
+            } else {
+                throw new IllegalArgumentException("Esta pessoa já está cadastrada como paciente.");
+            }
         }
 
         boolean isResp = Boolean.TRUE.equals(savePacienteDTO.getIsResponsavel());
@@ -139,17 +184,14 @@ public class PacienteService {
             }
         }
 
-        // Vínculo opcional inicial com Clínica
-        if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
-            Clinica clinica = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
-            if (clinica != null) {
-                PacienteClinica pc = PacienteClinica.builder()
-                        .paciente(paciente)
-                        .clinica(clinica)
-                        .dataInicioAtendimento(LocalDate.now())
-                        .build();
-                pacienteClinicaRepository.save(pc);
-            }
+        // Vínculo com Clínica
+        if (clinicaAlvo != null) {
+            PacienteClinica pc = PacienteClinica.builder()
+                    .paciente(paciente)
+                    .clinica(clinicaAlvo)
+                    .dataInicioAtendimento(LocalDate.now())
+                    .build();
+            pacienteClinicaRepository.save(pc);
         }
 
         return paciente;

@@ -1,8 +1,10 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { X, UserCheck, Edit3, Loader2, AlertCircle, Plus } from 'lucide-react';
+import { X, UserCheck, Edit3, Loader2, AlertCircle, Plus, Building2 } from 'lucide-react';
 import { responsavelService } from '../services/responsavelService';
+import { clinicaService } from '../services/clinicaService';
 import type { Responsavel, SaveResponsavelInput, PacienteOption } from '../types/responsavel';
 import type { Paciente } from '../types/paciente';
+import type { Clinica } from '../types/clinica';
 import PacienteModal from './PacienteModal';
 
 interface ResponsavelModalProps {
@@ -29,6 +31,9 @@ export default function ResponsavelModal({
   const [endereco, setEndereco] = useState('');
   const [isPacienteTambem, setIsPacienteTambem] = useState(false);
   const [selectedPacienteIds, setSelectedPacienteIds] = useState<string[]>([]);
+  const [idClinica, setIdClinica] = useState('');
+  const [clinicas, setClinicas] = useState<Clinica[]>([]);
+  const [loadingClinicas, setLoadingClinicas] = useState(false);
 
   const [availablePacientes, setAvailablePacientes] = useState<PacienteOption[]>([]);
   const [loadingPacientes, setLoadingPacientes] = useState(false);
@@ -47,6 +52,13 @@ export default function ResponsavelModal({
         .catch(() => setAvailablePacientes([]))
         .finally(() => setLoadingPacientes(false));
 
+      setLoadingClinicas(true);
+      clinicaService
+        .list()
+        .then((data) => setClinicas(data || []))
+        .catch(() => setClinicas([]))
+        .finally(() => setLoadingClinicas(false));
+
       if (initialData) {
         setNome(initialData.nomeResponsavel || '');
         setCpf(initialData.cpf || '');
@@ -57,6 +69,7 @@ export default function ResponsavelModal({
         setEndereco(initialData.endereco || '');
         setIsPacienteTambem(Boolean(initialData.isPaciente));
         setSelectedPacienteIds(initialData.pacientes?.map((p) => p.idPaciente) || []);
+        setIdClinica(initialData.idClinica || '');
       } else {
         setNome('');
         setCpf('');
@@ -67,6 +80,7 @@ export default function ResponsavelModal({
         setEndereco('');
         setIsPacienteTambem(false);
         setSelectedPacienteIds([]);
+        setIdClinica('');
       }
       setErrors({});
       setApiError('');
@@ -121,6 +135,7 @@ export default function ResponsavelModal({
         enderecoPessoa: endereco.trim() || undefined,
         isPacienteTambem,
         pacienteIds: selectedPacienteIds.length > 0 ? selectedPacienteIds : undefined,
+        idClinica: idClinica || undefined,
       };
 
       const result = isEditing && initialData
@@ -317,6 +332,28 @@ export default function ResponsavelModal({
                 </span>
               </div>
             </label>
+          </div>
+
+          {/* Clínica de Atendimento */}
+          <div>
+            <label htmlFor="clinicaResp" className="block text-xs font-semibold uppercase text-gray-700 mb-1 flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 text-indigo-600" />
+              Clínica de Atendimento
+            </label>
+            <select
+              id="clinicaResp"
+              value={idClinica}
+              onChange={(e) => setIdClinica(e.target.value)}
+              disabled={loadingClinicas}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors bg-white disabled:bg-gray-100"
+            >
+              <option value="">Selecione uma clínica (opcional)</option>
+              {clinicas.map((c) => (
+                <option key={c.idClinica} value={c.idClinica}>
+                  {c.nomeClinica}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Vínculo com pacientes existentes */}

@@ -59,4 +59,8 @@ public class SaveResponsavelDTO {
     @JsonProperty("pacienteIds")
     @JsonAlias({"pacientes", "idsPacientes"})
     private List<String> pacienteIds;
+
+    @JsonProperty("idClinica")
+    @JsonAlias({"clinicaId", "clinica"})
+    private String idClinica;
 }

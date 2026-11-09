@@ -33,6 +33,7 @@ export default function AdminLayout() {
       return [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
+        { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
       ];
     }

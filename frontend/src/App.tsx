@@ -8,6 +8,7 @@ import Profissionais from './pages/Profissionais';
 import Responsaveis from './pages/Responsaveis';
 import Pacientes from './pages/Pacientes';
 import Usuarios from './pages/Usuarios';
+import Clinicas from './pages/Clinicas';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="usuarios" element={<Usuarios />} />
+              <Route path="clinicas" element={<Clinicas />} />
               <Route path="profissionais" element={<Profissionais />} />
               <Route path="responsaveis" element={<Responsaveis />} />
               <Route path="pacientes" element={<Pacientes />} />

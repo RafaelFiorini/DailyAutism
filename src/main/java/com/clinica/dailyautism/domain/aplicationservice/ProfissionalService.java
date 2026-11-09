@@ -1,23 +1,25 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
+import com.clinica.dailyautism.domain.entity.Clinica;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
+import com.clinica.dailyautism.domain.entity.ProfissionalClinica;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ProfissionalNotFoundException;
-import com.clinica.dailyautism.domain.repository.PerfilRepository;
-import com.clinica.dailyautism.domain.repository.PessoaRepository;
-import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
-import com.clinica.dailyautism.domain.repository.UserRepository;
+import com.clinica.dailyautism.domain.repository.*;
 import com.clinica.dailyautism.infrastructure.dto.SaveProfissionalDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RequiredArgsConstructor
@@ -29,9 +31,17 @@ public class ProfissionalService {
     private final UserRepository userRepository;
     private final PerfilRepository perfilRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ProfissionalClinicaRepository profissionalClinicaRepository;
+    private final ClinicaRepository clinicaRepository;
+    private final FuncionarioClinicaRepository funcionarioClinicaRepository;
 
     @Transactional
     public Profissional createProfissional(SaveProfissionalDTO saveProfissionalDTO) {
+        return createProfissional(saveProfissionalDTO, null);
+    }
+
+    @Transactional
+    public Profissional createProfissional(SaveProfissionalDTO saveProfissionalDTO, String emailDoUsuario) {
         Pessoa pessoa;
         String idPessoa = saveProfissionalDTO.getIdPessoa();
         String rawCpf = saveProfissionalDTO.getCPFPessoa();
@@ -60,8 +70,45 @@ public class ProfissionalService {
             throw new IllegalArgumentException("Informe a pessoa existente ou os dados pessoais com CPF");
         }
 
-        if (profissionalRepository.existsByPessoaProf(pessoa)) {
-            throw new IllegalArgumentException("Esta pessoa já está cadastrada como profissional.");
+        // Descobrir a clínica alvo (se passada explicitamente ou pelo funcionário logado)
+        String idClinicaAlvo = saveProfissionalDTO.getIdClinica();
+        if ((idClinicaAlvo == null || idClinicaAlvo.isBlank()) && emailDoUsuario != null) {
+            User userLogado = userRepository.findByEmailUser(emailDoUsuario).orElse(null);
+            if (userLogado != null && userLogado.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(userLogado.getPessoa());
+                if (!vinculos.isEmpty() && vinculos.get(0).getClinica() != null) {
+                    idClinicaAlvo = vinculos.get(0).getClinica().getIdClinica();
+                }
+            }
+        }
+
+        Clinica clinicaAlvo = null;
+        if (idClinicaAlvo != null && !idClinicaAlvo.isBlank()) {
+            final String idParaBuscar = idClinicaAlvo.trim();
+            clinicaAlvo = clinicaRepository.findById(idParaBuscar)
+                    .orElseThrow(() -> new ClinicaNotFoundException(idParaBuscar));
+        }
+
+        Optional<Profissional> profExistenteOpt = profissionalRepository.findByPessoaProf(pessoa);
+
+        if (profExistenteOpt.isPresent()) {
+            Profissional profExistente = profExistenteOpt.get();
+            if (clinicaAlvo != null) {
+                if (profissionalClinicaRepository.existsByProfissionalAndClinica(profExistente, clinicaAlvo)) {
+                    throw new IllegalArgumentException("Este profissional já está vinculado a esta clínica.");
+                }
+                ProfissionalClinica pc = ProfissionalClinica.builder()
+                        .profissional(profExistente)
+                        .clinica(clinicaAlvo)
+                        .diasAtendimento(saveProfissionalDTO.getDiasAtendimento())
+                        .horariosAtendimento(saveProfissionalDTO.getHorariosAtendimento())
+                        .build();
+                profissionalClinicaRepository.save(pc);
+                criarOuAtualizarUsuarioProfissional(pessoa, saveProfissionalDTO.getEmailPessoa());
+                return profExistente;
+            } else {
+                throw new IllegalArgumentException("Esta pessoa já está cadastrada como profissional.");
+            }
         }
 
         Profissional profissional = Profissional.builder()
@@ -70,6 +117,16 @@ public class ProfissionalService {
                 .build();
 
         Profissional saved = profissionalRepository.save(profissional);
+
+        if (clinicaAlvo != null) {
+            ProfissionalClinica pc = ProfissionalClinica.builder()
+                    .profissional(saved)
+                    .clinica(clinicaAlvo)
+                    .diasAtendimento(saveProfissionalDTO.getDiasAtendimento())
+                    .horariosAtendimento(saveProfissionalDTO.getHorariosAtendimento())
+                    .build();
+            profissionalClinicaRepository.save(pc);
+        }
 
         // Auto-criação do usuário para o profissional
         criarOuAtualizarUsuarioProfissional(pessoa, saveProfissionalDTO.getEmailPessoa());
@@ -82,8 +139,91 @@ public class ProfissionalService {
                 .orElseThrow(() -> new ProfissionalNotFoundException("Profissional não encontrado: " + profissionalId));
     }
 
+    public Profissional loadProfissionalForUser(String profissionalId, String email) {
+        Profissional profissional = loadProfissional(profissionalId);
+        if (email == null || email.isBlank()) {
+            return profissional;
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return profissional;
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return profissional;
+        }
+
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() != null) {
+                var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+                List<String> clinicaIds = vinculos.stream()
+                        .filter(v -> v.getClinica() != null)
+                        .map(v -> v.getClinica().getIdClinica())
+                        .toList();
+                List<ProfissionalClinica> vinculosProf = profissionalClinicaRepository.findByProfissionalIdProf(profissionalId);
+                boolean pertence = vinculosProf.stream()
+                        .anyMatch(vp -> vp.getClinica() != null && clinicaIds.contains(vp.getClinica().getIdClinica()));
+                if (pertence) {
+                    return profissional;
+                }
+            }
+            throw new AccessDeniedException("Você não tem permissão para visualizar profissionais de outra clínica.");
+        }
+
+        return profissional;
+    }
+
     public List<Profissional> listProfissionais() {
         return profissionalRepository.findAll();
+    }
+
+    public List<Profissional> listProfissionaisForUser(String email) {
+        if (email == null || email.isBlank()) {
+            return listProfissionais();
+        }
+
+        User user = userRepository.findByEmailUser(email).orElse(null);
+        if (user == null) {
+            return listProfissionais();
+        }
+
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        if (isAdmin) {
+            return listProfissionais();
+        }
+
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (isClinica) {
+            if (user.getPessoa() == null) {
+                return List.of();
+            }
+            var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
+            List<String> clinicaIds = vinculos.stream()
+                    .filter(v -> v.getClinica() != null)
+                    .map(v -> v.getClinica().getIdClinica())
+                    .toList();
+            if (clinicaIds.isEmpty()) {
+                return List.of();
+            }
+            return profissionalClinicaRepository.findProfissionaisByClinicaIds(clinicaIds);
+        }
+
+        boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+        if (isProfissional && user.getPessoa() != null) {
+            return profissionalRepository.findByPessoaProf(user.getPessoa())
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+        return listProfissionais();
     }
 
     @Transactional
@@ -120,6 +260,20 @@ public class ProfissionalService {
 
             // Mantém usuário sincronizado
             criarOuAtualizarUsuarioProfissional(pessoa, saveProfissionalDTO.getEmailPessoa());
+        }
+
+        // Se informou clínica para vincular na edição
+        if (saveProfissionalDTO.getIdClinica() != null && !saveProfissionalDTO.getIdClinica().isBlank()) {
+            Clinica clinica = clinicaRepository.findById(saveProfissionalDTO.getIdClinica().trim()).orElse(null);
+            if (clinica != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(profissional, clinica)) {
+                ProfissionalClinica pc = ProfissionalClinica.builder()
+                        .profissional(profissional)
+                        .clinica(clinica)
+                        .diasAtendimento(saveProfissionalDTO.getDiasAtendimento())
+                        .horariosAtendimento(saveProfissionalDTO.getHorariosAtendimento())
+                        .build();
+                profissionalClinicaRepository.save(pc);
+            }
         }
 
         return profissionalRepository.save(profissional);

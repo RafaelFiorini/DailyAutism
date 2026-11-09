@@ -1,7 +1,9 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { X, UserPlus, Edit3, Loader2, AlertCircle } from 'lucide-react';
+import { X, UserPlus, Edit3, Loader2, AlertCircle, Building2 } from 'lucide-react';
 import { profissionalService } from '../services/profissionalService';
+import { clinicaService } from '../services/clinicaService';
 import type { Profissional, SaveProfissionalInput } from '../types/profissional';
+import type { Clinica } from '../types/clinica';
 
 interface ProfissionalModalProps {
   isOpen: boolean;
@@ -26,6 +28,9 @@ export default function ProfissionalModal({
   const [datanasc, setDatanasc] = useState('');
   const [rg, setRg] = useState('');
   const [endereco, setEndereco] = useState('');
+  const [idClinica, setIdClinica] = useState('');
+  const [clinicas, setClinicas] = useState<Clinica[]>([]);
+  const [loadingClinicas, setLoadingClinicas] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
@@ -33,6 +38,13 @@ export default function ProfissionalModal({
 
   useEffect(() => {
     if (isOpen) {
+      setLoadingClinicas(true);
+      clinicaService
+        .list()
+        .then((data) => setClinicas(data))
+        .catch(() => setClinicas([]))
+        .finally(() => setLoadingClinicas(false));
+
       if (initialData) {
         setNome(initialData.nomeProfissional || '');
         setCpf(initialData.cpf || '');
@@ -42,6 +54,7 @@ export default function ProfissionalModal({
         setDatanasc(initialData.datanasc || '');
         setRg(initialData.rg || '');
         setEndereco(initialData.endereco || '');
+        setIdClinica(initialData.idClinica || '');
       } else {
         setNome('');
         setCpf('');
@@ -51,6 +64,7 @@ export default function ProfissionalModal({
         setDatanasc('');
         setRg('');
         setEndereco('');
+        setIdClinica('');
       }
       setErrors({});
       setApiError('');
@@ -88,6 +102,7 @@ export default function ProfissionalModal({
         RGPessoa: rg.trim() || undefined,
         rg: rg.trim() || undefined,
         enderecoPessoa: endereco.trim() || undefined,
+        idClinica: idClinica || undefined,
       };
 
       const result = isEditing && initialData
@@ -283,6 +298,28 @@ export default function ProfissionalModal({
               placeholder="Rua, número, bairro, cidade - UF"
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
             />
+          </div>
+
+          {/* Clínica de Atendimento */}
+          <div className="pt-2">
+            <label htmlFor="clinica" className="block text-xs font-semibold uppercase text-gray-700 mb-1 flex items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 text-indigo-600" />
+              Clínica de Atendimento
+            </label>
+            <select
+              id="clinica"
+              value={idClinica}
+              onChange={(e) => setIdClinica(e.target.value)}
+              disabled={loadingClinicas}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors bg-white disabled:bg-gray-100"
+            >
+              <option value="">Selecione uma clínica (opcional)</option>
+              {clinicas.map((c) => (
+                <option key={c.idClinica} value={c.idClinica}>
+                  {c.nomeClinica}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Actions */}

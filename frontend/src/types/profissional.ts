@@ -9,6 +9,8 @@ export interface Profissional {
   rg?: string;
   endereco?: string;
   datanasc?: string;
+  idClinica?: string;
+  nomeClinica?: string;
 }
 
 export interface SaveProfissionalInput {
@@ -24,5 +26,7 @@ export interface SaveProfissionalInput {
   celularPessoa?: string;
   emailPessoa?: string;
   conselhoProf: string;
+  idClinica?: string;
+  diasAtendimento?: string;
+  horariosAtendimento?: string;
 }
-
