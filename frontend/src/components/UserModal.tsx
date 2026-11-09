@@ -96,11 +96,17 @@ export default function UserModal({
       setDatanasc(initialData.datanasc || '');
       setEndereco(initialData.endereco || '');
 
-      setIsResponsavel(Boolean(initialData.isResponsavel));
-      setIsProfissional(Boolean(initialData.isProfissional));
-      setIsFuncionarioClinica(Boolean(initialData.isFuncionarioClinica));
-      setIsAdminClinica(Boolean(initialData.isAdminClinica));
-      setIsAdmin(Boolean(initialData.isAdmin));
+      const hasAdmin = Boolean(initialData.isAdmin ?? (initialData as any).admin);
+      const hasResp = Boolean(initialData.isResponsavel ?? (initialData as any).responsavel);
+      const hasProf = Boolean(initialData.isProfissional ?? (initialData as any).profissional);
+      const hasFunc = Boolean(initialData.isFuncionarioClinica ?? (initialData as any).funcionarioClinica);
+      const hasAdminClin = Boolean(initialData.isAdminClinica ?? (initialData as any).adminClinica);
+
+      setIsAdmin(hasAdmin);
+      setIsResponsavel(hasResp);
+      setIsProfissional(hasProf);
+      setIsFuncionarioClinica(hasFunc);
+      setIsAdminClinica(hasAdminClin);
 
       setConselhoProf(initialData.conselhoProf || '');
       setIdClinica(initialData.idClinica || '');
@@ -196,13 +202,18 @@ export default function UserModal({
         datanasc: datanasc || undefined,
         endereco: endereco.trim() || undefined,
         isResponsavel,
+        responsavel: isResponsavel,
         isProfissional,
+        profissional: isProfissional,
         conselhoProf: isProfissional ? conselhoProf.trim() : undefined,
         isFuncionarioClinica,
+        funcionarioClinica: isFuncionarioClinica,
         isAdminClinica: isFuncionarioClinica ? isAdminClinica : false,
+        adminClinica: isFuncionarioClinica ? isAdminClinica : false,
         idClinica: isFuncionarioClinica ? idClinica : undefined,
         cargoClinica: isFuncionarioClinica ? cargoClinica.trim() : undefined,
         isAdmin,
+        admin: isAdmin,
       };
 
       let savedUser: User;

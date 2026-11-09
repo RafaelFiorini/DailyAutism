@@ -16,7 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Table(name = "perfis")
 @SQLRestriction("ativo = true")
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = {"idPerfil", "nome"}, callSuper = false)
 public class Perfil extends BaseEntity {
 
     @Id

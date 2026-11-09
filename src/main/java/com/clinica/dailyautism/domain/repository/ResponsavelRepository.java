@@ -37,4 +37,7 @@ public interface ResponsavelRepository extends JpaRepository<Responsavel, String
     Optional<Responsavel> findByPessoaResponsavel(Pessoa pessoa);
     Optional<Responsavel> findByPessoaResponsavelEmailPessoa(String email);
     boolean existsByPessoaResponsavel(Pessoa pessoa);
+
+    @Query(value = "SELECT * FROM responsavel WHERE pessoa_responsavel = :idPessoa LIMIT 1", nativeQuery = true)
+    Optional<Responsavel> findByPessoaIdAnyAtivo(@Param("idPessoa") String idPessoa);
 }

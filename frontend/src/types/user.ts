@@ -22,16 +22,21 @@ export interface User {
   celular?: string | null;
   perfis: string[];
   isResponsavel: boolean;
+  responsavel?: boolean;
   idResponsavel?: string | null;
   isProfissional: boolean;
+  profissional?: boolean;
   idProfissional?: string | null;
   conselhoProf?: string | null;
   isFuncionarioClinica?: boolean;
+  funcionarioClinica?: boolean;
   isAdminClinica?: boolean;
+  adminClinica?: boolean;
   idClinica?: string | null;
   nomeClinica?: string | null;
   cargoClinica?: string | null;
   isAdmin: boolean;
+  admin?: boolean;
   ativo?: boolean;
 }
 
@@ -46,11 +51,16 @@ export interface SaveUserInput {
   datanasc?: string;
   endereco?: string;
   isResponsavel: boolean;
+  responsavel?: boolean;
   isProfissional: boolean;
+  profissional?: boolean;
   conselhoProf?: string;
   isFuncionarioClinica?: boolean;
+  funcionarioClinica?: boolean;
   isAdminClinica?: boolean;
+  adminClinica?: boolean;
   idClinica?: string;
   cargoClinica?: string;
   isAdmin: boolean;
+  admin?: boolean;
 }

@@ -170,33 +170,61 @@ public class UserService {
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);
         }
-        user.setPerfis(perfis);
+        if (user.getPerfis() == null) {
+            user.setPerfis(new HashSet<>());
+        } else {
+            user.getPerfis().clear();
+        }
+        user.getPerfis().addAll(perfis);
         user = userRepository.save(user);
 
         // 5. Responsável
+        var optResp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
         if (Boolean.TRUE.equals(dto.getIsResponsavel())) {
-            if (!responsavelRepository.existsByPessoaResponsavel(pessoa)) {
+            if (optResp.isPresent()) {
+                Responsavel resp = optResp.get();
+                if (resp.getAtivo() == null || !resp.getAtivo()) {
+                    resp.setAtivo(true);
+                    responsavelRepository.save(resp);
+                }
+            } else {
                 Responsavel resp = Responsavel.builder()
                         .pessoaResponsavel(pessoa)
                         .build();
+                if (resp.getAtivo() == null) resp.setAtivo(true);
+                responsavelRepository.save(resp);
+            }
+        } else if (Boolean.FALSE.equals(dto.getIsResponsavel())) {
+            if (optResp.isPresent()) {
+                Responsavel resp = optResp.get();
+                resp.desativar();
                 responsavelRepository.save(resp);
             }
         }
 
         // 6. Profissional
+        var optProf = profissionalRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
         if (Boolean.TRUE.equals(dto.getIsProfissional())) {
-            var optProf = profissionalRepository.findByPessoaProf(pessoa);
+            String conselho = dto.getConselhoProf() != null && !dto.getConselhoProf().isBlank()
+                    ? dto.getConselhoProf().trim()
+                    : "Não informado";
             if (optProf.isPresent()) {
                 Profissional prof = optProf.get();
-                if (dto.getConselhoProf() != null && !dto.getConselhoProf().isBlank()) {
-                    prof.setConselhoProf(dto.getConselhoProf().trim());
-                    profissionalRepository.save(prof);
-                }
+                prof.setAtivo(true);
+                prof.setConselhoProf(conselho);
+                profissionalRepository.save(prof);
             } else {
                 Profissional prof = Profissional.builder()
                         .pessoaProf(pessoa)
-                        .conselhoProf(dto.getConselhoProf() != null ? dto.getConselhoProf().trim() : "Não informado")
+                        .conselhoProf(conselho)
                         .build();
+                if (prof.getAtivo() == null) prof.setAtivo(true);
+                profissionalRepository.save(prof);
+            }
+        } else if (Boolean.FALSE.equals(dto.getIsProfissional())) {
+            if (optProf.isPresent()) {
+                Profissional prof = optProf.get();
+                prof.desativar();
                 profissionalRepository.save(prof);
             }
         }
@@ -207,9 +235,11 @@ public class UserService {
             Clinica clinica = clinicaRepository.findById(dto.getIdClinica().trim())
                     .orElseThrow(() -> new ClinicaNotFoundException(dto.getIdClinica()));
 
-            var optFunc = funcionarioClinicaRepository.findByPessoaAndClinica(pessoa, clinica);
-            if (optFunc.isPresent()) {
-                funcSalvo = optFunc.get();
+            var listFunc = funcionarioClinicaRepository.findByPessoa(pessoa);
+            if (!listFunc.isEmpty()) {
+                funcSalvo = listFunc.get(0);
+                funcSalvo.setAtivo(true);
+                funcSalvo.setClinica(clinica);
                 funcSalvo.setCargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário");
             } else {
                 funcSalvo = FuncionarioClinica.builder()
@@ -217,8 +247,15 @@ public class UserService {
                         .clinica(clinica)
                         .cargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário")
                         .build();
+                if (funcSalvo.getAtivo() == null) funcSalvo.setAtivo(true);
             }
             funcSalvo = funcionarioClinicaRepository.save(funcSalvo);
+        } else if (Boolean.FALSE.equals(dto.getIsFuncionarioClinica())) {
+            var listFunc = funcionarioClinicaRepository.findByPessoa(pessoa);
+            for (FuncionarioClinica f : listFunc) {
+                f.desativar();
+                funcionarioClinicaRepository.save(f);
+            }
         }
 
         return UserDTO.create(user, funcSalvo);
@@ -308,33 +345,61 @@ public class UserService {
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);
         }
-        user.setPerfis(perfis);
+        if (user.getPerfis() == null) {
+            user.setPerfis(new HashSet<>());
+        } else {
+            user.getPerfis().clear();
+        }
+        user.getPerfis().addAll(perfis);
         user = userRepository.save(user);
 
         // Responsável
+        var optResp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
         if (Boolean.TRUE.equals(dto.getIsResponsavel())) {
-            if (!responsavelRepository.existsByPessoaResponsavel(pessoa)) {
+            if (optResp.isPresent()) {
+                Responsavel resp = optResp.get();
+                if (resp.getAtivo() == null || !resp.getAtivo()) {
+                    resp.setAtivo(true);
+                    responsavelRepository.save(resp);
+                }
+            } else {
                 Responsavel resp = Responsavel.builder()
                         .pessoaResponsavel(pessoa)
                         .build();
+                if (resp.getAtivo() == null) resp.setAtivo(true);
+                responsavelRepository.save(resp);
+            }
+        } else if (Boolean.FALSE.equals(dto.getIsResponsavel())) {
+            if (optResp.isPresent()) {
+                Responsavel resp = optResp.get();
+                resp.desativar();
                 responsavelRepository.save(resp);
             }
         }
 
         // Profissional
+        var optProf = profissionalRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
         if (Boolean.TRUE.equals(dto.getIsProfissional())) {
-            var optProf = profissionalRepository.findByPessoaProf(pessoa);
+            String conselho = dto.getConselhoProf() != null && !dto.getConselhoProf().isBlank()
+                    ? dto.getConselhoProf().trim()
+                    : "Não informado";
             if (optProf.isPresent()) {
                 Profissional prof = optProf.get();
-                if (dto.getConselhoProf() != null && !dto.getConselhoProf().isBlank()) {
-                    prof.setConselhoProf(dto.getConselhoProf().trim());
-                    profissionalRepository.save(prof);
-                }
+                prof.setAtivo(true);
+                prof.setConselhoProf(conselho);
+                profissionalRepository.save(prof);
             } else {
                 Profissional prof = Profissional.builder()
                         .pessoaProf(pessoa)
-                        .conselhoProf(dto.getConselhoProf() != null ? dto.getConselhoProf().trim() : "Não informado")
+                        .conselhoProf(conselho)
                         .build();
+                if (prof.getAtivo() == null) prof.setAtivo(true);
+                profissionalRepository.save(prof);
+            }
+        } else if (Boolean.FALSE.equals(dto.getIsProfissional())) {
+            if (optProf.isPresent()) {
+                Profissional prof = optProf.get();
+                prof.desativar();
                 profissionalRepository.save(prof);
             }
         }
@@ -348,6 +413,7 @@ public class UserService {
             var listFunc = funcionarioClinicaRepository.findByPessoa(pessoa);
             if (!listFunc.isEmpty()) {
                 funcSalvo = listFunc.get(0);
+                funcSalvo.setAtivo(true);
                 funcSalvo.setClinica(clinica);
                 funcSalvo.setCargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário");
             } else {
@@ -356,6 +422,7 @@ public class UserService {
                         .clinica(clinica)
                         .cargo(dto.getCargoClinica() != null && !dto.getCargoClinica().isBlank() ? dto.getCargoClinica().trim() : "Funcionário")
                         .build();
+                if (funcSalvo.getAtivo() == null) funcSalvo.setAtivo(true);
             }
             funcSalvo = funcionarioClinicaRepository.save(funcSalvo);
         } else if (Boolean.FALSE.equals(dto.getIsFuncionarioClinica())) {
@@ -389,12 +456,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void atualizarPerfis(String userId, Set<String> idPerfis) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         Set<Perfil> perfis = new HashSet<>(perfilRepository.findAllById(idPerfis));
-        user.setPerfis(perfis);
+        if (user.getPerfis() == null) {
+            user.setPerfis(new HashSet<>());
+        } else {
+            user.getPerfis().clear();
+        }
+        user.getPerfis().addAll(perfis);
         userRepository.save(user);
     }
 

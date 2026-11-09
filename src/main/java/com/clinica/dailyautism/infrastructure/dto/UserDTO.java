@@ -3,6 +3,7 @@ package com.clinica.dailyautism.infrastructure.dto;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,17 +30,31 @@ public class UserDTO {
     private String telefone;
     private String celular;
     private List<String> perfis;
+
+    @JsonProperty("isResponsavel")
     private boolean isResponsavel;
+
     private String idResponsavel;
+
+    @JsonProperty("isProfissional")
     private boolean isProfissional;
+
     private String idProfissional;
     private String conselhoProf;
+
+    @JsonProperty("isFuncionarioClinica")
     private boolean isFuncionarioClinica;
+
+    @JsonProperty("isAdminClinica")
     private boolean isAdminClinica;
+
     private String idClinica;
     private String nomeClinica;
     private String cargoClinica;
+
+    @JsonProperty("isAdmin")
     private boolean isAdmin;
+
     private Boolean ativo;
 
     public static UserDTO create(User user) {
@@ -124,5 +139,30 @@ public class UserDTO {
                 .isAdmin(isAdmin)
                 .ativo(user.getAtivo())
                 .build();
+    }
+
+    @JsonProperty("responsavel")
+    public boolean getResponsavel() {
+        return isResponsavel;
+    }
+
+    @JsonProperty("profissional")
+    public boolean getProfissional() {
+        return isProfissional;
+    }
+
+    @JsonProperty("funcionarioClinica")
+    public boolean getFuncionarioClinica() {
+        return isFuncionarioClinica;
+    }
+
+    @JsonProperty("adminClinica")
+    public boolean getAdminClinica() {
+        return isAdminClinica;
+    }
+
+    @JsonProperty("admin")
+    public boolean getAdmin() {
+        return isAdmin;
     }
 }

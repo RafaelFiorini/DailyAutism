@@ -59,9 +59,11 @@ public class SaveUserFullDTO {
     private String endereco;
 
     @JsonProperty("isResponsavel")
+    @JsonAlias({"responsavel"})
     private Boolean isResponsavel;
 
     @JsonProperty("isProfissional")
+    @JsonAlias({"profissional"})
     private Boolean isProfissional;
 
     @JsonProperty("conselhoProf")
@@ -69,10 +71,11 @@ public class SaveUserFullDTO {
     private String conselhoProf;
 
     @JsonProperty("isAdmin")
+    @JsonAlias({"admin"})
     private Boolean isAdmin;
 
     @JsonProperty("isFuncionarioClinica")
-    @JsonAlias({"isClinica", "funcionarioClinica"})
+    @JsonAlias({"funcionarioClinica", "isClinica", "clinica"})
     private Boolean isFuncionarioClinica;
 
     @JsonProperty("isAdminClinica")
@@ -88,4 +91,54 @@ public class SaveUserFullDTO {
 
     @JsonProperty("perfis")
     private List<String> perfis;
+
+    @JsonProperty("isResponsavel")
+    public Boolean getIsResponsavel() {
+        return isResponsavel;
+    }
+
+    @JsonProperty("isResponsavel")
+    public void setIsResponsavel(Boolean isResponsavel) {
+        this.isResponsavel = isResponsavel;
+    }
+
+    @JsonProperty("isProfissional")
+    public Boolean getIsProfissional() {
+        return isProfissional;
+    }
+
+    @JsonProperty("isProfissional")
+    public void setIsProfissional(Boolean isProfissional) {
+        this.isProfissional = isProfissional;
+    }
+
+    @JsonProperty("isAdmin")
+    public Boolean getIsAdmin() {
+        return isAdmin;
+    }
+
+    @JsonProperty("isAdmin")
+    public void setIsAdmin(Boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+
+    @JsonProperty("isFuncionarioClinica")
+    public Boolean getIsFuncionarioClinica() {
+        return isFuncionarioClinica;
+    }
+
+    @JsonProperty("isFuncionarioClinica")
+    public void setIsFuncionarioClinica(Boolean isFuncionarioClinica) {
+        this.isFuncionarioClinica = isFuncionarioClinica;
+    }
+
+    @JsonProperty("isAdminClinica")
+    public Boolean getIsAdminClinica() {
+        return isAdminClinica;
+    }
+
+    @JsonProperty("isAdminClinica")
+    public void setIsAdminClinica(Boolean isAdminClinica) {
+        this.isAdminClinica = isAdminClinica;
+    }
 }

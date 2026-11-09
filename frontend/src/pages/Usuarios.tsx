@@ -212,6 +212,18 @@ export default function Usuarios() {
                     .join('')
                     .toUpperCase();
 
+                  const isAdm = Boolean(user.isAdmin ?? (user as any).admin ?? user.perfis?.includes('ADMIN'));
+                  const isResp = Boolean(user.isResponsavel ?? (user as any).responsavel ?? user.perfis?.includes('RESPONSAVEL'));
+                  const isProf = Boolean(user.isProfissional ?? (user as any).profissional ?? user.perfis?.includes('PROFISSIONAL'));
+                  const isAdmClin = Boolean(user.isAdminClinica ?? (user as any).adminClinica ?? user.perfis?.includes('ADMIN_CLINICA'));
+                  const isFunc = Boolean(
+                    user.isFuncionarioClinica ??
+                    (user as any).funcionarioClinica ??
+                    isAdmClin ??
+                    user.perfis?.includes('CLINICA') ??
+                    user.perfis?.includes('FUNCIONARIO_CLINICA')
+                  );
+
                   return (
                     <tr key={user.idUser} className="hover:bg-gray-50/60 transition-colors">
                       {/* Usuário (Nome + Email) */}
@@ -245,21 +257,21 @@ export default function Usuarios() {
                       {/* Papéis de Acesso */}
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5">
-                          {user.isAdmin && (
+                          {isAdm && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
                               <ShieldCheck className="h-3.5 w-3.5" />
                               Admin
                             </span>
                           )}
 
-                          {user.isResponsavel && (
+                          {isResp && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                               <UserCheck className="h-3.5 w-3.5" />
                               Responsável
                             </span>
                           )}
 
-                          {user.isProfissional && (
+                          {isProf && (
                             <span
                               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
                               title={user.conselhoProf ? `Conselho: ${user.conselhoProf}` : undefined}
@@ -274,10 +286,10 @@ export default function Usuarios() {
                             </span>
                           )}
 
-                          {user.isFuncionarioClinica && (
+                          {isFunc && (
                             <span
                               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                                user.isAdminClinica
+                                isAdmClin
                                   ? 'bg-amber-50 text-amber-800 border-amber-300'
                                   : 'bg-teal-50 text-teal-700 border-teal-200'
                               }`}
@@ -288,7 +300,7 @@ export default function Usuarios() {
                               }
                             >
                               <Building2 className="h-3.5 w-3.5" />
-                              {user.isAdminClinica ? 'Admin Clínica' : (user.nomeClinica || 'Clínica')}
+                              {isAdmClin ? 'Admin Clínica' : (user.nomeClinica || 'Clínica')}
                               {user.cargoClinica && (
                                 <span className="text-[10px] opacity-80">
                                   ({user.cargoClinica})
@@ -297,7 +309,7 @@ export default function Usuarios() {
                             </span>
                           )}
 
-                          {!user.isAdmin && !user.isResponsavel && !user.isProfissional && !user.isFuncionarioClinica && (
+                          {!isAdm && !isResp && !isProf && !isFunc && (
                             <span className="text-xs text-gray-400 italic">
                               Sem papéis definidos
                             </span>
