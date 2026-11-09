@@ -23,6 +23,9 @@ public class PeriodicidadeService {
                 .diasIntervalo(savePeriodicidadeDTO.getDiasIntervalo())
                 .descricaoPeriodicidade(savePeriodicidadeDTO.getDescricaoPeriodicidade())
                 .build();
+        if (periodicidade.getAtivo() == null) {
+            periodicidade.setAtivo(true);
+        }
         return periodicidadeRepository.save(periodicidade);
     }
 

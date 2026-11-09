@@ -10,11 +10,12 @@ import {
   UserCheck,
   Briefcase,
   CreditCard,
+  CalendarClock,
   LogOut,
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { user, logout, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica } = useAuth();
+  const { user, logout, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica } = useAuth();
 
   const navigation = useMemo(() => {
     if (isAdmin) {
@@ -26,17 +27,24 @@ export default function AdminLayout() {
         { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
+        { name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false },
       ];
     }
 
     if (isFuncionarioClinica) {
-      return [
+      const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
+
+      if (isAdminClinica) {
+        items.push({ name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false });
+      }
+
+      return items;
     }
 
     if (isResponsavel) {

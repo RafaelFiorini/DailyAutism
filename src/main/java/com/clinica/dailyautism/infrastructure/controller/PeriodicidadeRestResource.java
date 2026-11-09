@@ -21,7 +21,7 @@ public class PeriodicidadeRestResource {
     private final PeriodicidadeService periodicidadeService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CRIAR_PERIODICIDADE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('CRIAR_PERIODICIDADE')")
     public ResponseEntity<PeriodicidadeDTO> createPeriodicidade(@Valid @RequestBody SavePeriodicidadeDTO savePeriodicidadeDTO) {
         Periodicidade periodicidade = periodicidadeService.createPeriodicidade(savePeriodicidadeDTO);
         return ResponseEntity.created(URI.create("/periodicidades/" + periodicidade.getIdPeriodicidade()))
@@ -29,14 +29,14 @@ public class PeriodicidadeRestResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('VER_PERIODICIDADE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PeriodicidadeDTO> loadPeriodicidade(@PathVariable String id) {
         Periodicidade periodicidade = periodicidadeService.loadPeriodicidade(id);
         return ResponseEntity.ok(PeriodicidadeDTO.create(periodicidade));
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('LISTAR_PERIODICIDADE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PeriodicidadeDTO>> listPeriodicidades() {
         List<PeriodicidadeDTO> periodicidades = periodicidadeService.listPeriodicidades()
                 .stream()
@@ -46,7 +46,7 @@ public class PeriodicidadeRestResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_PERIODICIDADE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PERIODICIDADE')")
     public ResponseEntity<PeriodicidadeDTO> updatePeriodicidade(@PathVariable String id,
                                                                 @Valid @RequestBody SavePeriodicidadeDTO savePeriodicidadeDTO) {
         Periodicidade periodicidade = periodicidadeService.updatePeriodicidade(id, savePeriodicidadeDTO);
@@ -54,7 +54,7 @@ public class PeriodicidadeRestResource {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('DELETAR_PERIODICIDADE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('DELETAR_PERIODICIDADE')")
     public ResponseEntity<Void> deletePeriodicidade(@PathVariable String id) {
         periodicidadeService.deletePeriodicidade(id);
         return ResponseEntity.noContent().build();
