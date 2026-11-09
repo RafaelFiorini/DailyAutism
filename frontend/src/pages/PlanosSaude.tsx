@@ -9,12 +9,17 @@ import {
   Trash2,
   ShieldCheck,
   Building,
+  Eye,
 } from 'lucide-react';
 import { planoSaudeService } from '../services/planoSaudeService';
 import type { PlanoSaude } from '../types/planoSaude';
 import PlanoSaudeModal from '../components/PlanoSaudeModal';
+import { useAuth } from '../hooks/useAuth';
 
 export default function PlanosSaude() {
+  const { isAdmin, isAdminClinica } = useAuth();
+  const canManagePlanos = isAdmin || isAdminClinica;
+
   const [planos, setPlanos] = useState<PlanoSaude[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -91,16 +96,23 @@ export default function PlanosSaude() {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingPlano(null);
-            setIsModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          Novo Plano de Saúde
-        </button>
+        {canManagePlanos ? (
+          <button
+            onClick={() => {
+              setEditingPlano(null);
+              setIsModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm self-start sm:self-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Plano de Saúde
+          </button>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 border border-gray-200 text-gray-600 rounded-lg text-xs font-medium self-start sm:self-auto">
+            <Eye className="h-4 w-4 text-gray-500" />
+            Modo Somente Leitura
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -183,7 +195,7 @@ export default function PlanosSaude() {
                   <th className="px-6 py-3.5">Plano de Saúde</th>
                   <th className="px-6 py-3.5">Operadora</th>
                   <th className="px-6 py-3.5">Registro ANS</th>
-                  <th className="px-6 py-3.5 text-right">Ações</th>
+                  {canManagePlanos && <th className="px-6 py-3.5 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-sm">
@@ -225,32 +237,34 @@ export default function PlanosSaude() {
                       </td>
 
                       {/* Ações */}
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingPlano(plano);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Editar plano de saúde"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(plano.idPlanoSaude, plano.nomePlano)}
-                            disabled={deletingId === plano.idPlanoSaude}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Desativar plano de saúde"
-                          >
-                            {deletingId === plano.idPlanoSaude ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
+                      {canManagePlanos && (
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingPlano(plano);
+                                setIsModalOpen(true);
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                              title="Editar plano de saúde"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(plano.idPlanoSaude, plano.nomePlano)}
+                              disabled={deletingId === plano.idPlanoSaude}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              title="Desativar plano de saúde"
+                            >
+                              {deletingId === plano.idPlanoSaude ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

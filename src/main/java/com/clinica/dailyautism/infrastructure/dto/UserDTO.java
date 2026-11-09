@@ -35,6 +35,7 @@ public class UserDTO {
     private String idProfissional;
     private String conselhoProf;
     private boolean isFuncionarioClinica;
+    private boolean isAdminClinica;
     private String idClinica;
     private String nomeClinica;
     private String cargoClinica;
@@ -79,7 +80,9 @@ public class UserDTO {
         if (perfilNames.contains("PROFISSIONAL") || perfilNames.contains("ROLE_PROFISSIONAL")) {
             isProf = true;
         }
+        boolean isAdminClinica = perfilNames.contains("ADMIN_CLINICA") || perfilNames.contains("ROLE_ADMIN_CLINICA");
         boolean isFuncClinica = funcionario != null
+                || isAdminClinica
                 || perfilNames.contains("CLINICA")
                 || perfilNames.contains("FUNCIONARIO_CLINICA")
                 || perfilNames.contains("ROLE_CLINICA")
@@ -114,6 +117,7 @@ public class UserDTO {
                 .idProfissional(idProfissional)
                 .conselhoProf(conselhoProf)
                 .isFuncionarioClinica(isFuncClinica)
+                .isAdminClinica(isAdminClinica)
                 .idClinica(idClinica)
                 .nomeClinica(nomeClinica)
                 .cargoClinica(cargoClinica)

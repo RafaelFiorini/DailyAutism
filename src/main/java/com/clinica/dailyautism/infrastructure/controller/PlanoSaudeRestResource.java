@@ -20,7 +20,7 @@ public class PlanoSaudeRestResource {
     private final PlanoSaudeService planoSaudeService;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('CRIAR_PLANO_SAUDE')")
     public ResponseEntity<PlanoSaudeDTO> createPlanoSaude(@Valid @RequestBody SavePlanoSaudeDTO dto) {
         PlanoSaude plano = planoSaudeService.createPlanoSaude(dto);
         return ResponseEntity.created(URI.create("/planos-saude/" + plano.getIdPlanoSaude()))
@@ -44,14 +44,14 @@ public class PlanoSaudeRestResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PLANO_SAUDE')")
     public ResponseEntity<PlanoSaudeDTO> updatePlanoSaude(@PathVariable String id,
                                                           @Valid @RequestBody SavePlanoSaudeDTO dto) {
         return ResponseEntity.ok(PlanoSaudeDTO.create(planoSaudeService.updatePlanoSaude(id, dto)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('DELETAR_PLANO_SAUDE')")
     public ResponseEntity<Void> deletePlanoSaude(@PathVariable String id) {
         planoSaudeService.deletePlanoSaude(id);
         return ResponseEntity.noContent().build();

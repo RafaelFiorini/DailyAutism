@@ -27,6 +27,7 @@ export interface User {
   idProfissional?: string | null;
   conselhoProf?: string | null;
   isFuncionarioClinica?: boolean;
+  isAdminClinica?: boolean;
   idClinica?: string | null;
   nomeClinica?: string | null;
   cargoClinica?: string | null;
@@ -48,6 +49,7 @@ export interface SaveUserInput {
   isProfissional: boolean;
   conselhoProf?: string;
   isFuncionarioClinica?: boolean;
+  isAdminClinica?: boolean;
   idClinica?: string;
   cargoClinica?: string;
   isAdmin: boolean;

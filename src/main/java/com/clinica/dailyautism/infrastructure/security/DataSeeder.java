@@ -103,7 +103,7 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO",
-                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
+                "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE"
         )));
 
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
@@ -113,23 +113,39 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
                 "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA",
-                "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
+                "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE"
         )));
 
-        // CLINICA / FUNCIONARIO_CLINICA — gerencia estrutura da clínica e intermedia agendamentos
-        Set<String> acoesClinica = Set.of(
+        // ADMIN_CLINICA — administrador/gestor da clínica (gestão completa da unidade e dos planos)
+        Set<String> acoesAdminClinica = Set.of(
                 "VER_CLINICA", "EDITAR_CLINICA",
-                "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
+                "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL", "EDITAR_PROFISSIONAL",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
                 "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
-                "LISTAR_PACIENTE", "VER_PACIENTE", "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL",
+                "LISTAR_PACIENTE", "VER_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
+                "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
                 "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE"
         );
-        criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));
-        criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesClinica));
+        criarPerfilSeNaoExistir("ADMIN_CLINICA", acaoRepository.findAllByNomeIn(acoesAdminClinica));
+
+        // FUNCIONARIO_CLINICA / CLINICA — operacional / recepção (consulta planos e faz agendamentos)
+        Set<String> acoesFuncionarioClinica = Set.of(
+                "VER_CLINICA",
+                "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
+                "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
+                "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
+                "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
+                "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
+                "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
+                "LISTAR_PACIENTE", "VER_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
+                "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
+                "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE"
+        );
+        criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
+        criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
     }
 
     private void criarPerfilSeNaoExistir(String nome, Iterable<Acao> acoes) {

@@ -49,6 +49,7 @@ export default function UserModal({
   const [isResponsavel, setIsResponsavel] = useState(false);
   const [isProfissional, setIsProfissional] = useState(false);
   const [isFuncionarioClinica, setIsFuncionarioClinica] = useState(false);
+  const [isAdminClinica, setIsAdminClinica] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Dados do Profissional
@@ -98,6 +99,7 @@ export default function UserModal({
       setIsResponsavel(Boolean(initialData.isResponsavel));
       setIsProfissional(Boolean(initialData.isProfissional));
       setIsFuncionarioClinica(Boolean(initialData.isFuncionarioClinica));
+      setIsAdminClinica(Boolean(initialData.isAdminClinica));
       setIsAdmin(Boolean(initialData.isAdmin));
 
       setConselhoProf(initialData.conselhoProf || '');
@@ -118,6 +120,7 @@ export default function UserModal({
       setIsResponsavel(true); // padrão responsável
       setIsProfissional(false);
       setIsFuncionarioClinica(false);
+      setIsAdminClinica(false);
       setIsAdmin(false);
 
       setConselhoProf('');
@@ -196,6 +199,7 @@ export default function UserModal({
         isProfissional,
         conselhoProf: isProfissional ? conselhoProf.trim() : undefined,
         isFuncionarioClinica,
+        isAdminClinica: isFuncionarioClinica ? isAdminClinica : false,
         idClinica: isFuncionarioClinica ? idClinica : undefined,
         cargoClinica: isFuncionarioClinica ? cargoClinica.trim() : undefined,
         isAdmin,
@@ -441,13 +445,66 @@ export default function UserModal({
                         type="text"
                         value={cargoClinica}
                         onChange={(e) => setCargoClinica(e.target.value)}
-                        placeholder="Ex: Recepcionista, Secretária, Atendente"
+                        placeholder="Ex: Gerente, Recepcionista, Secretária"
                         className="w-full px-3 py-2 text-sm border border-teal-300 rounded-lg bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
                       />
                     </div>
                   </div>
+
+                  {/* Nível de Acesso na Clínica */}
+                  <div className="bg-white p-3 rounded-lg border border-teal-200 space-y-2">
+                    <span className="block text-xs font-semibold text-teal-900">
+                      Nível de Permissão na Clínica
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <label
+                        className={`flex items-start gap-2 p-2 rounded-md border cursor-pointer transition ${
+                          !isAdminClinica
+                            ? 'bg-teal-50 border-teal-500 text-teal-900 font-medium'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="nivelClinica"
+                          checked={!isAdminClinica}
+                          onChange={() => setIsAdminClinica(false)}
+                          className="mt-0.5 text-teal-600 focus:ring-teal-500"
+                        />
+                        <div>
+                          <p className="font-semibold text-gray-800">Operacional / Recepção</p>
+                          <p className="text-[11px] text-gray-500">
+                            Atendimento, agendamentos e consulta a planos de saúde.
+                          </p>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`flex items-start gap-2 p-2 rounded-md border cursor-pointer transition ${
+                          isAdminClinica
+                            ? 'bg-teal-50 border-teal-500 text-teal-900 font-medium'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="nivelClinica"
+                          checked={isAdminClinica}
+                          onChange={() => setIsAdminClinica(true)}
+                          className="mt-0.5 text-teal-600 focus:ring-teal-500"
+                        />
+                        <div>
+                          <p className="font-semibold text-teal-900">Administrador da Clínica</p>
+                          <p className="text-[11px] text-teal-700">
+                            Gestão da equipe, cadastro e edição de planos de saúde e periodicidades.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   <p className="text-[11px] text-teal-700">
-                    O funcionário terá acesso restrito aos pacientes e agendamentos vinculados a esta clínica.
+                    O usuário terá acesso aos pacientes e registros vinculados exclusivamente a esta clínica.
                   </p>
                 </div>
               )}

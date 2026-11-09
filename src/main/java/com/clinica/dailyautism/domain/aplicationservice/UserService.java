@@ -157,9 +157,15 @@ public class UserService {
             perfilRepository.findByNome("PROFISSIONAL").ifPresent(perfis::add);
         }
         if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica())) {
-            perfilRepository.findByNome("CLINICA")
-                    .or(() -> perfilRepository.findByNome("FUNCIONARIO_CLINICA"))
-                    .ifPresent(perfis::add);
+            if (Boolean.TRUE.equals(dto.getIsAdminClinica())) {
+                perfilRepository.findByNome("ADMIN_CLINICA")
+                        .or(() -> perfilRepository.findByNome("CLINICA"))
+                        .ifPresent(perfis::add);
+            } else {
+                perfilRepository.findByNome("FUNCIONARIO_CLINICA")
+                        .or(() -> perfilRepository.findByNome("CLINICA"))
+                        .ifPresent(perfis::add);
+            }
         }
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);
@@ -289,9 +295,15 @@ public class UserService {
             perfilRepository.findByNome("PROFISSIONAL").ifPresent(perfis::add);
         }
         if (Boolean.TRUE.equals(dto.getIsFuncionarioClinica())) {
-            perfilRepository.findByNome("CLINICA")
-                    .or(() -> perfilRepository.findByNome("FUNCIONARIO_CLINICA"))
-                    .ifPresent(perfis::add);
+            if (Boolean.TRUE.equals(dto.getIsAdminClinica())) {
+                perfilRepository.findByNome("ADMIN_CLINICA")
+                        .or(() -> perfilRepository.findByNome("CLINICA"))
+                        .ifPresent(perfis::add);
+            } else {
+                perfilRepository.findByNome("FUNCIONARIO_CLINICA")
+                        .or(() -> perfilRepository.findByNome("CLINICA"))
+                        .ifPresent(perfis::add);
+            }
         }
         if (perfis.isEmpty()) {
             perfilRepository.findByNome("RESPONSAVEL").ifPresent(perfis::add);

@@ -157,7 +157,7 @@ public class ProfissionalService {
         }
 
         boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
-                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
         if (isClinica) {
             if (user.getPessoa() != null) {
                 var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
@@ -199,7 +199,7 @@ public class ProfissionalService {
         }
 
         boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
-                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()));
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
         if (isClinica) {
             if (user.getPessoa() == null) {
                 return List.of();
