@@ -4,6 +4,7 @@ import CompromissoModal from './CompromissoModal';
 import { compromissoService } from '../services/compromissoService';
 import { pacienteService } from '../services/pacienteService';
 import { periodicidadeService } from '../services/periodicidadeService';
+import { profissionalService } from '../services/profissionalService';
 
 vi.mock('../services/compromissoService', () => ({
   compromissoService: {
@@ -25,6 +26,12 @@ vi.mock('../services/periodicidadeService', () => ({
   },
 }));
 
+vi.mock('../services/profissionalService', () => ({
+  profissionalService: {
+    list: vi.fn(),
+  },
+}));
+
 describe('CompromissoModal', () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();
@@ -39,6 +46,9 @@ describe('CompromissoModal', () => {
     ]);
     vi.mocked(periodicidadeService.list).mockResolvedValue([
       { idPeriodicidade: 'p-1', nomePeriodicidade: 'Semanal', diasIntervalo: 7 },
+    ]);
+    vi.mocked(profissionalService.list).mockResolvedValue([
+      { idProf: 'prof-1', nomeProfissional: 'Dra. Camila Santos', conselhoProf: 'CRFa 1234' } as any,
     ]);
   });
 
@@ -56,14 +66,16 @@ describe('CompromissoModal', () => {
       expect(screen.getByText('Lucas Silva')).toBeInTheDocument();
       expect(screen.getByText('Fonoaudiologia')).toBeInTheDocument();
       expect(screen.getByText('Semanal (7d)')).toBeInTheDocument();
+      expect(screen.getByText(/Dra. Camila Santos/)).toBeInTheDocument();
     });
   });
 
-  it('permite criar um novo agendamento com sucesso', async () => {
+  it('permite criar um novo agendamento com sucesso associando o profissional', async () => {
     vi.mocked(compromissoService.create).mockResolvedValue({
       idCompromisso: 'c-new',
       tituloCompromisso: 'Sessão Fono',
       status: 'AGUARDANDO_APROVACAO',
+      idProfissional: 'prof-1',
     } as any);
 
     render(
@@ -80,6 +92,7 @@ describe('CompromissoModal', () => {
 
     fireEvent.change(screen.getByLabelText(/paciente/i), { target: { value: 'pac-1' } });
     fireEvent.change(screen.getByLabelText(/tipo de atendimento/i), { target: { value: 'tipo-1' } });
+    fireEvent.change(screen.getByLabelText(/profissional \/ terapeuta/i), { target: { value: 'prof-1' } });
     fireEvent.change(screen.getByPlaceholderText(/sessão semanal/i), { target: { value: 'Sessão Fono' } });
 
     const btnSubmit = screen.getByRole('button', { name: /criar agendamento/i });
@@ -90,6 +103,7 @@ describe('CompromissoModal', () => {
         expect.objectContaining({
           idPaciente: 'pac-1',
           idTipoCompromisso: 'tipo-1',
+          idProfissional: 'prof-1',
           tituloCompromisso: 'Sessão Fono',
         })
       );

@@ -15,20 +15,39 @@ public class AgendaItemDTO {
     private final String idPaciente;
     private final String nomePaciente;
     private final boolean temPlano;
+    private final String idProfissional;
+    private final String nomeProfissional;
+    private final String especialidade;
 
     public static AgendaItemDTO create(Compromisso c) {
-        boolean temPlano = c.getPaciente().getPlanos() != null &&
+        boolean temPlano = c.getPaciente() != null &&
+                c.getPaciente().getPlanos() != null &&
                 !c.getPaciente().getPlanos().isEmpty();
+
+        String idProf = c.getProfissional() != null ? c.getProfissional().getIdProf() : null;
+        String nomeProf = (c.getProfissional() != null && c.getProfissional().getPessoaProf() != null)
+                ? c.getProfissional().getPessoaProf().getNomePessoa()
+                : null;
+        String esp = c.getTipoCompromisso() != null ? c.getTipoCompromisso().getNomeTipo() : null;
+
+        String idPac = c.getPaciente() != null ? c.getPaciente().getIdPaciente() : null;
+        String nomePac = (c.getPaciente() != null && c.getPaciente().getPessoaPaciente() != null)
+                ? c.getPaciente().getPessoaPaciente().getNomePessoa()
+                : (c.getPaciente() != null ? c.getPaciente().getApelidoPaciente() : null);
+
         return new AgendaItemDTO(
                 c.getIdCompromisso(),
                 c.getTituloCompromisso(),
                 c.getDescricaoCompromisso(),
-                c.getDataHoraCompromisso().toString(),
+                c.getDataHoraCompromisso() != null ? c.getDataHoraCompromisso().toString() : null,
                 c.getLocalCompromisso(),
-                c.getStatus().name(),
-                c.getPaciente().getIdPaciente(),
-                c.getPaciente().getPessoaPaciente().getNomePessoa(),
-                temPlano
+                c.getStatus() != null ? c.getStatus().name() : null,
+                idPac,
+                nomePac,
+                temPlano,
+                idProf,
+                nomeProf,
+                esp
         );
     }
 }

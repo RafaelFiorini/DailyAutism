@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { X, Calendar, Loader2, AlertCircle, Clock, MapPin, User, Tag, CalendarClock } from 'lucide-react';
+import { X, Calendar, Loader2, AlertCircle, Clock, MapPin, User, Tag, CalendarClock, Briefcase } from 'lucide-react';
 import { compromissoService } from '../services/compromissoService';
 import { pacienteService } from '../services/pacienteService';
 import { periodicidadeService } from '../services/periodicidadeService';
+import { profissionalService } from '../services/profissionalService';
 import type { Compromisso, SaveCompromissoInput, TipoCompromisso } from '../types/compromisso';
 import type { Paciente } from '../types/paciente';
 import type { Periodicidade } from '../types/periodicidade';
+import type { Profissional } from '../types/profissional';
 
 interface CompromissoModalProps {
   isOpen: boolean;
@@ -27,16 +29,18 @@ export default function CompromissoModal({
   const [idPaciente, setIdPaciente] = useState('');
   const [idTipoCompromisso, setIdTipoCompromisso] = useState('');
   const [idPeriodicidade, setIdPeriodicidade] = useState('');
+  const [idProfissional, setIdProfissional] = useState('');
 
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [tipos, setTipos] = useState<TipoCompromisso[]>([]);
   const [periodicidades, setPeriodicidades] = useState<Periodicidade[]>([]);
+  const [profissionais, setProfissionais] = useState<Profissional[]>([]);
 
   const [loadingData, setLoadingData] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Carrega opções de paciente, tipo e periodicidade ao abrir
+  // Carrega opções de paciente, tipo, periodicidade e profissional ao abrir
   useEffect(() => {
     if (isOpen) {
       setLoadingData(true);
@@ -44,11 +48,13 @@ export default function CompromissoModal({
         pacienteService.list().catch(() => []),
         compromissoService.listTipos().catch(() => []),
         periodicidadeService.list().catch(() => []),
+        profissionalService.list().catch(() => []),
       ])
-        .then(([pacList, tiposList, periodList]) => {
+        .then(([pacList, tiposList, periodList, profList]) => {
           setPacientes(pacList);
           setTipos(tiposList);
           setPeriodicidades(periodList);
+          setProfissionais(profList);
 
           // Se for novo compromisso e houver tipos/periodicidades, pré-seleciona padrão se estiver vazio
           if (!initialData) {
@@ -84,6 +90,7 @@ export default function CompromissoModal({
       setIdPaciente(initialData.idPaciente || '');
       setIdTipoCompromisso(initialData.idTipoCompromisso || '');
       setIdPeriodicidade(initialData.idPeriodicidade || '');
+      setIdProfissional(initialData.idProfissional || '');
     } else {
       setTituloCompromisso('');
       setDescricaoCompromisso('');
@@ -97,6 +104,7 @@ export default function CompromissoModal({
       setIdPaciente('');
       setIdTipoCompromisso('');
       setIdPeriodicidade('');
+      setIdProfissional('');
     }
     setError('');
   }, [initialData, isOpen]);
@@ -151,6 +159,7 @@ export default function CompromissoModal({
       idPaciente,
       idTipoCompromisso,
       idPeriodicidade,
+      idProfissional: idProfissional || undefined,
     };
 
     setSaving(true);
@@ -260,6 +269,30 @@ export default function CompromissoModal({
                   {tipos.map((t) => (
                     <option key={t.idTipoCompromisso} value={t.idTipoCompromisso}>
                       {t.nomeTipo}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Profissional / Terapeuta */}
+              <div>
+                <label
+                  htmlFor="idProfissional"
+                  className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5"
+                >
+                  <Briefcase className="w-4 h-4 text-gray-400" />
+                  Profissional / Terapeuta Responsável
+                </label>
+                <select
+                  id="idProfissional"
+                  value={idProfissional}
+                  onChange={(e) => setIdProfissional(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                >
+                  <option value="">Selecione o profissional (ou definir depois)...</option>
+                  {profissionais.map((prof) => (
+                    <option key={prof.idProf} value={prof.idProf}>
+                      {prof.nomeProfissional} {prof.conselhoProf ? `(${prof.conselhoProf})` : ''}
                     </option>
                   ))}
                 </select>

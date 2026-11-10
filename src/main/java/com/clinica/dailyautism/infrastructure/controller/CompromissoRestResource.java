@@ -39,10 +39,11 @@ public class CompromissoRestResource {
     @PreAuthorize("hasAuthority('LISTAR_COMPROMISSO')")
     public ResponseEntity<List<CompromissoDTO>> listCompromissos(
             @RequestParam(required = false) String pacienteId,
+            @RequestParam(required = false) String profissionalId,
             @RequestParam(required = false) StatusCompromisso status,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
-        List<CompromissoDTO> compromissos = compromissoService.listCompromissosForUser(email, pacienteId, status)
+        List<CompromissoDTO> compromissos = compromissoService.listCompromissosForUser(email, pacienteId, profissionalId, status)
                 .stream()
                 .map(CompromissoDTO::create)
                 .toList();

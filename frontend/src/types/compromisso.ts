@@ -19,6 +19,9 @@ export interface Compromisso {
   nomeTipoCompromisso: string;
   idPeriodicidade: string;
   nomePeriodicidade: string;
+  idProfissional?: string;
+  nomeProfissional?: string;
+  conselhoProfissional?: string;
   idUser: string;
 }
 
@@ -30,6 +33,7 @@ export interface SaveCompromissoInput {
   idPaciente: string;
   idTipoCompromisso: string;
   idPeriodicidade: string;
+  idProfissional?: string;
 }
 
 export interface TipoCompromisso {

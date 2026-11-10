@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -47,6 +44,12 @@ public class CompromissoService {
         User user = userRepository.findByEmailUser(emailDoToken)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailDoToken));
 
+        Profissional profissional = null;
+        if (saveCompromissoDTO.getIdProfissional() != null && !saveCompromissoDTO.getIdProfissional().isBlank()) {
+            profissional = profissionalRepository.findById(saveCompromissoDTO.getIdProfissional().trim())
+                    .orElse(null);
+        }
+
         Compromisso compromisso = Compromisso.builder()
                 .tituloCompromisso(saveCompromissoDTO.getTituloCompromisso())
                 .descricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso())
@@ -56,6 +59,7 @@ public class CompromissoService {
                 .paciente(paciente)
                 .tipoCompromisso(tipoCompromisso)
                 .periodicidade(periodicidade)
+                .profissional(profissional)
                 .criadoPor(user)
                 .build();
 
@@ -71,7 +75,7 @@ public class CompromissoService {
         return compromissoRepository.findByPacienteIdPacienteOrderByDataHoraCompromissoAsc(pacienteId);
     }
 
-    public List<Compromisso> listCompromissosForUser(String email, String pacienteId, StatusCompromisso status) {
+    public List<Compromisso> listCompromissosForUser(String email, String pacienteId, String profissionalId, StatusCompromisso status) {
         List<Compromisso> listaBase;
 
         if (email == null || email.isBlank()) {
@@ -86,14 +90,32 @@ public class CompromissoService {
                 if (isAdmin) {
                     listaBase = compromissoRepository.findAllByOrderByDataHoraCompromissoDesc();
                 } else {
-                    List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
-                    if (pacientesPermitidos.isEmpty()) {
-                        listaBase = List.of();
+                    boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                            .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+
+                    if (isProfissional && user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+                        String idProf = user.getPessoa().getProfissional().getIdProf();
+                        Set<Compromisso> unicos = new LinkedHashSet<>();
+                        unicos.addAll(compromissoRepository.findByProfissionalIdProfOrderByDataHoraCompromissoDesc(idProf));
+
+                        List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
+                        List<String> pacIds = pacientesPermitidos.stream().map(Paciente::getIdPaciente).toList();
+                        if (!pacIds.isEmpty()) {
+                            unicos.addAll(compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(pacIds));
+                        }
+                        unicos.addAll(compromissoRepository.findByCriadoPorIdUser(user.getIdUser()));
+                        listaBase = new ArrayList<>(unicos);
+                        listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.reverseOrder())));
                     } else {
-                        List<String> ids = pacientesPermitidos.stream()
-                                .map(Paciente::getIdPaciente)
-                                .toList();
-                        listaBase = compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(ids);
+                        List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
+                        if (pacientesPermitidos.isEmpty()) {
+                            listaBase = List.of();
+                        } else {
+                            List<String> ids = pacientesPermitidos.stream()
+                                    .map(Paciente::getIdPaciente)
+                                    .toList();
+                            listaBase = compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(ids);
+                        }
                     }
                 }
             }
@@ -101,6 +123,7 @@ public class CompromissoService {
 
         return listaBase.stream()
                 .filter(c -> pacienteId == null || pacienteId.isBlank() || (c.getPaciente() != null && pacienteId.equals(c.getPaciente().getIdPaciente())))
+                .filter(c -> profissionalId == null || profissionalId.isBlank() || (c.getProfissional() != null && profissionalId.equals(c.getProfissional().getIdProf())))
                 .filter(c -> status == null || c.getStatus() == status)
                 .toList();
     }
@@ -129,6 +152,16 @@ public class CompromissoService {
             Periodicidade periodicidade = periodicidadeRepository.findById(saveCompromissoDTO.getIdPeriodicidade())
                     .orElseThrow(() -> new PeriodicidadeNotFoundException("Periodicidade não encontrada: " + saveCompromissoDTO.getIdPeriodicidade()));
             compromisso.setPeriodicidade(periodicidade);
+        }
+
+        if (saveCompromissoDTO.getIdProfissional() != null) {
+            if (saveCompromissoDTO.getIdProfissional().isBlank()) {
+                compromisso.setProfissional(null);
+            } else {
+                Profissional prof = profissionalRepository.findById(saveCompromissoDTO.getIdProfissional().trim())
+                        .orElse(null);
+                compromisso.setProfissional(prof);
+            }
         }
 
         return compromissoRepository.save(compromisso);
@@ -166,14 +199,24 @@ public class CompromissoService {
         Profissional profissional = profissionalRepository.findById(profissionalId)
                 .orElseThrow(() -> new RuntimeException("Profissional não encontrado: " + profissionalId));
 
-        List<String> idsPacientes = profissional.getPacientes().stream()
-                .map(ProfissionalPaciente::getPaciente)
-                .map(Paciente::getIdPaciente)
-                .toList();
+        Set<Compromisso> unicos = new LinkedHashSet<>();
+        unicos.addAll(compromissoRepository.findByProfissionalIdProfAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(profissionalId, de, ate));
 
-        return compromissoRepository
-                .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate)
-                .stream()
+        if (profissional.getPacientes() != null) {
+            List<String> idsPacientes = profissional.getPacientes().stream()
+                    .map(ProfissionalPaciente::getPaciente)
+                    .filter(Objects::nonNull)
+                    .map(Paciente::getIdPaciente)
+                    .toList();
+
+            if (!idsPacientes.isEmpty()) {
+                unicos.addAll(compromissoRepository
+                        .findByPacienteIdPacienteInAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(idsPacientes, de, ate));
+            }
+        }
+
+        return unicos.stream()
+                .sorted(Comparator.comparing(Compromisso::getDataHoraCompromisso))
                 .map(AgendaItemDTO::create)
                 .toList();
     }
@@ -234,6 +277,7 @@ public class CompromissoService {
                     .paciente(original.getPaciente())
                     .tipoCompromisso(original.getTipoCompromisso())
                     .periodicidade(original.getPeriodicidade())
+                    .profissional(original.getProfissional())
                     .criadoPor(original.getCriadoPor())
                     .build();
             replicas.add(replica);

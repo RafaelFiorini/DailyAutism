@@ -8,7 +8,7 @@ import type {
 } from '../types/compromisso';
 
 export const compromissoService = {
-  async list(params?: { pacienteId?: string; status?: StatusCompromisso }): Promise<Compromisso[]> {
+  async list(params?: { pacienteId?: string; profissionalId?: string; status?: StatusCompromisso }): Promise<Compromisso[]> {
     const { data } = await api.get<Compromisso[]>('/compromissos', { params });
     return data;
   },

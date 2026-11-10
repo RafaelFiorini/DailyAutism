@@ -24,6 +24,14 @@ public interface CompromissoRepository extends JpaRepository<Compromisso, String
 
     List<Compromisso> findByCriadoPorIdUser(String idUser);
 
+    List<Compromisso> findByProfissionalIdProfOrderByDataHoraCompromissoDesc(String idProf);
+
+    List<Compromisso> findByProfissionalIdProfAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(
+            String idProf,
+            LocalDateTime de,
+            LocalDateTime ate
+    );
+
     @Query("SELECT DISTINCT c.paciente FROM Compromisso c WHERE c.criadoPor.idUser = :idUser AND c.paciente IS NOT NULL")
     List<Paciente> findPacientesByCriadoPorIdUser(@Param("idUser") String idUser);
 }

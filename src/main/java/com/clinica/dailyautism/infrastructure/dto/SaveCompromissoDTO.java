@@ -1,10 +1,14 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor(force = true)
+@AllArgsConstructor
 public class SaveCompromissoDTO {
 
     @NotNull(message = "O título do compromisso é obrigatório")
@@ -25,4 +29,6 @@ public class SaveCompromissoDTO {
 
     @NotNull(message = "O ID da periodicidade é obrigatório")
     private final String idPeriodicidade;
+
+    private final String idProfissional;
 }

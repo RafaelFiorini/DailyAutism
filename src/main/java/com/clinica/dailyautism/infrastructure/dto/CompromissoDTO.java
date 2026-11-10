@@ -20,9 +20,34 @@ public class CompromissoDTO {
     private final String nomeTipoCompromisso;
     private final String idPeriodicidade;
     private final String nomePeriodicidade;
+    private final String idProfissional;
+    private final String nomeProfissional;
+    private final String conselhoProfissional;
     private final String idUser;
 
     public static CompromissoDTO create(Compromisso compromisso) {
+        String idProf = compromisso.getProfissional() != null ? compromisso.getProfissional().getIdProf() : null;
+        String nomeProf = null;
+        String conselhoProf = null;
+        if (compromisso.getProfissional() != null) {
+            conselhoProf = compromisso.getProfissional().getConselhoProf();
+            if (compromisso.getProfissional().getPessoaProf() != null) {
+                nomeProf = compromisso.getProfissional().getPessoaProf().getNomePessoa();
+            }
+        }
+
+        String nomePac = (compromisso.getPaciente() != null && compromisso.getPaciente().getPessoaPaciente() != null)
+                ? compromisso.getPaciente().getPessoaPaciente().getNomePessoa()
+                : (compromisso.getPaciente() != null ? compromisso.getPaciente().getApelidoPaciente() : null);
+
+        String idTipo = compromisso.getTipoCompromisso() != null ? compromisso.getTipoCompromisso().getIdTipoCompromisso() : null;
+        String nomeTipo = compromisso.getTipoCompromisso() != null ? compromisso.getTipoCompromisso().getNomeTipo() : null;
+
+        String idPeriod = compromisso.getPeriodicidade() != null ? compromisso.getPeriodicidade().getIdPeriodicidade() : null;
+        String nomePeriod = compromisso.getPeriodicidade() != null ? compromisso.getPeriodicidade().getNomePeriodicidade() : null;
+
+        String idUser = compromisso.getCriadoPor() != null ? compromisso.getCriadoPor().getIdUser() : null;
+
         return new CompromissoDTO(
                 compromisso.getIdCompromisso(),
                 compromisso.getTituloCompromisso(),
@@ -30,13 +55,16 @@ public class CompromissoDTO {
                 compromisso.getDataHoraCompromisso(),
                 compromisso.getLocalCompromisso(),
                 compromisso.getStatus(),
-                compromisso.getPaciente().getIdPaciente(),
-                compromisso.getPaciente().getPessoaPaciente().getNomePessoa(),
-                compromisso.getTipoCompromisso().getIdTipoCompromisso(),
-                compromisso.getTipoCompromisso().getNomeTipo(),
-                compromisso.getPeriodicidade().getIdPeriodicidade(),
-                compromisso.getPeriodicidade().getNomePeriodicidade(),
-                compromisso.getCriadoPor().getIdUser()
+                compromisso.getPaciente() != null ? compromisso.getPaciente().getIdPaciente() : null,
+                nomePac,
+                idTipo,
+                nomeTipo,
+                idPeriod,
+                nomePeriod,
+                idProf,
+                nomeProf,
+                conselhoProf,
+                idUser
         );
     }
 }
