@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface ArquivoRepository extends JpaRepository<Arquivo, String> {
     List<Arquivo> findByPacienteIdPacienteOrderByDataArquivoDesc(String pacienteId);
+    List<Arquivo> findAllByOrderByDataArquivoDescDataUploadDesc();
+    List<Arquivo> findByPacienteIdPacienteInOrderByDataArquivoDescDataUploadDesc(List<String> pacienteIds);
 }

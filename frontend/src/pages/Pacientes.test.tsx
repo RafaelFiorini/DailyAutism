@@ -1,5 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import Pacientes from './Pacientes';
 import { pacienteService } from '../services/pacienteService';
 
@@ -53,13 +54,21 @@ describe('Pacientes Page', () => {
 
   it('renderiza o estado de carregamento inicialmente', () => {
     vi.mocked(pacienteService.list).mockReturnValueOnce(new Promise(() => {}));
-    render(<Pacientes />);
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
     expect(screen.getByText('Carregando pacientes...')).toBeInTheDocument();
   });
 
   it('renderiza a lista de pacientes com sucesso', async () => {
     vi.mocked(pacienteService.list).mockResolvedValueOnce(mockPacientes);
-    render(<Pacientes />);
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Lucas Silva')).toBeInTheDocument();
@@ -72,7 +81,11 @@ describe('Pacientes Page', () => {
 
   it('filtra a lista de pacientes pela barra de busca', async () => {
     vi.mocked(pacienteService.list).mockResolvedValueOnce(mockPacientes);
-    render(<Pacientes />);
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Lucas Silva')).toBeInTheDocument();
@@ -87,7 +100,11 @@ describe('Pacientes Page', () => {
 
   it('abre modal ao clicar em Novo Paciente', async () => {
     vi.mocked(pacienteService.list).mockResolvedValueOnce([]);
-    render(<Pacientes />);
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Nenhum paciente encontrado')).toBeInTheDocument();

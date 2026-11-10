@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   HeartPulse,
   UserPlus,
@@ -10,6 +11,7 @@ import {
   UserCheck,
   CreditCard,
   Building2,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { pacienteService } from '../services/pacienteService';
@@ -17,6 +19,7 @@ import type { Paciente } from '../types/paciente';
 import PacienteModal from '../components/PacienteModal';
 
 export default function Pacientes() {
+  const navigate = useNavigate();
   const { isAdmin, isResponsavel, isProfissional } = useAuth();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,6 +291,13 @@ export default function Pacientes() {
                       {/* Ações */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => navigate(`/admin/arquivos?pacienteId=${pac.idPaciente}`)}
+                            className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Documentos / Arquivos"
+                          >
+                            <FileText className="h-4 w-4" />
+                          </button>
                           <button
                             onClick={() => {
                               setEditingPaciente(pac);

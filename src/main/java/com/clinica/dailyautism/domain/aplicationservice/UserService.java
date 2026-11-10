@@ -62,7 +62,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    private UserDTO mapUserToDTO(User user) {
+    public UserDTO mapUserToDTO(User user) {
         FuncionarioClinica func = null;
         if (user.getPessoa() != null) {
             var list = funcionarioClinicaRepository.findByPessoa(user.getPessoa());

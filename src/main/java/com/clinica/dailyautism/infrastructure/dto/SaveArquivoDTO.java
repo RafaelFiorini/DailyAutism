@@ -1,31 +1,44 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SaveArquivoDTO {
 
-    @NotNull(message = "O nome do arquivo é obrigatório")
-    private final String nomeArquivo;
+    private String nomeArquivo;
+
+    private String descricao;
 
     @NotNull(message = "A data do arquivo é obrigatória")
-    private final LocalDate dataArquivo;
+    private LocalDate dataArquivo;
 
     @NotNull(message = "A extensão do arquivo é obrigatória")
-    private final String extensaoArquivo;
+    private String extensaoArquivo;
 
-    private final String arquivoBase64;
+    private String arquivoBase64;
 
-    private final String urlArquivo;
+    private String urlArquivo;
 
     @NotNull(message = "O ID do paciente é obrigatório")
-    private final String idPaciente;
+    private String idPaciente;
 
     @NotNull(message = "O ID do tipo de arquivo é obrigatório")
-    private final String idTipoArquivo;
+    private String idTipoArquivo;
 
-    @NotNull(message = "O ID do usuário é obrigatório")
-    private final String idUser;
+    private String idUser;
+
+    private Boolean compartilhadoComResponsavel;
+
+    private Boolean compartilhadoComClinica;
+
+    private String idClinicaCompartilhada;
+
+    private List<String> idsProfissionaisCompartilhados;
 }

@@ -76,6 +76,6 @@ public class UserRestResource {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDTO> getMe(Authentication authentication) {
         User user = userService.findByEmail(authentication.getName());
-        return ResponseEntity.ok(UserDTO.create(user));
+        return ResponseEntity.ok(userService.mapUserToDTO(user));
     }
 }

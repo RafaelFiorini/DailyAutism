@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.infrastructure.security;
 
 import com.clinica.dailyautism.domain.entity.Periodicidade;
+import com.clinica.dailyautism.domain.entity.TipoArquivo;
 import com.clinica.dailyautism.domain.entity.TipoCompromisso;
 import com.clinica.dailyautism.domain.entity.security.Acao;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
@@ -8,6 +9,7 @@ import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.AcaoRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PeriodicidadeRepository;
+import com.clinica.dailyautism.domain.repository.TipoArquivoRepository;
 import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PeriodicidadeRepository periodicidadeRepository;
     private final TipoCompromissoRepository tipoCompromissoRepository;
+    private final TipoArquivoRepository tipoArquivoRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,6 +39,7 @@ public class DataSeeder implements CommandLineRunner {
         seedAdminUser();
         seedPeriodicidades();
         seedTiposCompromisso();
+        seedTiposArquivo();
     }
 
     private void seedAdminUser() {
@@ -65,6 +69,9 @@ public class DataSeeder implements CommandLineRunner {
                 // Arquivo
                 "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO",
                 "DELETAR_ARQUIVO", "BAIXAR_ARQUIVO",
+                // Tipo de Arquivo
+                "CRIAR_TIPOARQUIVO", "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO",
+                "EDITAR_TIPOARQUIVO", "DELETAR_TIPOARQUIVO",
                 // Compromisso
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "DELETAR_COMPROMISSO", "APROVAR_COMPROMISSO",
@@ -111,10 +118,11 @@ public class DataSeeder implements CommandLineRunner {
         // ADMIN — acesso total
         criarPerfilSeNaoExistir("ADMIN", acaoRepository.findAll());
 
-        // RESPONSAVEL — vê agenda, arquivos e dados do paciente, e cadastra/edita seus pacientes
+        // RESPONSAVEL — vê agenda, arquivos (sobe resultados/laudos e baixa liberados) e dados do paciente
         criarPerfilSeNaoExistir("RESPONSAVEL", acaoRepository.findAllByNomeIn(Set.of(
                 "VER_PACIENTE", "LISTAR_PACIENTE", "CRIAR_PACIENTE", "EDITAR_PACIENTE",
-                "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
+                "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
+                "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO",
                 "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "CRIAR_COMPROMISSO", "VER_AGENDA", "APROVAR_COMPROMISSO",
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
@@ -125,7 +133,8 @@ public class DataSeeder implements CommandLineRunner {
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
         criarPerfilSeNaoExistir("PROFISSIONAL", acaoRepository.findAllByNomeIn(Set.of(
                 "VER_PACIENTE", "LISTAR_PACIENTE",
-                "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO",
+                "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
+                "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO",
                 "CRIAR_COMPROMISSO", "VER_COMPROMISSO", "LISTAR_COMPROMISSO",
                 "EDITAR_COMPROMISSO", "APROVAR_COMPROMISSO",
                 "VER_PROFISSIONAL_PACIENTE", "EDITAR_ANAMNESE", "VER_AGENDA",
@@ -134,7 +143,7 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
         )));
 
-        // ADMIN_CLINICA — administrador/gestor da clínica (gestão completa da unidade, planos e periodicidades)
+        // ADMIN_CLINICA — administrador/gestor da clínica (gestão completa da unidade, planos, periodicidades e documentos)
         Set<String> acoesAdminClinica = Set.of(
                 "VER_CLINICA", "EDITAR_CLINICA",
                 "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL", "EDITAR_PROFISSIONAL",
@@ -147,11 +156,13 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
                 "CRIAR_PLANO_SAUDE", "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE", "EDITAR_PLANO_SAUDE", "DELETAR_PLANO_SAUDE",
                 "CRIAR_PERIODICIDADE", "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE", "EDITAR_PERIODICIDADE", "DELETAR_PERIODICIDADE",
-                "CRIAR_TIPOCOMPROMISSO", "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO", "EDITAR_TIPOCOMPROMISSO", "DELETAR_TIPOCOMPROMISSO"
+                "CRIAR_TIPOCOMPROMISSO", "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO", "EDITAR_TIPOCOMPROMISSO", "DELETAR_TIPOCOMPROMISSO",
+                "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
+                "CRIAR_TIPOARQUIVO", "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO", "EDITAR_TIPOARQUIVO", "DELETAR_TIPOARQUIVO"
         );
         criarPerfilSeNaoExistir("ADMIN_CLINICA", acaoRepository.findAllByNomeIn(acoesAdminClinica));
 
-        // FUNCIONARIO_CLINICA / CLINICA — operacional / recepção (consulta planos e periodicidades, faz agendamentos)
+        // FUNCIONARIO_CLINICA / CLINICA — operacional / recepção (consulta planos, periodicidades e documentos liberados)
         Set<String> acoesFuncionarioClinica = Set.of(
                 "VER_CLINICA",
                 "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
@@ -164,7 +175,9 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_RESPONSAVEL", "LISTAR_RESPONSAVEL", "CRIAR_RESPONSAVEL", "EDITAR_RESPONSAVEL",
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
                 "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
-                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
+                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO",
+                "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
+                "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO"
         );
         criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
         criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
@@ -246,6 +259,45 @@ public class DataSeeder implements CommandLineRunner {
                 if (t.getAtivo() == null) t.setAtivo(true);
             });
             tipoCompromissoRepository.saveAll(padroes);
+        }
+    }
+
+    private void seedTiposArquivo() {
+        if (tipoArquivoRepository.count() == 0) {
+            List<TipoArquivo> padroes = List.of(
+                    TipoArquivo.builder()
+                            .nomeTipo("Laudo Médico")
+                            .descricaoTipo("Laudos diagnósticos, pareceres neurológicos e relatórios médicos oficiais")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Receita / Prescrição")
+                            .descricaoTipo("Prescrições de medicamentos, fórmulas ou encaminhamentos terapêuticos")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Acompanhamento Periódico")
+                            .descricaoTipo("Relatórios evolutivos de terapias, gráficos de progresso e acompanhamento")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Solicitação de Exame")
+                            .descricaoTipo("Pedidos e guias de solicitação de exames laboratoriais ou complementares")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Resultado de Exame")
+                            .descricaoTipo("Resultados e laudos de exames enviados pelos pais ou laboratórios")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Anamnese / Avaliação")
+                            .descricaoTipo("Avaliações iniciais multidisciplinares, protocolos VB-MAPP / PEP-R e anamnese")
+                            .build(),
+                    TipoArquivo.builder()
+                            .nomeTipo("Outros Documentos")
+                            .descricaoTipo("Atestados, PEI escolar e documentações complementares")
+                            .build()
+            );
+            padroes.forEach(t -> {
+                if (t.getAtivo() == null) t.setAtivo(true);
+            });
+            tipoArquivoRepository.saveAll(padroes);
         }
     }
 
