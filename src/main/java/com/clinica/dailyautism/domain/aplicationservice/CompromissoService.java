@@ -259,16 +259,23 @@ public class CompromissoService {
             return List.of(original);
         }
 
-        PacientePlanoSaude guiaAtiva = resolverGuiaAtiva(original.getPaciente());
-        LocalDate dataFim = dto.getDataFim() != null
-                ? dto.getDataFim()
-                : (guiaAtiva != null ? guiaAtiva.getVencimentoLiberacao() : null);
+        Paciente paciente = original.getPaciente();
+        PacientePlanoSaude guiaAtiva = resolverGuiaAtiva(paciente);
+        LocalDate vencimentoPadrao = guiaAtiva != null
+                ? guiaAtiva.getVencimentoLiberacao()
+                : (paciente != null ? paciente.getVencimentoLiberacao() : null);
+        LocalDate dataFim = dto.getDataFim() != null ? dto.getDataFim() : vencimentoPadrao;
 
-        Integer qtdLiberada = (guiaAtiva != null
-                && guiaAtiva.getTipoLiberacao() == TipoLiberacaoGuia.QUANTIDADE
-                && guiaAtiva.getQuantidadeSessoesLiberadas() != null
-                && guiaAtiva.getQuantidadeSessoesLiberadas() > 0)
+        TipoLiberacaoGuia tipoAtivo = guiaAtiva != null
+                ? guiaAtiva.getTipoLiberacao()
+                : (paciente != null ? paciente.getTipoLiberacao() : null);
+        Integer qtdSessoesAtiva = guiaAtiva != null
                 ? guiaAtiva.getQuantidadeSessoesLiberadas()
+                : (paciente != null ? paciente.getQuantidadeSessoesLiberadas() : null);
+        Integer qtdLiberada = (tipoAtivo == TipoLiberacaoGuia.QUANTIDADE
+                && qtdSessoesAtiva != null
+                && qtdSessoesAtiva > 0)
+                ? qtdSessoesAtiva
                 : null;
 
         // Se não há nem data fim nem quantidade de sessões, aprova apenas o original

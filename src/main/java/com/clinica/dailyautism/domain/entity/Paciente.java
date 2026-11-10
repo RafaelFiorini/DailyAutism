@@ -40,4 +40,13 @@ public class Paciente extends BaseEntity {
 
     @OneToMany(mappedBy = "paciente")
     private List<ProfissionalPaciente> profissionais;
+
+    @Enumerated(EnumType.STRING)
+    private TipoLiberacaoGuia tipoLiberacao;
+
+    private LocalDate dataInicioLiberacao;
+
+    private LocalDate vencimentoLiberacao;
+
+    private Integer quantidadeSessoesLiberadas;
 }

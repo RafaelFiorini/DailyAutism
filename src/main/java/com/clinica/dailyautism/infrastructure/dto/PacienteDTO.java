@@ -113,6 +113,16 @@ public class PacienteDTO {
             }
         }
 
+        // Quando o paciente for Particular (sem plano ativo), usa o limite de terapias direto do Paciente
+        if (idPlano == null) {
+            tipoLib = paciente.getTipoLiberacao();
+            dataInicioLib = paciente.getDataInicioLiberacao();
+            vencLib = paciente.getVencimentoLiberacao();
+            qtdSessoes = paciente.getQuantidadeSessoesLiberadas();
+            diasVenc = PacientePlanoSaudeDTO.calcularDiasParaVencimento(vencLib);
+            statusGuia = PacientePlanoSaudeDTO.calcularStatusGuia(vencLib, qtdSessoes);
+        }
+
         List<String> clinicas = new ArrayList<>();
         String idClinica = null;
         if (paciente.getClinicas() != null) {

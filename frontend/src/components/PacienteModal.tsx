@@ -219,6 +219,12 @@ export default function PacienteModal({
     setSubmitting(true);
     try {
       const cleanCpf = cpf.replace(/\D/g, '');
+      const temPlano = Boolean(idPlanoSaude);
+      const vencimentoFinal = vencimentoLiberacao || previsaoFimPorQuantidade?.iso || '';
+      const qtdNum = Number(quantidadeSessoesLiberadas);
+      const hasLimiteConfigurado =
+        Boolean(vencimentoFinal) || (tipoLiberacao === 'QUANTIDADE' && qtdNum > 0);
+
       const payload: SavePacienteInput = {
         nomePessoa: nome.trim(),
         CPFPessoa: cleanCpf,
@@ -233,24 +239,17 @@ export default function PacienteModal({
         emailPessoa: email.trim() || undefined,
         isResponsavel: isProprioResponsavel,
         idResponsavel: !isProprioResponsavel && idResponsavel ? idResponsavel : undefined,
-        idPlanoSaude: idPlanoSaude || undefined,
-        numeroCarteirinha: numeroCarteirinha.trim() || undefined,
-        validadeCarteirinha: validadeCarteirinha || undefined,
-        numeroGuia: numeroGuia.trim() || undefined,
-        tipoLiberacao: idPlanoSaude ? tipoLiberacao : undefined,
-        dataInicioLiberacao: idPlanoSaude && dataInicioLiberacao ? dataInicioLiberacao : undefined,
-        vencimentoLiberacao:
-          idPlanoSaude && vencimentoLiberacao
-            ? vencimentoLiberacao
-            : idPlanoSaude && previsaoFimPorQuantidade
-            ? previsaoFimPorQuantidade.iso
-            : undefined,
+        idPlanoSaude: temPlano ? idPlanoSaude : isEditing ? '' : undefined,
+        numeroCarteirinha: temPlano && numeroCarteirinha.trim() ? numeroCarteirinha.trim() : undefined,
+        validadeCarteirinha: temPlano && validadeCarteirinha ? validadeCarteirinha : undefined,
+        numeroGuia: temPlano && numeroGuia.trim() ? numeroGuia.trim() : undefined,
+        tipoLiberacao: hasLimiteConfigurado ? tipoLiberacao : undefined,
+        dataInicioLiberacao: hasLimiteConfigurado && dataInicioLiberacao ? dataInicioLiberacao : undefined,
+        vencimentoLiberacao: hasLimiteConfigurado && vencimentoFinal ? vencimentoFinal : undefined,
         quantidadeSessoesLiberadas:
-          idPlanoSaude && tipoLiberacao === 'QUANTIDADE' && quantidadeSessoesLiberadas
-            ? Number(quantidadeSessoesLiberadas)
-            : undefined,
+          hasLimiteConfigurado && tipoLiberacao === 'QUANTIDADE' && qtdNum > 0 ? qtdNum : undefined,
         idPeriodicidadeReferencia:
-          idPlanoSaude && tipoLiberacao === 'QUANTIDADE' && idPeriodicidadeReferencia
+          hasLimiteConfigurado && tipoLiberacao === 'QUANTIDADE' && idPeriodicidadeReferencia
             ? idPeriodicidadeReferencia
             : undefined,
         idClinica: idClinica || undefined,
@@ -539,16 +538,16 @@ export default function PacienteModal({
             )}
           </div>
 
-          {/* Plano de Saúde e Controle de Guias */}
+          {/* Plano de Saúde e Controle de Guias / Limite Particular */}
           <div className="border border-gray-200 rounded-xl p-3.5 bg-gray-50/40 space-y-3">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-indigo-600" />
               <span className="text-xs font-semibold text-gray-800 uppercase tracking-wide">
-                Plano de Saúde & Guia de Liberação
+                Plano de Saúde & Limite de Terapias
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
+              <div className={idPlanoSaude ? '' : 'md:col-span-2'}>
                 <label className="block text-[11px] font-medium text-gray-600 mb-1">
                   Selecione o Plano
                 </label>
@@ -572,176 +571,196 @@ export default function PacienteModal({
                 )}
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                  Nº da Carteirinha
-                </label>
-                <input
-                  type="text"
-                  value={numeroCarteirinha}
-                  onChange={(e) => setNumeroCarteirinha(e.target.value)}
-                  placeholder="Ex: 00123456789"
-                  className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                />
-              </div>
+              {idPlanoSaude && (
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                    Nº da Carteirinha
+                  </label>
+                  <input
+                    type="text"
+                    value={numeroCarteirinha}
+                    onChange={(e) => setNumeroCarteirinha(e.target.value)}
+                    placeholder="Ex: 00123456789"
+                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  />
+                </div>
+              )}
             </div>
 
             {idPlanoSaude && (
-              <div className="pt-2.5 border-t border-gray-200/80 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                      Validade da Carteirinha
-                    </label>
-                    <input
-                      type="date"
-                      value={validadeCarteirinha}
-                      onChange={(e) => setValidadeCarteirinha(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                      Nº da Guia (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      value={numeroGuia}
-                      onChange={(e) => setNumeroGuia(e.target.value)}
-                      placeholder="Ex: GUIA-2026-001"
-                      className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                    />
-                  </div>
+              <div className="pt-2.5 border-t border-gray-200/80 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                    Validade da Carteirinha
+                  </label>
+                  <input
+                    type="date"
+                    value={validadeCarteirinha}
+                    onChange={(e) => setValidadeCarteirinha(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  />
                 </div>
-
-                {/* Tipo de Liberação da Guia */}
-                <div className="bg-white p-2.5 rounded-lg border border-indigo-100 space-y-2.5">
-                  <span className="block text-[11px] font-semibold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
-                    <CalendarClock className="h-3.5 w-3.5 text-indigo-600" />
-                    Regra de Liberação / Vencimento da Guia
-                  </span>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <label
-                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
-                        tipoLiberacao === 'PERIODO'
-                          ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="tipoLiberacaoGuia"
-                        checked={tipoLiberacao === 'PERIODO'}
-                        onChange={() => setTipoLiberacao('PERIODO')}
-                        className="text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span>Por Prazo (Data Limite)</span>
-                    </label>
-
-                    <label
-                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
-                        tipoLiberacao === 'QUANTIDADE'
-                          ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="tipoLiberacaoGuia"
-                        checked={tipoLiberacao === 'QUANTIDADE'}
-                        onChange={() => setTipoLiberacao('QUANTIDADE')}
-                        className="text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span>Por Qtd. de Sessões</span>
-                    </label>
-                  </div>
-
-                  {tipoLiberacao === 'PERIODO' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                          Início da Liberação
-                        </label>
-                        <input
-                          type="date"
-                          value={dataInicioLiberacao}
-                          onChange={(e) => setDataInicioLiberacao(e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                          Vencimento da Guia (Data Fim)
-                        </label>
-                        <input
-                          type="date"
-                          value={vencimentoLiberacao}
-                          onChange={(e) => setVencimentoLiberacao(e.target.value)}
-                          className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2.5">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
-                        <div>
-                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                            Sessões Liberadas
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            value={quantidadeSessoesLiberadas}
-                            onChange={(e) => setQuantidadeSessoesLiberadas(e.target.value)}
-                            placeholder="Ex: 30"
-                            className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                            Início das Sessões
-                          </label>
-                          <input
-                            type="date"
-                            value={dataInicioLiberacao}
-                            onChange={(e) => setDataInicioLiberacao(e.target.value)}
-                            className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
-                            Periodicidade (Cálculo)
-                          </label>
-                          <select
-                            value={idPeriodicidadeReferencia}
-                            onChange={(e) => setIdPeriodicidadeReferencia(e.target.value)}
-                            className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
-                          >
-                            <option value="">Selecionar p/ prever fim...</option>
-                            {periodicidadesOptions
-                              .filter((p) => p.diasIntervalo && p.diasIntervalo > 0)
-                              .map((per) => (
-                                <option key={per.idPeriodicidade} value={per.idPeriodicidade}>
-                                  {per.nomePeriodicidade} ({per.diasIntervalo}d)
-                                </option>
-                              ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {previsaoFimPorQuantidade && (
-                        <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800">
-                          Com base na periodicidade <strong>{previsaoFimPorQuantidade.nomePeriodicidade}</strong>,{' '}
-                          <strong>{quantidadeSessoesLiberadas} sessões</strong> cobrirão até{' '}
-                          <strong>{previsaoFimPorQuantidade.br}</strong>.
-                        </div>
-                      )}
-                    </div>
-                  )}
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                    Nº da Guia (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={numeroGuia}
+                    onChange={(e) => setNumeroGuia(e.target.value)}
+                    placeholder="Ex: GUIA-2026-001"
+                    className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                  />
                 </div>
               </div>
             )}
+
+            {/* Regra de Liberação / Limite de Terapias (Plano ou Particular) */}
+            <div className="bg-white p-2.5 rounded-lg border border-indigo-100 space-y-2.5">
+              <div>
+                <span className="block text-[11px] font-semibold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <CalendarClock className="h-3.5 w-3.5 text-indigo-600" />
+                  {idPlanoSaude
+                    ? 'Regra de Liberação / Vencimento da Guia'
+                    : 'Limite de Terapias — Particular / Avulso (opcional)'}
+                </span>
+                {!idPlanoSaude && (
+                  <p className="text-[10px] text-gray-500 mt-0.5">
+                    Defina uma data limite ou pacote de sessões pagas no particular. Se deixar em branco, a secretaria da clínica poderá preencher depois.
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <label
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
+                    tipoLiberacao === 'PERIODO'
+                      ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="tipoLiberacaoGuia"
+                    checked={tipoLiberacao === 'PERIODO'}
+                    onChange={() => setTipoLiberacao('PERIODO')}
+                    className="text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Por Prazo (Data Limite)</span>
+                </label>
+
+                <label
+                  className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
+                    tipoLiberacao === 'QUANTIDADE'
+                      ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="tipoLiberacaoGuia"
+                    checked={tipoLiberacao === 'QUANTIDADE'}
+                    onChange={() => setTipoLiberacao('QUANTIDADE')}
+                    className="text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span>Por Qtd. de Sessões</span>
+                </label>
+              </div>
+
+              {tipoLiberacao === 'PERIODO' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      {idPlanoSaude ? 'Início da Liberação' : 'Início do Tratamento'}
+                    </label>
+                    <input
+                      type="date"
+                      value={dataInicioLiberacao}
+                      onChange={(e) => setDataInicioLiberacao(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      {idPlanoSaude ? 'Vencimento da Guia (Data Fim)' : 'Data Limite das Terapias'}
+                    </label>
+                    <input
+                      type="date"
+                      value={vencimentoLiberacao}
+                      onChange={(e) => setVencimentoLiberacao(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                        {idPlanoSaude ? 'Sessões Liberadas' : 'Sessões Pagas / Acertadas'}
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={quantidadeSessoesLiberadas}
+                        onChange={(e) => setQuantidadeSessoesLiberadas(e.target.value)}
+                        placeholder={idPlanoSaude ? 'Ex: 30' : 'Ex: 10'}
+                        className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                        Início das Sessões
+                      </label>
+                      <input
+                        type="date"
+                        value={dataInicioLiberacao}
+                        onChange={(e) => setDataInicioLiberacao(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                        Periodicidade (Cálculo)
+                      </label>
+                      <select
+                        value={idPeriodicidadeReferencia}
+                        onChange={(e) => setIdPeriodicidadeReferencia(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                      >
+                        <option value="">Selecionar p/ prever fim...</option>
+                        {periodicidadesOptions
+                          .filter((p) => p.diasIntervalo && p.diasIntervalo > 0)
+                          .map((per) => (
+                            <option key={per.idPeriodicidade} value={per.idPeriodicidade}>
+                              {per.nomePeriodicidade} ({per.diasIntervalo}d)
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                        Data Limite (opcional)
+                      </label>
+                      <input
+                        type="date"
+                        value={vencimentoLiberacao}
+                        onChange={(e) => setVencimentoLiberacao(e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {previsaoFimPorQuantidade && (
+                    <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800">
+                      Com base na periodicidade <strong>{previsaoFimPorQuantidade.nomePeriodicidade}</strong>,{' '}
+                      <strong>{quantidadeSessoesLiberadas} sessões</strong> cobrirão até{' '}
+                      <strong>{previsaoFimPorQuantidade.br}</strong>.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Espera: Clínica */}

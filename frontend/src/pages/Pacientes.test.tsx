@@ -114,4 +114,36 @@ describe('Pacientes Page', () => {
 
     expect(screen.getByText('Cadastrar Novo Paciente')).toBeInTheDocument();
   });
+
+  it('exibe limite de terapias e status de vencimento para paciente particular', async () => {
+    vi.mocked(pacienteService.list).mockResolvedValueOnce([
+      {
+        idPaciente: '3',
+        nomePessoa: 'Pedro Particular',
+        cpf: '22233344455',
+        isResponsavel: false,
+        planos: [],
+        clinicas: [],
+        responsaveis: ['Mariana'],
+        quantidadeSessoesLiberadas: 10,
+        vencimentoLiberacao: '2026-12-15',
+        diasParaVencimento: 5,
+        statusGuia: 'VENCENDO_EM_BREVE',
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Pedro Particular')).toBeInTheDocument();
+      expect(screen.getByText('Particular')).toBeInTheDocument();
+      expect(screen.getByText('Vence em 5d')).toBeInTheDocument();
+      expect(screen.getByText('10 sessões')).toBeInTheDocument();
+      expect(screen.getByText('até 15/12/2026')).toBeInTheDocument();
+    });
+  });
 });

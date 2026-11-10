@@ -173,4 +173,55 @@ describe('PacienteModal', () => {
       expect(mockOnSuccess).toHaveBeenCalled();
     });
   });
+
+  it('permite definir limite de sessões e data para paciente particular sem plano de saúde', async () => {
+    vi.mocked(pacienteService.create).mockResolvedValueOnce({
+      idPaciente: 'pac-part',
+      nomePessoa: 'Sofia Particular',
+      cpf: '55566677788',
+      tipoLiberacao: 'QUANTIDADE',
+      quantidadeSessoesLiberadas: 10,
+      vencimentoLiberacao: '2026-12-15',
+      statusGuia: 'ATIVA',
+    });
+
+    render(<PacienteModal isOpen={true} onClose={mockOnClose} onSuccess={mockOnSuccess} />);
+
+    expect(
+      screen.getByText(/Limite de Terapias — Particular \/ Avulso/i)
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('Ex: Gabriel Henrique da Silva'), {
+      target: { value: 'Sofia Particular' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), {
+      target: { value: '55566677788' },
+    });
+
+    fireEvent.click(screen.getByLabelText(/Por Qtd\. de Sessões/i));
+    fireEvent.change(screen.getByPlaceholderText('Ex: 10'), {
+      target: { value: '10' },
+    });
+
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    // último input date é Data Limite (opcional) em modo QUANTIDADE
+    fireEvent.change(dateInputs[dateInputs.length - 1], {
+      target: { value: '2026-12-15' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Salvar Paciente/i }));
+
+    await waitFor(() => {
+      expect(pacienteService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nomePessoa: 'Sofia Particular',
+          idPlanoSaude: undefined,
+          tipoLiberacao: 'QUANTIDADE',
+          quantidadeSessoesLiberadas: 10,
+          vencimentoLiberacao: '2026-12-15',
+        })
+      );
+      expect(mockOnSuccess).toHaveBeenCalled();
+    });
+  });
 });

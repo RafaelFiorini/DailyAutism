@@ -32,24 +32,35 @@ public class PacientePlanoSaudeDTO {
     private Long diasParaVencimento;
     private String statusGuia;
 
+    public static Long calcularDiasParaVencimento(LocalDate vencimento) {
+        if (vencimento == null) {
+            return null;
+        }
+        return ChronoUnit.DAYS.between(LocalDate.now(), vencimento);
+    }
+
+    public static String calcularStatusGuia(LocalDate vencimento, Integer quantidadeSessoes) {
+        if (vencimento != null) {
+            long dias = ChronoUnit.DAYS.between(LocalDate.now(), vencimento);
+            if (dias < 0) {
+                return "VENCIDA";
+            }
+            if (dias <= 15) {
+                return "VENCENDO_EM_BREVE";
+            }
+            return "ATIVA";
+        }
+        if (quantidadeSessoes != null && quantidadeSessoes > 0) {
+            return "ATIVA";
+        }
+        return "SEM_GUIA";
+    }
+
     public static PacientePlanoSaudeDTO create(PacientePlanoSaude pps) {
         if (pps == null) return null;
 
-        Long dias = null;
-        String status = "SEM_GUIA";
-
-        if (pps.getVencimentoLiberacao() != null) {
-            dias = ChronoUnit.DAYS.between(LocalDate.now(), pps.getVencimentoLiberacao());
-            if (dias < 0) {
-                status = "VENCIDA";
-            } else if (dias <= 15) {
-                status = "VENCENDO_EM_BREVE";
-            } else {
-                status = "ATIVA";
-            }
-        } else if (pps.getQuantidadeSessoesLiberadas() != null && pps.getQuantidadeSessoesLiberadas() > 0) {
-            status = "ATIVA";
-        }
+        Long dias = calcularDiasParaVencimento(pps.getVencimentoLiberacao());
+        String status = calcularStatusGuia(pps.getVencimentoLiberacao(), pps.getQuantidadeSessoesLiberadas());
 
         String idPac = pps.getPaciente() != null ? pps.getPaciente().getIdPaciente() : null;
         String nomePac = (pps.getPaciente() != null && pps.getPaciente().getPessoaPaciente() != null)

@@ -561,9 +561,52 @@ public class PacienteService {
     }
 
     private void salvarOuAtualizarVinculoPlano(Paciente paciente, SavePacienteDTO dto) {
-        if (dto.getIdPlanoSaude() == null || dto.getIdPlanoSaude().isBlank()) {
+        boolean temPlanoInformado = dto.getIdPlanoSaude() != null && !dto.getIdPlanoSaude().isBlank();
+        if (!temPlanoInformado) {
+            boolean limpezaExplicitaPlano = dto.getIdPlanoSaude() != null;
+            if (limpezaExplicitaPlano) {
+                var planosAtuais = pacientePlanoSaudeRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
+                for (var pps : planosAtuais) {
+                    if (pps.getAtivo() == null || pps.getAtivo()) {
+                        pps.desativar();
+                        pacientePlanoSaudeRepository.save(pps);
+                    }
+                }
+            }
+
+            boolean temLimiteParticular = dto.getVencimentoLiberacao() != null
+                    || (dto.getQuantidadeSessoesLiberadas() != null && dto.getQuantidadeSessoesLiberadas() > 0);
+            if (temLimiteParticular) {
+                TipoLiberacaoGuia tipo = dto.getTipoLiberacao() != null
+                        ? dto.getTipoLiberacao()
+                        : (dto.getQuantidadeSessoesLiberadas() != null && dto.getQuantidadeSessoesLiberadas() > 0
+                            ? TipoLiberacaoGuia.QUANTIDADE
+                            : TipoLiberacaoGuia.PERIODO);
+                LocalDate dataInicio = dto.getDataInicioLiberacao() != null ? dto.getDataInicioLiberacao() : LocalDate.now();
+                LocalDate vencimento = pacientePlanoSaudeService.resolverVencimentoGuia(
+                        tipo,
+                        dataInicio,
+                        dto.getVencimentoLiberacao(),
+                        dto.getQuantidadeSessoesLiberadas(),
+                        dto.getIdPeriodicidadeReferencia()
+                );
+                paciente.setTipoLiberacao(tipo);
+                paciente.setDataInicioLiberacao(dataInicio);
+                paciente.setVencimentoLiberacao(vencimento);
+                paciente.setQuantidadeSessoesLiberadas(
+                        tipo == TipoLiberacaoGuia.QUANTIDADE ? dto.getQuantidadeSessoesLiberadas() : null
+                );
+                pacienteRepository.save(paciente);
+            } else if (limpezaExplicitaPlano) {
+                paciente.setTipoLiberacao(null);
+                paciente.setDataInicioLiberacao(null);
+                paciente.setVencimentoLiberacao(null);
+                paciente.setQuantidadeSessoesLiberadas(null);
+                pacienteRepository.save(paciente);
+            }
             return;
         }
+
         PlanoSaude plano = planoSaudeRepository.findById(dto.getIdPlanoSaude().trim()).orElse(null);
         if (plano == null) {
             return;
@@ -604,7 +647,19 @@ public class PacienteService {
         ppsAlvo.setTipoLiberacao(tipo);
         ppsAlvo.setDataInicioLiberacao(dataInicio);
         ppsAlvo.setVencimentoLiberacao(vencimento);
-        ppsAlvo.setQuantidadeSessoesLiberadas(dto.getQuantidadeSessoesLiberadas());
+        ppsAlvo.setQuantidadeSessoesLiberadas(
+                tipo == TipoLiberacaoGuia.QUANTIDADE ? dto.getQuantidadeSessoesLiberadas() : null
+        );
         pacientePlanoSaudeRepository.save(ppsAlvo);
+
+        // Limpa campos particulares do paciente ao vincular plano de saúde
+        if (paciente.getTipoLiberacao() != null || paciente.getVencimentoLiberacao() != null
+                || paciente.getQuantidadeSessoesLiberadas() != null) {
+            paciente.setTipoLiberacao(null);
+            paciente.setDataInicioLiberacao(null);
+            paciente.setVencimentoLiberacao(null);
+            paciente.setQuantidadeSessoesLiberadas(null);
+            pacienteRepository.save(paciente);
+        }
     }
 }
