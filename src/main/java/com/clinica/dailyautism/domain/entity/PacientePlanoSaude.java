@@ -10,7 +10,8 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(of = "idPacientePlanoSaude", callSuper = false)
+@ToString(exclude = {"paciente", "planoSaude"})
 @SQLRestriction("ativo = true")
 public class PacientePlanoSaude extends BaseEntity {
 
@@ -32,5 +33,16 @@ public class PacientePlanoSaude extends BaseEntity {
 
     private LocalDate validadeCarteirinha;
 
+    @Column(length = 50)
+    private String numeroGuia;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TipoLiberacaoGuia tipoLiberacao;
+
+    private LocalDate dataInicioLiberacao;
+
     private LocalDate vencimentoLiberacao;
+
+    private Integer quantidadeSessoesLiberadas;
 }

@@ -1,8 +1,8 @@
-// PacientePlanoSaudeRestResource
 package com.clinica.dailyautism.infrastructure.controller;
 
 import com.clinica.dailyautism.domain.aplicationservice.PacientePlanoSaudeService;
 import com.clinica.dailyautism.domain.entity.PacientePlanoSaude;
+import com.clinica.dailyautism.infrastructure.dto.PacientePlanoSaudeDTO;
 import com.clinica.dailyautism.infrastructure.dto.SavePacientePlanoSaudeDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,27 +19,37 @@ public class PacientePlanoSaudeRestResource {
 
     @PostMapping
     @PreAuthorize("hasAuthority('VINCULAR_PACIENTE_PLANO_SAUDE')")
-    public ResponseEntity<PacientePlanoSaude> vincular(@RequestBody SavePacientePlanoSaudeDTO dto) {
-        return ResponseEntity.ok(pacientePlanoSaudeService.vincular(dto));
+    public ResponseEntity<PacientePlanoSaudeDTO> vincular(@RequestBody SavePacientePlanoSaudeDTO dto) {
+        PacientePlanoSaude saved = pacientePlanoSaudeService.vincular(dto);
+        return ResponseEntity.ok(PacientePlanoSaudeDTO.create(saved));
     }
 
     @GetMapping("/paciente/{idPaciente}")
     @PreAuthorize("hasAuthority('VER_PACIENTE_PLANO_SAUDE')")
-    public ResponseEntity<List<PacientePlanoSaude>> listarPorPaciente(@PathVariable String idPaciente) {
-        return ResponseEntity.ok(pacientePlanoSaudeService.listarPorPaciente(idPaciente));
+    public ResponseEntity<List<PacientePlanoSaudeDTO>> listarPorPaciente(@PathVariable String idPaciente) {
+        List<PacientePlanoSaudeDTO> list = pacientePlanoSaudeService.listarPorPaciente(idPaciente)
+                .stream()
+                .map(PacientePlanoSaudeDTO::create)
+                .toList();
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/plano/{idPlanoSaude}")
     @PreAuthorize("hasAuthority('VER_PACIENTE_PLANO_SAUDE')")
-    public ResponseEntity<List<PacientePlanoSaude>> listarPorPlano(@PathVariable String idPlanoSaude) {
-        return ResponseEntity.ok(pacientePlanoSaudeService.listarPorPlano(idPlanoSaude));
+    public ResponseEntity<List<PacientePlanoSaudeDTO>> listarPorPlano(@PathVariable String idPlanoSaude) {
+        List<PacientePlanoSaudeDTO> list = pacientePlanoSaudeService.listarPorPlano(idPlanoSaude)
+                .stream()
+                .map(PacientePlanoSaudeDTO::create)
+                .toList();
+        return ResponseEntity.ok(list);
     }
 
     @PutMapping("/{idVinculo}")
     @PreAuthorize("hasAuthority('EDITAR_PACIENTE_PLANO_SAUDE')")
-    public ResponseEntity<PacientePlanoSaude> atualizar(@PathVariable String idVinculo,
-                                                        @RequestBody SavePacientePlanoSaudeDTO dto) {
-        return ResponseEntity.ok(pacientePlanoSaudeService.atualizar(idVinculo, dto));
+    public ResponseEntity<PacientePlanoSaudeDTO> atualizar(@PathVariable String idVinculo,
+                                                           @RequestBody SavePacientePlanoSaudeDTO dto) {
+        PacientePlanoSaude updated = pacientePlanoSaudeService.atualizar(idVinculo, dto);
+        return ResponseEntity.ok(PacientePlanoSaudeDTO.create(updated));
     }
 
     @DeleteMapping("/{idVinculo}")

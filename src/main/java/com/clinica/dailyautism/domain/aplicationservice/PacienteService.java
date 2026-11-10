@@ -34,6 +34,7 @@ public class PacienteService {
     private final CompromissoRepository compromissoRepository;
     private final ProfissionalPacienteRepository profissionalPacienteRepository;
     private final FuncionarioClinicaRepository funcionarioClinicaRepository;
+    private final PacientePlanoSaudeService pacientePlanoSaudeService;
     private final EntityManager entityManager;
 
     @Transactional
@@ -202,18 +203,8 @@ public class PacienteService {
             }
         }
 
-        // Vínculo opcional inicial com Plano de Saúde
-        if (savePacienteDTO.getIdPlanoSaude() != null && !savePacienteDTO.getIdPlanoSaude().isBlank()) {
-            PlanoSaude plano = planoSaudeRepository.findById(savePacienteDTO.getIdPlanoSaude().trim()).orElse(null);
-            if (plano != null) {
-                PacientePlanoSaude pps = PacientePlanoSaude.builder()
-                        .paciente(paciente)
-                        .planoSaude(plano)
-                        .numeroCarteirinha(savePacienteDTO.getNumeroCarteirinha())
-                        .build();
-                pacientePlanoSaudeRepository.save(pps);
-            }
-        }
+        // Vínculo opcional inicial com Plano de Saúde e Guia
+        salvarOuAtualizarVinculoPlano(paciente, savePacienteDTO);
 
         // Vínculo com Clínica
         if (clinicaAlvo != null) {
@@ -486,33 +477,8 @@ public class PacienteService {
             }
         }
 
-        // Vínculo opcional com Plano de Saúde se idPlanoSaude informado
-        if (savePacienteDTO.getIdPlanoSaude() != null && !savePacienteDTO.getIdPlanoSaude().isBlank()) {
-            PlanoSaude plano = planoSaudeRepository.findById(savePacienteDTO.getIdPlanoSaude().trim()).orElse(null);
-            if (plano != null) {
-                var planosAtuais = pacientePlanoSaudeRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
-                boolean achou = false;
-                for (var pps : planosAtuais) {
-                    if (pps.getPlanoSaude() != null && pps.getPlanoSaude().getIdPlanoSaude().equals(plano.getIdPlanoSaude())) {
-                        pps.setNumeroCarteirinha(savePacienteDTO.getNumeroCarteirinha());
-                        pps.setAtivo(true);
-                        pacientePlanoSaudeRepository.save(pps);
-                        achou = true;
-                    } else {
-                        pps.desativar();
-                        pacientePlanoSaudeRepository.save(pps);
-                    }
-                }
-                if (!achou) {
-                    PacientePlanoSaude pps = PacientePlanoSaude.builder()
-                            .paciente(paciente)
-                            .planoSaude(plano)
-                            .numeroCarteirinha(savePacienteDTO.getNumeroCarteirinha())
-                            .build();
-                    pacientePlanoSaudeRepository.save(pps);
-                }
-            }
-        }
+        // Vínculo opcional com Plano de Saúde e Guia
+        salvarOuAtualizarVinculoPlano(paciente, savePacienteDTO);
 
         // Vínculo opcional com Clínica se idClinica informado
         if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
@@ -592,5 +558,53 @@ public class PacienteService {
         responsavelRepository.save(responsavel);
 
         return paciente;
+    }
+
+    private void salvarOuAtualizarVinculoPlano(Paciente paciente, SavePacienteDTO dto) {
+        if (dto.getIdPlanoSaude() == null || dto.getIdPlanoSaude().isBlank()) {
+            return;
+        }
+        PlanoSaude plano = planoSaudeRepository.findById(dto.getIdPlanoSaude().trim()).orElse(null);
+        if (plano == null) {
+            return;
+        }
+
+        LocalDate dataInicio = dto.getDataInicioLiberacao() != null ? dto.getDataInicioLiberacao() : LocalDate.now();
+        TipoLiberacaoGuia tipo = dto.getTipoLiberacao() != null ? dto.getTipoLiberacao() : TipoLiberacaoGuia.PERIODO;
+        LocalDate vencimento = pacientePlanoSaudeService.resolverVencimentoGuia(
+                tipo,
+                dataInicio,
+                dto.getVencimentoLiberacao(),
+                dto.getQuantidadeSessoesLiberadas(),
+                dto.getIdPeriodicidadeReferencia()
+        );
+
+        var planosAtuais = pacientePlanoSaudeRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
+        PacientePlanoSaude ppsAlvo = null;
+        for (var pps : planosAtuais) {
+            if (pps.getPlanoSaude() != null && pps.getPlanoSaude().getIdPlanoSaude().equals(plano.getIdPlanoSaude())) {
+                ppsAlvo = pps;
+            } else {
+                pps.desativar();
+                pacientePlanoSaudeRepository.save(pps);
+            }
+        }
+
+        if (ppsAlvo == null) {
+            ppsAlvo = PacientePlanoSaude.builder()
+                    .paciente(paciente)
+                    .planoSaude(plano)
+                    .build();
+        }
+
+        ppsAlvo.setAtivo(true);
+        ppsAlvo.setNumeroCarteirinha(dto.getNumeroCarteirinha());
+        ppsAlvo.setValidadeCarteirinha(dto.getValidadeCarteirinha());
+        ppsAlvo.setNumeroGuia(dto.getNumeroGuia());
+        ppsAlvo.setTipoLiberacao(tipo);
+        ppsAlvo.setDataInicioLiberacao(dataInicio);
+        ppsAlvo.setVencimentoLiberacao(vencimento);
+        ppsAlvo.setQuantidadeSessoesLiberadas(dto.getQuantidadeSessoesLiberadas());
+        pacientePlanoSaudeRepository.save(ppsAlvo);
     }
 }

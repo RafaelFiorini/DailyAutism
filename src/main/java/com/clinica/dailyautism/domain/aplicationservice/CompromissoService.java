@@ -252,22 +252,46 @@ public class CompromissoService {
         original.setStatus(StatusCompromisso.AGENDADO);
         compromissoRepository.save(original);
 
-        // descobre a data fim
-        LocalDate dataFim = resolverDataFim(original, dto.getDataFim());
-
-        if (dataFim == null) {
-            return List.of(original); // sem replicação
-        }
-
-        // replica
-        List<Compromisso> replicas = new ArrayList<>();
-        int intervalo = original.getPeriodicidade().getDiasIntervalo();
-        if (intervalo == 0) {
+        int intervalo = original.getPeriodicidade() != null && original.getPeriodicidade().getDiasIntervalo() != null
+                ? original.getPeriodicidade().getDiasIntervalo()
+                : 0;
+        if (intervalo <= 0) {
             return List.of(original);
         }
-        LocalDateTime proxima = original.getDataHoraCompromisso().plusDays(intervalo);
 
-        while (!proxima.toLocalDate().isAfter(dataFim)) {
+        PacientePlanoSaude guiaAtiva = resolverGuiaAtiva(original.getPaciente());
+        LocalDate dataFim = dto.getDataFim() != null
+                ? dto.getDataFim()
+                : (guiaAtiva != null ? guiaAtiva.getVencimentoLiberacao() : null);
+
+        Integer qtdLiberada = (guiaAtiva != null
+                && guiaAtiva.getTipoLiberacao() == TipoLiberacaoGuia.QUANTIDADE
+                && guiaAtiva.getQuantidadeSessoesLiberadas() != null
+                && guiaAtiva.getQuantidadeSessoesLiberadas() > 0)
+                ? guiaAtiva.getQuantidadeSessoesLiberadas()
+                : null;
+
+        // Se não há nem data fim nem quantidade de sessões, aprova apenas o original
+        if (dataFim == null && (qtdLiberada == null || qtdLiberada <= 1)) {
+            return List.of(original);
+        }
+
+        List<Compromisso> replicas = new ArrayList<>();
+        LocalDateTime proxima = original.getDataHoraCompromisso().plusDays(intervalo);
+        int sessoesGeradas = 1; // original já é a primeira sessão
+        int limiteSeguranca = 365; // proteção contra loops infinitos caso data muito distante
+
+        while (replicas.size() < limiteSeguranca) {
+            if (qtdLiberada != null && sessoesGeradas >= qtdLiberada) {
+                break;
+            }
+            if (dataFim != null && proxima.toLocalDate().isAfter(dataFim)) {
+                break;
+            }
+            if (qtdLiberada == null && dataFim == null) {
+                break;
+            }
+
             Compromisso replica = Compromisso.builder()
                     .tituloCompromisso(original.getTituloCompromisso())
                     .descricaoCompromisso(original.getDescricaoCompromisso())
@@ -281,24 +305,30 @@ public class CompromissoService {
                     .criadoPor(original.getCriadoPor())
                     .build();
             replicas.add(replica);
+            sessoesGeradas++;
             proxima = proxima.plusDays(intervalo);
         }
 
-        compromissoRepository.saveAll(replicas);
-        return replicas;
+        if (!replicas.isEmpty()) {
+            compromissoRepository.saveAll(replicas);
+        }
+
+        List<Compromisso> resultado = new ArrayList<>();
+        resultado.add(original);
+        resultado.addAll(replicas);
+        return resultado;
     }
 
-    private LocalDate resolverDataFim(Compromisso compromisso, LocalDate dataFimManual) {
-        // tenta pegar do plano de saúde do paciente primeiro
-        if (compromisso.getPaciente().getPlanos() != null &&
-                !compromisso.getPaciente().getPlanos().isEmpty()) {
-            return compromisso.getPaciente().getPlanos()
-                    .stream()
-                    .map(PacientePlanoSaude::getVencimentoLiberacao)
-                    .filter(Objects::nonNull)
-                    .max(Comparator.naturalOrder())
-                    .orElse(dataFimManual);
+    private PacientePlanoSaude resolverGuiaAtiva(Paciente paciente) {
+        if (paciente == null || paciente.getPlanos() == null || paciente.getPlanos().isEmpty()) {
+            return null;
         }
-        return dataFimManual;
+        return paciente.getPlanos().stream()
+                .filter(p -> p.getAtivo() == null || p.getAtivo())
+                .filter(p -> p.getVencimentoLiberacao() != null || (p.getQuantidadeSessoesLiberadas() != null && p.getQuantidadeSessoesLiberadas() > 0))
+                .max(Comparator.comparing(
+                        p -> p.getVencimentoLiberacao() != null ? p.getVencimentoLiberacao() : LocalDate.MIN
+                ))
+                .orElse(null);
     }
 }

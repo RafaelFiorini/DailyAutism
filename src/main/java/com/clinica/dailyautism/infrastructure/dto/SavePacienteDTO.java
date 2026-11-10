@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
+import com.clinica.dailyautism.domain.entity.TipoLiberacaoGuia;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -73,6 +74,27 @@ public class SavePacienteDTO {
 
     @JsonProperty("numeroCarteirinha")
     private String numeroCarteirinha;
+
+    @JsonProperty("validadeCarteirinha")
+    private LocalDate validadeCarteirinha;
+
+    @JsonProperty("numeroGuia")
+    private String numeroGuia;
+
+    @JsonProperty("tipoLiberacao")
+    private TipoLiberacaoGuia tipoLiberacao;
+
+    @JsonProperty("dataInicioLiberacao")
+    private LocalDate dataInicioLiberacao;
+
+    @JsonProperty("vencimentoLiberacao")
+    private LocalDate vencimentoLiberacao;
+
+    @JsonProperty("quantidadeSessoesLiberadas")
+    private Integer quantidadeSessoesLiberadas;
+
+    @JsonProperty("idPeriodicidadeReferencia")
+    private String idPeriodicidadeReferencia;
 
     @JsonProperty("idClinica")
     @JsonAlias({"clinicaId"})

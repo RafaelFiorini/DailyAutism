@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
 import com.clinica.dailyautism.domain.entity.Paciente;
+import com.clinica.dailyautism.domain.entity.TipoLiberacaoGuia;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,7 +34,17 @@ public class PacienteDTO {
     private List<String> clinicas;
     private List<String> responsaveis;
     private String idPlanoSaude;
+    private String idPacientePlanoSaude;
     private String numeroCarteirinha;
+    private LocalDate validadeCarteirinha;
+    private String numeroGuia;
+    private TipoLiberacaoGuia tipoLiberacao;
+    private LocalDate dataInicioLiberacao;
+    private LocalDate vencimentoLiberacao;
+    private Integer quantidadeSessoesLiberadas;
+    private Long diasParaVencimento;
+    private String statusGuia;
+    private List<PacientePlanoSaudeDTO> guias;
     private String idClinica;
     private String idResponsavel;
 
@@ -61,16 +72,42 @@ public class PacienteDTO {
         }
 
         List<String> planos = new ArrayList<>();
+        List<PacientePlanoSaudeDTO> guias = new ArrayList<>();
         String idPlano = null;
+        String idPacientePlano = null;
         String numCart = null;
+        LocalDate validadeCart = null;
+        String numeroGuia = null;
+        TipoLiberacaoGuia tipoLib = null;
+        LocalDate dataInicioLib = null;
+        LocalDate vencLib = null;
+        Integer qtdSessoes = null;
+        Long diasVenc = null;
+        String statusGuia = null;
+
         if (paciente.getPlanos() != null) {
             for (var p : paciente.getPlanos()) {
                 if (p.getAtivo() != null && !p.getAtivo()) continue;
+                PacientePlanoSaudeDTO guiaDto = PacientePlanoSaudeDTO.create(p);
+                if (guiaDto != null) {
+                    guias.add(guiaDto);
+                }
                 if (p.getPlanoSaude() != null) {
                     planos.add(p.getPlanoSaude().getNomePlano());
                     if (idPlano == null) {
                         idPlano = p.getPlanoSaude().getIdPlanoSaude();
+                        idPacientePlano = p.getIdPacientePlanoSaude();
                         numCart = p.getNumeroCarteirinha();
+                        validadeCart = p.getValidadeCarteirinha();
+                        numeroGuia = p.getNumeroGuia();
+                        tipoLib = p.getTipoLiberacao() != null ? p.getTipoLiberacao() : TipoLiberacaoGuia.PERIODO;
+                        dataInicioLib = p.getDataInicioLiberacao();
+                        vencLib = p.getVencimentoLiberacao();
+                        qtdSessoes = p.getQuantidadeSessoesLiberadas();
+                        if (guiaDto != null) {
+                            diasVenc = guiaDto.getDiasParaVencimento();
+                            statusGuia = guiaDto.getStatusGuia();
+                        }
                     }
                 }
             }
@@ -128,7 +165,17 @@ public class PacienteDTO {
                 .clinicas(clinicas)
                 .responsaveis(responsaveis)
                 .idPlanoSaude(idPlano)
+                .idPacientePlanoSaude(idPacientePlano)
                 .numeroCarteirinha(numCart)
+                .validadeCarteirinha(validadeCart)
+                .numeroGuia(numeroGuia)
+                .tipoLiberacao(tipoLib)
+                .dataInicioLiberacao(dataInicioLib)
+                .vencimentoLiberacao(vencLib)
+                .quantidadeSessoesLiberadas(qtdSessoes)
+                .diasParaVencimento(diasVenc)
+                .statusGuia(statusGuia)
+                .guias(guias)
                 .idClinica(idClinica)
                 .idResponsavel(idResp)
                 .build();

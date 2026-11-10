@@ -253,16 +253,41 @@ export default function Pacientes() {
                       {/* Plano de Saúde */}
                       <td className="px-6 py-4">
                         {pac.planos && pac.planos.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {pac.planos.map((pl, i) => (
-                              <span
-                                key={i}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              >
-                                <CreditCard className="h-3 w-3" />
-                                {pl}
-                              </span>
-                            ))}
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap gap-1">
+                              {pac.planos.map((pl, i) => (
+                                <span
+                                  key={i}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                >
+                                  <CreditCard className="h-3 w-3" />
+                                  {pl}
+                                </span>
+                              ))}
+                            </div>
+                            {(pac.vencimentoLiberacao || pac.quantidadeSessoesLiberadas) && (
+                              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                {pac.statusGuia === 'VENCIDA' ? (
+                                  <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-semibold">
+                                    Guia vencida
+                                  </span>
+                                ) : pac.statusGuia === 'VENCENDO_EM_BREVE' ? (
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-semibold">
+                                    Vence em {pac.diasParaVencimento}d
+                                  </span>
+                                ) : null}
+                                {pac.quantidadeSessoesLiberadas ? (
+                                  <span className="text-gray-500">
+                                    {pac.quantidadeSessoesLiberadas} sessões
+                                  </span>
+                                ) : null}
+                                {pac.vencimentoLiberacao ? (
+                                  <span className="text-gray-500">
+                                    até {pac.vencimentoLiberacao.split('-').reverse().join('/')}
+                                  </span>
+                                ) : null}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400 italic">Particular</span>

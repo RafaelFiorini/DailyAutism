@@ -1,5 +1,13 @@
 import api from './api';
-import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption, ResponsavelOption } from '../types/paciente';
+import type {
+  Paciente,
+  SavePacienteInput,
+  ClinicaOption,
+  PlanoSaudeOption,
+  ResponsavelOption,
+  PacienteGuiaPlano,
+  SavePacienteGuiaPlanoInput,
+} from '../types/paciente';
 
 export const pacienteService = {
   async list(): Promise<Paciente[]> {
@@ -60,5 +68,24 @@ export const pacienteService = {
     } catch {
       return [];
     }
+  },
+
+  async listGuias(pacienteId: string): Promise<PacienteGuiaPlano[]> {
+    const { data } = await api.get<PacienteGuiaPlano[]>(`/paciente-plano-saude/paciente/${pacienteId}`);
+    return data;
+  },
+
+  async vincularGuia(input: SavePacienteGuiaPlanoInput): Promise<PacienteGuiaPlano> {
+    const { data } = await api.post<PacienteGuiaPlano>('/paciente-plano-saude', input);
+    return data;
+  },
+
+  async atualizarGuia(idVinculo: string, input: SavePacienteGuiaPlanoInput): Promise<PacienteGuiaPlano> {
+    const { data } = await api.put<PacienteGuiaPlano>(`/paciente-plano-saude/${idVinculo}`, input);
+    return data;
+  },
+
+  async desvincularGuia(idVinculo: string): Promise<void> {
+    await api.delete(`/paciente-plano-saude/${idVinculo}`);
   },
 };

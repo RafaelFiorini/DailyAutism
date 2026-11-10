@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext, type FormEvent } from 'react';
+import { useState, useEffect, useCallback, useContext, useMemo, type FormEvent } from 'react';
 import {
   X,
   HeartPulse,
@@ -10,10 +10,20 @@ import {
   UserCheck,
   Users,
   RefreshCw,
+  CalendarClock,
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { pacienteService } from '../services/pacienteService';
-import type { Paciente, SavePacienteInput, ClinicaOption, PlanoSaudeOption, ResponsavelOption } from '../types/paciente';
+import { periodicidadeService } from '../services/periodicidadeService';
+import type {
+  Paciente,
+  SavePacienteInput,
+  ClinicaOption,
+  PlanoSaudeOption,
+  ResponsavelOption,
+  TipoLiberacaoGuia,
+} from '../types/paciente';
+import type { Periodicidade } from '../types/periodicidade';
 
 interface PacienteModalProps {
   isOpen: boolean;
@@ -48,14 +58,22 @@ export default function PacienteModal({
   const [isProprioResponsavel, setIsProprioResponsavel] = useState(false);
   const [idResponsavel, setIdResponsavel] = useState('');
 
-  // Plano de Saúde e Clínica
+  // Plano de Saúde, Guia e Clínica
   const [idPlanoSaude, setIdPlanoSaude] = useState('');
   const [numeroCarteirinha, setNumeroCarteirinha] = useState('');
+  const [validadeCarteirinha, setValidadeCarteirinha] = useState('');
+  const [numeroGuia, setNumeroGuia] = useState('');
+  const [tipoLiberacao, setTipoLiberacao] = useState<TipoLiberacaoGuia>('PERIODO');
+  const [dataInicioLiberacao, setDataInicioLiberacao] = useState('');
+  const [vencimentoLiberacao, setVencimentoLiberacao] = useState('');
+  const [quantidadeSessoesLiberadas, setQuantidadeSessoesLiberadas] = useState('');
+  const [idPeriodicidadeReferencia, setIdPeriodicidadeReferencia] = useState('');
   const [idClinica, setIdClinica] = useState('');
 
   const [planosOptions, setPlanosOptions] = useState<PlanoSaudeOption[]>([]);
   const [clinicasOptions, setClinicasOptions] = useState<ClinicaOption[]>([]);
   const [responsaveisOptions, setResponsaveisOptions] = useState<ResponsavelOption[]>([]);
+  const [periodicidadesOptions, setPeriodicidadesOptions] = useState<Periodicidade[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,14 +99,16 @@ export default function PacienteModal({
   const loadOptions = useCallback(async () => {
     setLoadingOptions(true);
     try {
-      const [planos, clinicas, resps] = await Promise.all([
+      const [planos, clinicas, resps, periods] = await Promise.all([
         pacienteService.listPlanos(),
         pacienteService.listClinicas(),
         pacienteService.listResponsaveis(),
+        periodicidadeService.list().catch(() => []),
       ]);
       setPlanosOptions(planos);
       setClinicasOptions(clinicas);
       setResponsaveisOptions(resps);
+      setPeriodicidadesOptions(periods);
     } catch {
       // Ignora erros de carregamento secundário
     } finally {
@@ -114,6 +134,15 @@ export default function PacienteModal({
       setIdResponsavel(initialData.idResponsavel || '');
       setIdPlanoSaude(initialData.idPlanoSaude || '');
       setNumeroCarteirinha(initialData.numeroCarteirinha || '');
+      setValidadeCarteirinha(initialData.validadeCarteirinha || '');
+      setNumeroGuia(initialData.numeroGuia || '');
+      setTipoLiberacao(initialData.tipoLiberacao || 'PERIODO');
+      setDataInicioLiberacao(initialData.dataInicioLiberacao || '');
+      setVencimentoLiberacao(initialData.vencimentoLiberacao || '');
+      setQuantidadeSessoesLiberadas(
+        initialData.quantidadeSessoesLiberadas ? String(initialData.quantidadeSessoesLiberadas) : ''
+      );
+      setIdPeriodicidadeReferencia('');
       setIdClinica(initialData.idClinica || '');
     } else {
       setNome('');
@@ -129,11 +158,40 @@ export default function PacienteModal({
       setIdResponsavel(userIsResponsavel && user?.idResponsavel ? user.idResponsavel : '');
       setIdPlanoSaude('');
       setNumeroCarteirinha('');
+      setValidadeCarteirinha('');
+      setNumeroGuia('');
+      setTipoLiberacao('PERIODO');
+      setDataInicioLiberacao(new Date().toISOString().slice(0, 10));
+      setVencimentoLiberacao('');
+      setQuantidadeSessoesLiberadas('');
+      setIdPeriodicidadeReferencia('');
       setIdClinica('');
     }
     setErrors({});
     setApiError('');
   }, [isOpen, initialData, loadOptions, jaTemOutroResponsavel, userIsResponsavel, user]);
+
+  // Cálculo em tempo real da data estimada de término quando a guia for por quantidade de sessões
+  const previsaoFimPorQuantidade = useMemo(() => {
+    if (tipoLiberacao !== 'QUANTIDADE') return null;
+    const qtd = Number(quantidadeSessoesLiberadas);
+    if (!qtd || qtd <= 0) return null;
+    const per = periodicidadesOptions.find((p) => p.idPeriodicidade === idPeriodicidadeReferencia);
+    if (!per || !per.diasIntervalo || per.diasIntervalo <= 0) return null;
+
+    const baseStr = dataInicioLiberacao || new Date().toISOString().slice(0, 10);
+    const [y, m, d] = baseStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + Math.max(0, qtd - 1) * per.diasIntervalo);
+    const ny = dt.getFullYear();
+    const nm = String(dt.getMonth() + 1).padStart(2, '0');
+    const nd = String(dt.getDate()).padStart(2, '0');
+    return {
+      iso: `${ny}-${nm}-${nd}`,
+      br: `${nd}/${nm}/${ny}`,
+      nomePeriodicidade: per.nomePeriodicidade,
+    };
+  }, [tipoLiberacao, quantidadeSessoesLiberadas, idPeriodicidadeReferencia, periodicidadesOptions, dataInicioLiberacao]);
 
   if (!isOpen) return null;
 
@@ -177,6 +235,24 @@ export default function PacienteModal({
         idResponsavel: !isProprioResponsavel && idResponsavel ? idResponsavel : undefined,
         idPlanoSaude: idPlanoSaude || undefined,
         numeroCarteirinha: numeroCarteirinha.trim() || undefined,
+        validadeCarteirinha: validadeCarteirinha || undefined,
+        numeroGuia: numeroGuia.trim() || undefined,
+        tipoLiberacao: idPlanoSaude ? tipoLiberacao : undefined,
+        dataInicioLiberacao: idPlanoSaude && dataInicioLiberacao ? dataInicioLiberacao : undefined,
+        vencimentoLiberacao:
+          idPlanoSaude && vencimentoLiberacao
+            ? vencimentoLiberacao
+            : idPlanoSaude && previsaoFimPorQuantidade
+            ? previsaoFimPorQuantidade.iso
+            : undefined,
+        quantidadeSessoesLiberadas:
+          idPlanoSaude && tipoLiberacao === 'QUANTIDADE' && quantidadeSessoesLiberadas
+            ? Number(quantidadeSessoesLiberadas)
+            : undefined,
+        idPeriodicidadeReferencia:
+          idPlanoSaude && tipoLiberacao === 'QUANTIDADE' && idPeriodicidadeReferencia
+            ? idPeriodicidadeReferencia
+            : undefined,
         idClinica: idClinica || undefined,
       };
 
@@ -463,12 +539,12 @@ export default function PacienteModal({
             )}
           </div>
 
-          {/* Espera: Plano de Saúde */}
-          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/40 space-y-2.5">
+          {/* Plano de Saúde e Controle de Guias */}
+          <div className="border border-gray-200 rounded-xl p-3.5 bg-gray-50/40 space-y-3">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-indigo-600" />
               <span className="text-xs font-semibold text-gray-800 uppercase tracking-wide">
-                Plano de Saúde (Espera de Integração)
+                Plano de Saúde & Guia de Liberação
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -509,6 +585,163 @@ export default function PacienteModal({
                 />
               </div>
             </div>
+
+            {idPlanoSaude && (
+              <div className="pt-2.5 border-t border-gray-200/80 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      Validade da Carteirinha
+                    </label>
+                    <input
+                      type="date"
+                      value={validadeCarteirinha}
+                      onChange={(e) => setValidadeCarteirinha(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                      Nº da Guia (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={numeroGuia}
+                      onChange={(e) => setNumeroGuia(e.target.value)}
+                      placeholder="Ex: GUIA-2026-001"
+                      className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Tipo de Liberação da Guia */}
+                <div className="bg-white p-2.5 rounded-lg border border-indigo-100 space-y-2.5">
+                  <span className="block text-[11px] font-semibold text-indigo-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5 text-indigo-600" />
+                    Regra de Liberação / Vencimento da Guia
+                  </span>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <label
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
+                        tipoLiberacao === 'PERIODO'
+                          ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="tipoLiberacaoGuia"
+                        checked={tipoLiberacao === 'PERIODO'}
+                        onChange={() => setTipoLiberacao('PERIODO')}
+                        className="text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span>Por Prazo (Data Limite)</span>
+                    </label>
+
+                    <label
+                      className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${
+                        tipoLiberacao === 'QUANTIDADE'
+                          ? 'bg-indigo-50 border-indigo-400 text-indigo-900 font-semibold'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="tipoLiberacaoGuia"
+                        checked={tipoLiberacao === 'QUANTIDADE'}
+                        onChange={() => setTipoLiberacao('QUANTIDADE')}
+                        className="text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span>Por Qtd. de Sessões</span>
+                    </label>
+                  </div>
+
+                  {tipoLiberacao === 'PERIODO' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Início da Liberação
+                        </label>
+                        <input
+                          type="date"
+                          value={dataInicioLiberacao}
+                          onChange={(e) => setDataInicioLiberacao(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                          Vencimento da Guia (Data Fim)
+                        </label>
+                        <input
+                          type="date"
+                          value={vencimentoLiberacao}
+                          onChange={(e) => setVencimentoLiberacao(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                            Sessões Liberadas
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            value={quantidadeSessoesLiberadas}
+                            onChange={(e) => setQuantidadeSessoesLiberadas(e.target.value)}
+                            placeholder="Ex: 30"
+                            className="w-full px-2.5 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white font-medium"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                            Início das Sessões
+                          </label>
+                          <input
+                            type="date"
+                            value={dataInicioLiberacao}
+                            onChange={(e) => setDataInicioLiberacao(e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-gray-600 mb-1">
+                            Periodicidade (Cálculo)
+                          </label>
+                          <select
+                            value={idPeriodicidadeReferencia}
+                            onChange={(e) => setIdPeriodicidadeReferencia(e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white"
+                          >
+                            <option value="">Selecionar p/ prever fim...</option>
+                            {periodicidadesOptions
+                              .filter((p) => p.diasIntervalo && p.diasIntervalo > 0)
+                              .map((per) => (
+                                <option key={per.idPeriodicidade} value={per.idPeriodicidade}>
+                                  {per.nomePeriodicidade} ({per.diasIntervalo}d)
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {previsaoFimPorQuantidade && (
+                        <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800">
+                          Com base na periodicidade <strong>{previsaoFimPorQuantidade.nomePeriodicidade}</strong>,{' '}
+                          <strong>{quantidadeSessoesLiberadas} sessões</strong> cobrirão até{' '}
+                          <strong>{previsaoFimPorQuantidade.br}</strong>.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Espera: Clínica */}
