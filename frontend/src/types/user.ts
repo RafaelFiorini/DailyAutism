@@ -6,6 +6,9 @@ export interface UserDTO {
   perfis: string[];
   idResponsavel?: string | null;
   idProfissional?: string | null;
+  idClinica?: string | null;
+  nomeClinica?: string | null;
+  cargoClinica?: string | null;
 }
 
 export interface User {
