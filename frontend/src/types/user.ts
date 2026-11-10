@@ -41,6 +41,7 @@ export interface User {
   isAdmin: boolean;
   admin?: boolean;
   ativo?: boolean;
+  pacientesIds?: string[];
 }
 
 export interface SaveUserInput {
@@ -66,4 +67,5 @@ export interface SaveUserInput {
   cargoClinica?: string;
   isAdmin: boolean;
   admin?: boolean;
+  pacientesIds?: string[];
 }

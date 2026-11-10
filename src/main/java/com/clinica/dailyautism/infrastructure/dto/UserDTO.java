@@ -56,6 +56,7 @@ public class UserDTO {
     private boolean isAdmin;
 
     private Boolean ativo;
+    private List<String> pacientesIds;
 
     public static UserDTO create(User user) {
         return create(user, null);
@@ -71,11 +72,18 @@ public class UserDTO {
         String idProfissional = null;
         boolean isProf = false;
         String conselhoProf = null;
+        List<String> pacientesIds = List.of();
 
         if (pessoa != null) {
             if (pessoa.getResponsavel() != null) {
                 idResponsavel = pessoa.getResponsavel().getIdResponsavel();
                 isResp = true;
+                if (pessoa.getResponsavel().getPacientes() != null) {
+                    pacientesIds = pessoa.getResponsavel().getPacientes().stream()
+                            .filter(p -> p.getAtivo() == null || p.getAtivo())
+                            .map(com.clinica.dailyautism.domain.entity.Paciente::getIdPaciente)
+                            .toList();
+                }
             }
             if (pessoa.getProfissional() != null) {
                 idProfissional = pessoa.getProfissional().getIdProf();
@@ -138,6 +146,7 @@ public class UserDTO {
                 .cargoClinica(cargoClinica)
                 .isAdmin(isAdmin)
                 .ativo(user.getAtivo())
+                .pacientesIds(pacientesIds)
                 .build();
     }
 

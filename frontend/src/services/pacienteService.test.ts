@@ -89,4 +89,16 @@ describe('pacienteService', () => {
     const fallback = await pacienteService.listClinicas();
     expect(fallback).toEqual([]);
   });
+
+  it('deve listar responsaveis mapeando nomeResponsavel e cpf corretamente', async () => {
+    const mockResps = [
+      { idResponsavel: 'r1', nomeResponsavel: 'Viviane Silva', cpf: '11122233344' },
+    ];
+    vi.mocked(api.get).mockResolvedValueOnce({ data: mockResps });
+
+    const result = await pacienteService.listResponsaveis();
+    expect(result).toEqual([
+      { idResponsavel: 'r1', nome: 'Viviane Silva', cpf: '11122233344' },
+    ]);
+  });
 });

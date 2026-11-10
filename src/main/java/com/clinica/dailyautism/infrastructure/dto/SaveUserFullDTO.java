@@ -92,6 +92,10 @@ public class SaveUserFullDTO {
     @JsonProperty("perfis")
     private List<String> perfis;
 
+    @JsonProperty("pacientesIds")
+    @JsonAlias({"idsPacientes"})
+    private List<String> pacientesIds;
+
     @JsonProperty("isResponsavel")
     public Boolean getIsResponsavel() {
         return isResponsavel;

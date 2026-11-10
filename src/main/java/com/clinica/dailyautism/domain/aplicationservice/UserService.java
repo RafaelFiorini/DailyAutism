@@ -2,6 +2,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.Clinica;
 import com.clinica.dailyautism.domain.entity.FuncionarioClinica;
+import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
 import com.clinica.dailyautism.domain.entity.Responsavel;
@@ -13,6 +14,7 @@ import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.UserNotFoundException;
 import com.clinica.dailyautism.domain.repository.ClinicaRepository;
 import com.clinica.dailyautism.domain.repository.FuncionarioClinicaRepository;
+import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
@@ -26,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +45,7 @@ public class UserService {
     private final ProfissionalRepository profissionalRepository;
     private final ClinicaRepository clinicaRepository;
     private final FuncionarioClinicaRepository funcionarioClinicaRepository;
+    private final PacienteRepository pacienteRepository;
 
     @Transactional
     public User createUser(SaveUserDTO saveUserDTO) {
@@ -179,28 +183,7 @@ public class UserService {
         user = userRepository.save(user);
 
         // 5. Responsável
-        var optResp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
-        if (Boolean.TRUE.equals(dto.getIsResponsavel())) {
-            if (optResp.isPresent()) {
-                Responsavel resp = optResp.get();
-                if (resp.getAtivo() == null || !resp.getAtivo()) {
-                    resp.setAtivo(true);
-                    responsavelRepository.save(resp);
-                }
-            } else {
-                Responsavel resp = Responsavel.builder()
-                        .pessoaResponsavel(pessoa)
-                        .build();
-                if (resp.getAtivo() == null) resp.setAtivo(true);
-                responsavelRepository.save(resp);
-            }
-        } else if (Boolean.FALSE.equals(dto.getIsResponsavel())) {
-            if (optResp.isPresent()) {
-                Responsavel resp = optResp.get();
-                resp.desativar();
-                responsavelRepository.save(resp);
-            }
-        }
+        processarResponsavel(pessoa, dto);
 
         // 6. Profissional
         var optProf = profissionalRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
@@ -354,28 +337,7 @@ public class UserService {
         user = userRepository.save(user);
 
         // Responsável
-        var optResp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
-        if (Boolean.TRUE.equals(dto.getIsResponsavel())) {
-            if (optResp.isPresent()) {
-                Responsavel resp = optResp.get();
-                if (resp.getAtivo() == null || !resp.getAtivo()) {
-                    resp.setAtivo(true);
-                    responsavelRepository.save(resp);
-                }
-            } else {
-                Responsavel resp = Responsavel.builder()
-                        .pessoaResponsavel(pessoa)
-                        .build();
-                if (resp.getAtivo() == null) resp.setAtivo(true);
-                responsavelRepository.save(resp);
-            }
-        } else if (Boolean.FALSE.equals(dto.getIsResponsavel())) {
-            if (optResp.isPresent()) {
-                Responsavel resp = optResp.get();
-                resp.desativar();
-                responsavelRepository.save(resp);
-            }
-        }
+        processarResponsavel(pessoa, dto);
 
         // Profissional
         var optProf = profissionalRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
@@ -474,5 +436,45 @@ public class UserService {
     public User findByEmail(String email) {
         return userRepository.findByEmailUser(email)
                 .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + email));
+    }
+
+    private void processarResponsavel(Pessoa pessoa, SaveUserFullDTO dto) {
+        var optResp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa());
+        if (Boolean.TRUE.equals(dto.getIsResponsavel())) {
+            Responsavel resp;
+            if (optResp.isPresent()) {
+                resp = optResp.get();
+                if (resp.getAtivo() == null || !resp.getAtivo()) {
+                    resp.setAtivo(true);
+                }
+            } else {
+                resp = Responsavel.builder()
+                        .pessoaResponsavel(pessoa)
+                        .pacientes(new ArrayList<>())
+                        .build();
+                resp.setAtivo(true);
+            }
+
+            if (dto.getPacientesIds() != null) {
+                List<Paciente> selecionados = dto.getPacientesIds().isEmpty()
+                        ? List.of()
+                        : pacienteRepository.findAllById(dto.getPacientesIds());
+                if (resp.getPacientes() == null) {
+                    resp.setPacientes(new ArrayList<>());
+                } else {
+                    resp.getPacientes().clear();
+                }
+                resp.getPacientes().addAll(selecionados);
+            }
+
+            resp = responsavelRepository.save(resp);
+            pessoa.setResponsavel(resp);
+        } else if (Boolean.FALSE.equals(dto.getIsResponsavel())) {
+            if (optResp.isPresent()) {
+                Responsavel resp = optResp.get();
+                resp.desativar();
+                responsavelRepository.save(resp);
+            }
+        }
     }
 }

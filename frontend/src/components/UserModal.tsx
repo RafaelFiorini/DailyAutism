@@ -15,11 +15,15 @@ import {
   Building2,
   ShieldCheck,
   Info,
+  HeartPulse,
+  Search,
 } from 'lucide-react';
 import { userService } from '../services/userService';
 import { clinicaService } from '../services/clinicaService';
+import { pacienteService } from '../services/pacienteService';
 import type { User, SaveUserInput } from '../types/user';
 import type { Clinica } from '../types/clinica';
+import type { Paciente } from '../types/paciente';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -61,6 +65,12 @@ export default function UserModal({
   const [clinicas, setClinicas] = useState<Clinica[]>([]);
   const [loadingClinicas, setLoadingClinicas] = useState(false);
 
+  // Pacientes associados ao Responsável
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [loadingPacientes, setLoadingPacientes] = useState(false);
+  const [selectedPacienteIds, setSelectedPacienteIds] = useState<string[]>([]);
+  const [pacienteSearch, setPacienteSearch] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -80,6 +90,13 @@ export default function UserModal({
         .then((data) => setClinicas(data))
         .catch(() => setClinicas([]))
         .finally(() => setLoadingClinicas(false));
+
+      setLoadingPacientes(true);
+      pacienteService
+        .list()
+        .then((data) => setPacientes(data))
+        .catch(() => setPacientes([]))
+        .finally(() => setLoadingPacientes(false));
     }
   }, [isOpen]);
 
@@ -111,6 +128,8 @@ export default function UserModal({
       setConselhoProf(initialData.conselhoProf || '');
       setIdClinica(initialData.idClinica || '');
       setCargoClinica(initialData.cargoClinica || '');
+      setSelectedPacienteIds(initialData.pacientesIds || []);
+      setPacienteSearch('');
     } else {
       setNome('');
       setCpf('');
@@ -132,9 +151,17 @@ export default function UserModal({
       setConselhoProf('');
       setIdClinica('');
       setCargoClinica('');
+      setSelectedPacienteIds([]);
+      setPacienteSearch('');
     }
     setError('');
   }, [initialData, isOpen]);
+
+  const togglePaciente = (idPac: string) => {
+    setSelectedPacienteIds((prev) =>
+      prev.includes(idPac) ? prev.filter((id) => id !== idPac) : [...prev, idPac]
+    );
+  };
 
   if (!isOpen) return null;
 
@@ -214,6 +241,7 @@ export default function UserModal({
         cargoClinica: isFuncionarioClinica ? cargoClinica.trim() : undefined,
         isAdmin,
         admin: isAdmin,
+        pacientesIds: isResponsavel ? selectedPacienteIds : undefined,
       };
 
       let savedUser: User;
@@ -396,6 +424,83 @@ export default function UserModal({
                   </div>
                 </label>
               </div>
+
+              {/* Associar Pacientes (exibido se for responsável) */}
+              {isResponsavel && (
+                <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-200 mt-2 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-indigo-900 flex items-center gap-1.5">
+                      <HeartPulse className="h-4 w-4 text-indigo-600" />
+                      Associar Pacientes ao Responsável (Opcional)
+                    </label>
+                    <span className="text-[11px] font-medium text-indigo-700 bg-white px-2 py-0.5 rounded-full border border-indigo-200">
+                      {selectedPacienteIds.length} selecionado(s)
+                    </span>
+                  </div>
+
+                  {pacientes.length > 4 && (
+                    <div className="relative">
+                      <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-indigo-400" />
+                      <input
+                        type="text"
+                        value={pacienteSearch}
+                        onChange={(e) => setPacienteSearch(e.target.value)}
+                        placeholder="Filtrar pacientes por nome ou CPF..."
+                        className="w-full pl-8 pr-3 py-1.5 text-xs border border-indigo-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {loadingPacientes ? (
+                    <div className="p-3 text-center text-xs text-indigo-700 flex items-center justify-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Carregando pacientes...
+                    </div>
+                  ) : pacientes.length === 0 ? (
+                    <p className="text-xs text-indigo-700/80 italic bg-white p-2.5 rounded-lg border border-indigo-100">
+                      Nenhum paciente cadastrado no momento. Você também pode associar depois na tela de Pacientes.
+                    </p>
+                  ) : (
+                    <div className="max-h-36 overflow-y-auto bg-white border border-indigo-200 rounded-lg divide-y divide-gray-100 p-1">
+                      {pacientes
+                        .filter((pac) => {
+                          if (!pacienteSearch.trim()) return true;
+                          const term = pacienteSearch.toLowerCase();
+                          return (
+                            (pac.nomePessoa || '').toLowerCase().includes(term) ||
+                            (pac.cpf || '').includes(term)
+                          );
+                        })
+                        .map((pac) => {
+                          const isChecked = selectedPacienteIds.includes(pac.idPaciente);
+                          return (
+                            <label
+                              key={pac.idPaciente}
+                              className="flex items-center gap-2.5 p-2 hover:bg-indigo-50/40 rounded cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => togglePaciente(pac.idPaciente)}
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <div className="text-xs flex-1 min-w-0">
+                                <span className="font-medium text-gray-800 block truncate">
+                                  {pac.nomePessoa}
+                                </span>
+                                {pac.cpf && (
+                                  <span className="text-[11px] text-gray-400">
+                                    CPF: {formatCpf(pac.cpf)}
+                                  </span>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Registro no Conselho (exibido se for profissional) */}
               {isProfissional && (

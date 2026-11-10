@@ -49,8 +49,13 @@ export const pacienteService = {
       const response = await api.get<any[]>('/responsaveis');
       return response.data.map((r) => ({
         idResponsavel: r.idResponsavel,
-        nome: r.nomePessoa || r.pessoaResponsavel?.nomePessoa || 'Responsável sem nome',
-        cpf: r.cpf || r.pessoaResponsavel?.cpfpessoa,
+        nome:
+          r.nomeResponsavel ||
+          r.nomePessoa ||
+          r.nome ||
+          r.pessoaResponsavel?.nomePessoa ||
+          'Responsável sem nome',
+        cpf: r.cpf || r.CPFPessoa || r.pessoaResponsavel?.cpfpessoa,
       }));
     } catch {
       return [];
