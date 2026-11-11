@@ -33,7 +33,11 @@ public class PacoteParticularService {
                     pacote.getClinica() != null ? pacote.getClinica().getIdClinica() : null,
                     emailUsuario
             );
-            pacote.getItens().clear();
+            if (pacote.getItens() != null) {
+                pacote.getItens().forEach(BaseEntity::desativar);
+            } else {
+                pacote.setItens(new ArrayList<>());
+            }
         } else {
             pacote = PacoteParticular.builder()
                     .clinica(clinica)
@@ -90,6 +94,9 @@ public class PacoteParticularService {
                 emailUsuario
         );
         pacote.desativar();
+        if (pacote.getItens() != null) {
+            pacote.getItens().forEach(BaseEntity::desativar);
+        }
         pacoteRepository.save(pacote);
     }
 }

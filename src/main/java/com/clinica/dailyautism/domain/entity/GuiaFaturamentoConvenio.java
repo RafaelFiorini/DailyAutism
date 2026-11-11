@@ -107,6 +107,6 @@ public class GuiaFaturamentoConvenio extends BaseEntity {
     private String observacoes;
 
     @Builder.Default
-    @OneToMany(mappedBy = "guia", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "guia", cascade = CascadeType.ALL)
     private List<GuiaFaturamentoItem> itens = new ArrayList<>();
 }

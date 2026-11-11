@@ -45,6 +45,6 @@ public class PacoteParticular extends BaseEntity {
     private Integer validadeMesesSugerida;
 
     @Builder.Default
-    @OneToMany(mappedBy = "pacote", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "pacote", cascade = CascadeType.ALL)
     private List<PacoteParticularItem> itens = new ArrayList<>();
 }

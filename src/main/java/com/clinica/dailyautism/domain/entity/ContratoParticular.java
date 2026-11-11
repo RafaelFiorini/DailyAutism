@@ -74,6 +74,6 @@ public class ContratoParticular extends BaseEntity {
     private StatusContratoParticular statusContrato = StatusContratoParticular.ATIVO;
 
     @Builder.Default
-    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL)
     private List<ContratoParticularItem> itens = new ArrayList<>();
 }
