@@ -28,6 +28,18 @@ public class UserRestResource {
         return ResponseEntity.ok(userService.listUsers());
     }
 
+    @GetMapping("/inativos")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<UserDTO>> listUsersInativos() {
+        return ResponseEntity.ok(userService.listUsersInativos());
+    }
+
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<UserDTO> reativarUser(@PathVariable String id) {
+        return ResponseEntity.ok(userService.reativarUser(id));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('VER_USUARIO')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String id) {

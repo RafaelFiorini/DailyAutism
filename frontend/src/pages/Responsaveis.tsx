@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import {
   UserCheck,
   UserPlus,
@@ -8,18 +8,25 @@ import {
   Phone,
   Mail,
   Trash2,
+  RotateCcw,
   HeartPulse,
   Pencil,
 } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 import { responsavelService } from '../services/responsavelService';
 import type { Responsavel } from '../types/responsavel';
 import ResponsavelModal from '../components/ResponsavelModal';
+import ActiveStatusFilter from '../components/ActiveStatusFilter';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Responsaveis() {
+  const auth = useContext(AuthContext);
+  const canManageInativos = auth ? auth.isAdmin || auth.isFuncionarioClinica : true;
   const [responsaveis, setResponsaveis] = useState<Responsavel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [showInativos, setShowInativos] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResponsavel, setEditingResponsavel] = useState<Responsavel | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -28,14 +35,14 @@ export default function Responsaveis() {
     setLoading(true);
     setError('');
     try {
-      const data = await responsavelService.list();
+      const data = showInativos ? await responsavelService.listInativos() : await responsavelService.list();
       setResponsaveis(data);
     } catch {
       setError('Não foi possível carregar a lista de responsáveis.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showInativos]);
 
   useEffect(() => {
     fetchResponsaveis();
@@ -57,6 +64,10 @@ export default function Responsaveis() {
   }, [responsaveis, search]);
 
   const handleSaved = (item: Responsavel) => {
+    if (showInativos) {
+      setShowInativos(false);
+      return;
+    }
     setResponsaveis((prev) => {
       const index = prev.findIndex((r) => r.idResponsavel === item.idResponsavel);
       if (index >= 0) {
@@ -75,8 +86,22 @@ export default function Responsaveis() {
     try {
       await responsavelService.delete(id);
       setResponsaveis((prev) => prev.filter((r) => r.idResponsavel !== id));
-    } catch {
-      alert('Erro ao excluir responsável.');
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao desativar responsável.'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleReativar = async (id: string, nome: string) => {
+    if (!window.confirm(`Deseja reativar o responsável "${nome}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      await responsavelService.reativar(id);
+      setResponsaveis((prev) => prev.filter((r) => r.idResponsavel !== id));
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao reativar responsável.'));
     } finally {
       setDeletingId(null);
     }
@@ -111,8 +136,8 @@ export default function Responsaveis() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="relative">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 min-w-0">
           <Search className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -122,6 +147,9 @@ export default function Responsaveis() {
             className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
           />
         </div>
+        {canManageInativos && (
+          <ActiveStatusFilter showInativos={showInativos} onChange={setShowInativos} />
+        )}
       </div>
 
       {/* Table Container */}
@@ -251,28 +279,46 @@ export default function Responsaveis() {
                       {/* Ações */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingResponsavel(resp);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Editar Responsável"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(resp.idResponsavel, resp.nomeResponsavel)}
-                            disabled={deletingId === resp.idResponsavel}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Excluir Responsável"
-                          >
-                            {deletingId === resp.idResponsavel ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
+                          {showInativos ? (
+                            <button
+                              onClick={() => handleReativar(resp.idResponsavel, resp.nomeResponsavel)}
+                              disabled={deletingId === resp.idResponsavel}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                              title="Reativar Responsável"
+                            >
+                              {deletingId === resp.idResponsavel ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              )}
+                              Reativar
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingResponsavel(resp);
+                                  setIsModalOpen(true);
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Editar Responsável"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(resp.idResponsavel, resp.nomeResponsavel)}
+                                disabled={deletingId === resp.idResponsavel}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Excluir Responsável"
+                              >
+                                {deletingId === resp.idResponsavel ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

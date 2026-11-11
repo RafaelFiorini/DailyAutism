@@ -40,4 +40,10 @@ public interface ResponsavelRepository extends JpaRepository<Responsavel, String
 
     @Query(value = "SELECT * FROM responsavel WHERE pessoa_responsavel = :idPessoa LIMIT 1", nativeQuery = true)
     Optional<Responsavel> findByPessoaIdAnyAtivo(@Param("idPessoa") String idPessoa);
+
+    @Query(value = "SELECT * FROM responsavel WHERE ativo = false", nativeQuery = true)
+    List<Responsavel> findAllInactive();
+
+    @Query(value = "SELECT * FROM responsavel WHERE id_responsavel = :id LIMIT 1", nativeQuery = true)
+    Optional<Responsavel> findByIdAnyAtivo(@Param("id") String id);
 }

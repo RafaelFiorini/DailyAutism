@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Pencil,
   Trash2,
+  RotateCcw,
   UserCheck,
   CreditCard,
   Building2,
@@ -17,14 +18,18 @@ import { useAuth } from '../hooks/useAuth';
 import { pacienteService } from '../services/pacienteService';
 import type { Paciente } from '../types/paciente';
 import PacienteModal from '../components/PacienteModal';
+import ActiveStatusFilter from '../components/ActiveStatusFilter';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Pacientes() {
   const navigate = useNavigate();
-  const { isAdmin, isResponsavel, isProfissional } = useAuth();
+  const { isAdmin, isFuncionarioClinica, isResponsavel, isProfissional } = useAuth();
+  const canManageInativos = isAdmin || isFuncionarioClinica;
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [showInativos, setShowInativos] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPaciente, setEditingPaciente] = useState<Paciente | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -33,14 +38,14 @@ export default function Pacientes() {
     setLoading(true);
     setError('');
     try {
-      const data = await pacienteService.list();
+      const data = showInativos ? await pacienteService.listInativos() : await pacienteService.list();
       setPacientes(data);
     } catch {
       setError('Não foi possível carregar a lista de pacientes.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showInativos]);
 
   useEffect(() => {
     fetchPacientes();
@@ -62,6 +67,10 @@ export default function Pacientes() {
   }, [pacientes, search]);
 
   const handleSaved = (item: Paciente) => {
+    if (showInativos) {
+      setShowInativos(false);
+      return;
+    }
     setPacientes((prev) => {
       const index = prev.findIndex((p) => p.idPaciente === item.idPaciente);
       if (index >= 0) {
@@ -81,8 +90,22 @@ export default function Pacientes() {
     try {
       await pacienteService.delete(id);
       setPacientes((prev) => prev.filter((p) => p.idPaciente !== id));
-    } catch {
-      alert('Erro ao excluir paciente.');
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao desativar paciente.'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleReativar = async (id: string, nome: string) => {
+    if (!window.confirm(`Deseja reativar o paciente "${nome}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      await pacienteService.reativar(id);
+      setPacientes((prev) => prev.filter((p) => p.idPaciente !== id));
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao reativar paciente.'));
     } finally {
       setDeletingId(null);
     }
@@ -136,8 +159,8 @@ export default function Pacientes() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="relative">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 min-w-0">
           <Search className="h-5 w-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -147,6 +170,9 @@ export default function Pacientes() {
             className="w-full pl-11 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
           />
         </div>
+        {canManageInativos && (
+          <ActiveStatusFilter showInativos={showInativos} onChange={setShowInativos} />
+        )}
       </div>
 
       {/* Table Container */}
@@ -316,36 +342,54 @@ export default function Pacientes() {
                       {/* Ações */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => navigate(`/admin/arquivos?pacienteId=${pac.idPaciente}`)}
-                            className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                            title="Documentos / Arquivos"
-                          >
-                            <FileText className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingPaciente(pac);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Editar Paciente"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          {isAdmin && (
+                          {showInativos ? (
                             <button
-                              onClick={() => handleDelete(pac.idPaciente, pac.nomePessoa)}
+                              onClick={() => handleReativar(pac.idPaciente, pac.nomePessoa)}
                               disabled={deletingId === pac.idPaciente}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                              title="Excluir Paciente"
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                              title="Reativar Paciente"
                             >
                               {deletingId === pac.idPaciente ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               ) : (
-                                <Trash2 className="h-4 w-4" />
+                                <RotateCcw className="h-3.5 w-3.5" />
                               )}
+                              Reativar
                             </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => navigate(`/admin/arquivos?pacienteId=${pac.idPaciente}`)}
+                                className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Documentos / Arquivos"
+                              >
+                                <FileText className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingPaciente(pac);
+                                  setIsModalOpen(true);
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Editar Paciente"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleDelete(pac.idPaciente, pac.nomePessoa)}
+                                  disabled={deletingId === pac.idPaciente}
+                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Excluir Paciente"
+                                >
+                                  {deletingId === pac.idPaciente ? (
+                                    <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

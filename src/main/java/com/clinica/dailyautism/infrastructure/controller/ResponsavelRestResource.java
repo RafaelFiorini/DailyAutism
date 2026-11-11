@@ -59,6 +59,26 @@ public class ResponsavelRestResource {
         return ResponseEntity.ok(responsaveis);
     }
 
+    @GetMapping("/inativos")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_RESPONSAVEL')")
+    public ResponseEntity<List<ResponsavelDTO>> listResponsaveisInativos(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<ResponsavelDTO> responsaveis = responsavelService.listResponsaveisInativosForUser(email)
+                .stream()
+                .map(ResponsavelDTO::create)
+                .toList();
+        return ResponseEntity.ok(responsaveis);
+    }
+
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_RESPONSAVEL')")
+    public ResponseEntity<ResponsavelDTO> reativarResponsavel(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        return ResponseEntity.ok(ResponsavelDTO.create(responsavelService.reativarResponsavel(id, email)));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EDITAR_RESPONSAVEL')")
     public ResponseEntity<ResponsavelDTO> updateResponsavel(@PathVariable String id,

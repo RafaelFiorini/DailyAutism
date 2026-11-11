@@ -54,9 +54,12 @@ public class AuthService {
     public String register(RegisterDTO dto) {
         String email = dto.getEmail().trim().toLowerCase();
 
-        if (userRepository.findByEmailUser(email).isPresent()) {
+        userRepository.findByEmailAnyAtivo(email).ifPresent(existente -> {
+            if (!Boolean.TRUE.equals(existente.getAtivo())) {
+                throw new IllegalArgumentException("Este e-mail pertence a uma conta desativada. Entre em contato com a clínica ou administrador para reativá-la.");
+            }
             throw new EmailAlreadyExistsException(email);
-        }
+        });
 
         String rawCpf = dto.getCpf();
         String cleanCpf = (rawCpf != null) ? rawCpf.replaceAll("\\D", "").trim() : "";

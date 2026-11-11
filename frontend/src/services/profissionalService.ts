@@ -7,6 +7,16 @@ export const profissionalService = {
     return response.data;
   },
 
+  async listInativos(): Promise<Profissional[]> {
+    const response = await api.get<Profissional[]>('/profissionais/inativos');
+    return response.data;
+  },
+
+  async reativar(id: string): Promise<Profissional> {
+    const response = await api.patch<Profissional>(`/profissionais/${id}/reativar`);
+    return response.data;
+  },
+
   async create(input: SaveProfissionalInput): Promise<Profissional> {
     const response = await api.post<Profissional>('/profissionais', input);
     return response.data;

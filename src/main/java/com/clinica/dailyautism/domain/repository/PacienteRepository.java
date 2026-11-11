@@ -16,4 +16,13 @@ public interface PacienteRepository extends JpaRepository<Paciente, String> {
 
     @Query("SELECT DISTINCT p FROM Paciente p JOIN p.clinicas pc WHERE pc.clinica.idClinica IN :clinicaIds")
     List<Paciente> findByClinicaIds(@Param("clinicaIds") List<String> clinicaIds);
+
+    @Query(value = "SELECT * FROM paciente WHERE ativo = false", nativeQuery = true)
+    List<Paciente> findAllInactive();
+
+    @Query(value = "SELECT * FROM paciente WHERE id_paciente = :id LIMIT 1", nativeQuery = true)
+    Optional<Paciente> findByIdAnyAtivo(@Param("id") String id);
+
+    @Query(value = "SELECT * FROM paciente WHERE pessoa_paciente = :idPessoa LIMIT 1", nativeQuery = true)
+    Optional<Paciente> findByPessoaIdAnyAtivo(@Param("idPessoa") String idPessoa);
 }

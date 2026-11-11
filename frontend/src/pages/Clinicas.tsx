@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Pencil,
   Trash2,
+  RotateCcw,
   ShieldAlert,
   Phone,
   Mail,
@@ -16,6 +17,8 @@ import { useAuth } from '../hooks/useAuth';
 import { clinicaService } from '../services/clinicaService';
 import type { Clinica } from '../types/clinica';
 import ClinicaModal from '../components/ClinicaModal';
+import ActiveStatusFilter from '../components/ActiveStatusFilter';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Clinicas() {
   const { isAdmin } = useAuth();
@@ -24,6 +27,7 @@ export default function Clinicas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [showInativos, setShowInativos] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClinica, setEditingClinica] = useState<Clinica | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -32,14 +36,14 @@ export default function Clinicas() {
     setLoading(true);
     setError('');
     try {
-      const data = await clinicaService.list();
+      const data = showInativos ? await clinicaService.listInativos() : await clinicaService.list();
       setClinicas(data);
     } catch {
       setError('Não foi possível carregar a lista de clínicas.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showInativos]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -68,6 +72,10 @@ export default function Clinicas() {
   }, [clinicas, search]);
 
   const handleSaved = (saved: Clinica) => {
+    if (showInativos) {
+      setShowInativos(false);
+      return;
+    }
     setClinicas((prev) => {
       const idx = prev.findIndex((c) => c.idClinica === saved.idClinica);
       if (idx >= 0) {
@@ -86,8 +94,22 @@ export default function Clinicas() {
     try {
       await clinicaService.delete(id);
       setClinicas((prev) => prev.filter((c) => c.idClinica !== id));
-    } catch {
-      alert('Erro ao excluir clínica.');
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao desativar clínica.'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleReativar = async (id: string, nome: string) => {
+    if (!window.confirm(`Deseja reativar a clínica "${nome}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      await clinicaService.reativar(id);
+      setClinicas((prev) => prev.filter((c) => c.idClinica !== id));
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao reativar clínica.'));
     } finally {
       setDeletingId(null);
     }
@@ -151,8 +173,8 @@ export default function Clinicas() {
       {/* Search and Table Card */}
       <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
         {/* Search header */}
-        <div className="p-4 border-b border-gray-200/80 bg-gray-50/50 flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
+        <div className="p-4 border-b border-gray-200/80 bg-gray-50/50 flex flex-wrap items-center justify-between gap-4">
+          <div className="relative flex-1 min-w-[240px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
@@ -162,11 +184,14 @@ export default function Clinicas() {
               className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all placeholder:text-gray-400"
             />
           </div>
-          {search && (
-            <span className="text-xs text-gray-500">
-              {filteredClinicas.length} de {clinicas.length} clínica(s)
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {search && (
+              <span className="text-xs text-gray-500">
+                {filteredClinicas.length} de {clinicas.length} clínica(s)
+              </span>
+            )}
+            <ActiveStatusFilter showInativos={showInativos} onChange={setShowInativos} />
+          </div>
         </div>
 
         {/* State: Error */}
@@ -288,28 +313,46 @@ export default function Clinicas() {
                       {/* Ações */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingClinica(clinica);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Editar clínica"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(clinica.idClinica, clinica.nomeClinica)}
-                            disabled={deletingId === clinica.idClinica}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                            title="Desativar clínica"
-                          >
-                            {deletingId === clinica.idClinica ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
+                          {showInativos ? (
+                            <button
+                              onClick={() => handleReativar(clinica.idClinica, clinica.nomeClinica)}
+                              disabled={deletingId === clinica.idClinica}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                              title="Reativar clínica"
+                            >
+                              {deletingId === clinica.idClinica ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              )}
+                              Reativar
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingClinica(clinica);
+                                  setIsModalOpen(true);
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                title="Editar clínica"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(clinica.idClinica, clinica.nomeClinica)}
+                                disabled={deletingId === clinica.idClinica}
+                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                title="Desativar clínica"
+                              >
+                                {deletingId === clinica.idClinica ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

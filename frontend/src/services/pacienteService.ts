@@ -15,6 +15,16 @@ export const pacienteService = {
     return response.data;
   },
 
+  async listInativos(): Promise<Paciente[]> {
+    const response = await api.get<Paciente[]>('/pacientes/inativos');
+    return response.data;
+  },
+
+  async reativar(id: string): Promise<Paciente> {
+    const response = await api.patch<Paciente>(`/pacientes/${id}/reativar`);
+    return response.data;
+  },
+
   async getById(id: string): Promise<Paciente> {
     const response = await api.get<Paciente>(`/pacientes/${id}`);
     return response.data;

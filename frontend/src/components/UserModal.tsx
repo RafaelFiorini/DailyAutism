@@ -24,6 +24,8 @@ import { pacienteService } from '../services/pacienteService';
 import type { User, SaveUserInput } from '../types/user';
 import type { Clinica } from '../types/clinica';
 import type { Paciente } from '../types/paciente';
+import { extractApiErrorMessage, extractInactiveConflict, type InactiveConflictInfo } from '../utils/apiError';
+import InactiveConflictAlert from './InactiveConflictAlert';
 
 interface UserModalProps {
   isOpen: boolean;
@@ -72,7 +74,10 @@ export default function UserModal({
   const [pacienteSearch, setPacienteSearch] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
   const [error, setError] = useState('');
+  const [inactiveConflict, setInactiveConflict] = useState<InactiveConflictInfo | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<SaveUserInput | null>(null);
 
   const formatCpf = (value: string) => {
     const raw = value.replace(/\D/g, '').slice(0, 11);
@@ -155,6 +160,8 @@ export default function UserModal({
       setPacienteSearch('');
     }
     setError('');
+    setInactiveConflict(null);
+    setPendingPayload(null);
   }, [initialData, isOpen]);
 
   const togglePaciente = (idPac: string) => {
@@ -168,6 +175,7 @@ export default function UserModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setInactiveConflict(null);
 
     if (!nome.trim()) {
       setError('Informe o nome completo.');
@@ -244,6 +252,7 @@ export default function UserModal({
         pacientesIds: isResponsavel ? selectedPacienteIds : undefined,
       };
 
+      setPendingPayload(payload);
       let savedUser: User;
       if (initialData?.idUser) {
         savedUser = await userService.update(initialData.idUser, payload);
@@ -253,14 +262,35 @@ export default function UserModal({
 
       onSuccess(savedUser);
       onClose();
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.errorMessage ||
-        err?.response?.data?.message ||
-        'Não foi possível salvar o usuário. Verifique os dados e tente novamente.';
-      setError(msg);
+    } catch (err: unknown) {
+      const conflict = extractInactiveConflict(err);
+      if (conflict) {
+        setInactiveConflict(conflict);
+      } else {
+        setError(
+          extractApiErrorMessage(err, 'Não foi possível salvar o usuário. Verifique os dados e tente novamente.')
+        );
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReactivateExisting = async () => {
+    if (!inactiveConflict) return;
+    setReactivating(true);
+    setError('');
+    try {
+      let reactivated = await userService.reativar(inactiveConflict.resourceId);
+      if (pendingPayload) {
+        reactivated = await userService.update(inactiveConflict.resourceId, pendingPayload);
+      }
+      onSuccess(reactivated);
+      onClose();
+    } catch (err: unknown) {
+      setError(extractApiErrorMessage(err, 'Não foi possível reativar o usuário.'));
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -287,6 +317,11 @@ export default function UserModal({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">
+          <InactiveConflictAlert
+            conflict={inactiveConflict}
+            onReactivate={handleReactivateExisting}
+            loading={reactivating}
+          />
           {error && (
             <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2.5 text-red-700 text-sm">
               <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />

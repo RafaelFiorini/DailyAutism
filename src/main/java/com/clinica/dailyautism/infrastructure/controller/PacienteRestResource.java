@@ -55,6 +55,26 @@ public class PacienteRestResource {
         return ResponseEntity.ok(pacientes);
     }
 
+    @GetMapping("/inativos")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PACIENTE')")
+    public ResponseEntity<List<PacienteDTO>> listPacientesInativos(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<PacienteDTO> pacientes = pacienteService.listPacientesInativosForUser(email)
+                .stream()
+                .map(PacienteDTO::create)
+                .toList();
+        return ResponseEntity.ok(pacientes);
+    }
+
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PACIENTE')")
+    public ResponseEntity<PacienteDTO> reativarPaciente(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        return ResponseEntity.ok(PacienteDTO.create(pacienteService.reativarPaciente(id, email)));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EDITAR_PACIENTE')")
     public ResponseEntity<PacienteDTO> updatePaciente(

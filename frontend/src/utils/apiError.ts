@@ -1,3 +1,46 @@
+export interface InactiveConflictInfo {
+  resourceType?: string;
+  resourceId: string;
+  resourceName?: string;
+  message: string;
+}
+
+export function extractInactiveConflict(err: unknown): InactiveConflictInfo | null {
+  if (!err || typeof err !== 'object' || !('response' in err)) {
+    return null;
+  }
+  const res = (
+    err as {
+      response?: {
+        status?: number;
+        data?: {
+          errorCode?: string;
+          errorMessage?: string;
+          message?: string;
+          resourceType?: string;
+          resourceId?: string;
+          resourceName?: string;
+        };
+      };
+    }
+  ).response;
+
+  const data = res?.data;
+  if (
+    res?.status === 409 &&
+    data?.errorCode === 'INACTIVE_RESOURCE_EXISTS' &&
+    data.resourceId
+  ) {
+    return {
+      resourceType: data.resourceType,
+      resourceId: data.resourceId,
+      resourceName: data.resourceName,
+      message: data.errorMessage || data.message || 'Já existe um cadastro desativado com este identificador.',
+    };
+  }
+  return null;
+}
+
 export function extractApiErrorMessage(err: unknown, fallback: string): string {
   if (err && typeof err === 'object' && 'response' in err) {
     const res = (

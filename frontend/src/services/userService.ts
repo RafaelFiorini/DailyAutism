@@ -7,6 +7,16 @@ export const userService = {
     return data;
   },
 
+  async listInativos(): Promise<User[]> {
+    const { data } = await api.get<User[]>('/users/inativos');
+    return data;
+  },
+
+  async reativar(id: string): Promise<User> {
+    const { data } = await api.patch<User>(`/users/${id}/reativar`);
+    return data;
+  },
+
   async getById(id: string): Promise<User> {
     const { data } = await api.get<User>(`/users/${id}`);
     return data;

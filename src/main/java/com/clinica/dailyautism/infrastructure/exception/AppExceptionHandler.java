@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.infrastructure.exception;
 
+import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PessoaAccessDeniedException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
@@ -91,6 +92,23 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = PessoaAccessDeniedException.class)
     public ResponseEntity<Object> handlePessoaAccessDeniedException(PessoaAccessDeniedException ex, WebRequest request) {
         return handleException(ex, ex.getErrorCode(), ex.getMessage(), null, HttpStatus.FORBIDDEN, request);
+    }
+
+    @ExceptionHandler(value = InactiveResourceConflictException.class)
+    public ResponseEntity<Object> handleInactiveResourceConflictException(
+            InactiveResourceConflictException ex,
+            WebRequest request) {
+        ServletWebRequest servletWebRequest = (ServletWebRequest) request;
+        RestError body = RestError.builder()
+                .errorCode("INACTIVE_RESOURCE_EXISTS")
+                .errorMessage(ex.getMessage())
+                .status(HttpStatus.CONFLICT.value())
+                .path(servletWebRequest.getRequest().getRequestURI())
+                .resourceType(ex.getResourceType())
+                .resourceId(ex.getResourceId())
+                .resourceName(ex.getResourceName())
+                .build();
+        return handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 
 }

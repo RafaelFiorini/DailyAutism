@@ -2,6 +2,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PacienteNotFoundException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
@@ -89,6 +90,17 @@ public class PacienteService {
             clinicaAlvo = clinicaRepository.findById(idClinicaAlvo.trim()).orElse(null);
         }
 
+        pacienteRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()).ifPresent(pacInativo -> {
+            if (!Boolean.TRUE.equals(pacInativo.getAtivo())) {
+                throw new InactiveResourceConflictException(
+                        "PACIENTE",
+                        pacInativo.getIdPaciente(),
+                        pessoa.getNomePessoa(),
+                        "Já existe um paciente desativado com este CPF (" + pessoa.getNomePessoa() + "). Reative o cadastro existente."
+                );
+            }
+        });
+
         var pacExistenteOpt = pacienteRepository.findByPessoaPaciente(pessoa);
         if (pacExistenteOpt.isPresent()) {
             Paciente pacExistente = pacExistenteOpt.get();
@@ -137,8 +149,9 @@ public class PacienteService {
         // Vínculo com Responsável:
         if (isResp) {
             // Se marcado como isResponsavel, garante o registro em Responsavel para o próprio paciente
-            Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa)
+            Responsavel resp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa())
                     .orElseGet(() -> Responsavel.builder().pessoaResponsavel(pessoa).pacientes(new ArrayList<>()).build());
+            resp.setAtivo(true);
             if (resp.getPacientes() == null) {
                 resp.setPacientes(new ArrayList<>());
             }
@@ -442,8 +455,9 @@ public class PacienteService {
             pessoaRepository.save(pessoa);
 
             if (isResp) {
-                Responsavel resp = responsavelRepository.findByPessoaResponsavel(pessoa)
+                Responsavel resp = responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa())
                         .orElseGet(() -> Responsavel.builder().pessoaResponsavel(pessoa).pacientes(new ArrayList<>()).build());
+                resp.setAtivo(true);
                 if (resp.getPacientes() == null) {
                     resp.setPacientes(new ArrayList<>());
                 }
@@ -518,6 +532,72 @@ public class PacienteService {
         pacienteRepository.save(paciente);
     }
 
+    public List<Paciente> listPacientesInativosForUser(String email) {
+        User user = (email != null && !email.isBlank())
+                ? userRepository.findByEmailUser(email).orElse(null)
+                : null;
+        if (user == null) {
+            return List.of();
+        }
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        List<Paciente> inativos = pacienteRepository.findAllInactive();
+        if (isAdmin) {
+            return inativos;
+        }
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                        || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                        || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (!isClinica || user.getPessoa() == null) {
+            throw new AccessDeniedException("Você não tem permissão para listar pacientes inativos.");
+        }
+        Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                .map(FuncionarioClinica::getClinica)
+                .filter(java.util.Objects::nonNull)
+                .map(Clinica::getIdClinica)
+                .collect(java.util.stream.Collectors.toSet());
+        if (clinicaIds.isEmpty()) {
+            return List.of();
+        }
+        return inativos.stream()
+                .filter(p -> p.getClinicas() != null && p.getClinicas().stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica())))
+                .toList();
+    }
+
+    @Transactional
+    public Paciente reativarPaciente(String pacienteId, String email) {
+        Paciente paciente = pacienteRepository.findByIdAnyAtivo(pacienteId)
+                .orElseThrow(() -> new PacienteNotFoundException(pacienteId));
+        if (email != null && !email.isBlank()) {
+            User user = userRepository.findByEmailUser(email).orElse(null);
+            boolean isAdmin = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                    .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+            if (!isAdmin) {
+                boolean isClinica = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                        .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                                || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                                || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+                if (!isClinica || user.getPessoa() == null) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar pacientes.");
+                }
+                Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                        .map(FuncionarioClinica::getClinica)
+                        .filter(java.util.Objects::nonNull)
+                        .map(Clinica::getIdClinica)
+                        .collect(java.util.stream.Collectors.toSet());
+                boolean pertence = paciente.getClinicas() != null && paciente.getClinicas().stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
+                if (!pertence) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar este paciente.");
+                }
+            }
+        }
+        paciente.setAtivo(true);
+        return pacienteRepository.save(paciente);
+    }
+
     @Transactional
     public Paciente createPacienteCompleto(
             SavePacienteCompletoDTO dto,
@@ -537,6 +617,18 @@ public class PacienteService {
                             .build();
                     return pessoaRepository.save(nova);
                 });
+
+        pacienteRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()).ifPresent(existente -> {
+            if (!Boolean.TRUE.equals(existente.getAtivo())) {
+                throw new InactiveResourceConflictException(
+                        "PACIENTE",
+                        existente.getIdPaciente(),
+                        pessoa.getNomePessoa(),
+                        "Já existe um paciente desativado com este CPF (" + pessoa.getNomePessoa() + "). Reative o cadastro existente."
+                );
+            }
+            throw new IllegalArgumentException("Esta pessoa já está cadastrada como paciente.");
+        });
 
         Paciente paciente = Paciente.builder()
                 .pessoaPaciente(pessoa)

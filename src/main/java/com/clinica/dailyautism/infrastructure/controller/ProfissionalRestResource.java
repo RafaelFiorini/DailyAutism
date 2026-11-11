@@ -59,6 +59,26 @@ public class ProfissionalRestResource {
         return ResponseEntity.ok(profissionais);
     }
 
+    @GetMapping("/inativos")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PROFISSIONAL')")
+    public ResponseEntity<List<ProfissionalDTO>> listProfissionaisInativos(@AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        List<ProfissionalDTO> profissionais = profissionalService.listProfissionaisInativosForUser(email)
+                .stream()
+                .map(ProfissionalDTO::create)
+                .toList();
+        return ResponseEntity.ok(profissionais);
+    }
+
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PROFISSIONAL')")
+    public ResponseEntity<ProfissionalDTO> reativarProfissional(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        return ResponseEntity.ok(ProfissionalDTO.create(profissionalService.reativarProfissional(id, email)));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('EDITAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> updateProfissional(@PathVariable String id,

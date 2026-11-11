@@ -13,5 +13,8 @@ public class RestError {
     private final List<String> details;
     private final int status;
     private final String path;
+    private final String resourceType;
+    private final String resourceId;
+    private final String resourceName;
 
 }

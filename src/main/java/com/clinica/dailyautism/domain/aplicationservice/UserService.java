@@ -10,6 +10,7 @@ import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
 import com.clinica.dailyautism.domain.exception.EmailAlreadyExistsException;
+import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.UserNotFoundException;
 import com.clinica.dailyautism.domain.repository.ClinicaRepository;
@@ -49,9 +50,7 @@ public class UserService {
 
     @Transactional
     public User createUser(SaveUserDTO saveUserDTO) {
-        if (userRepository.findByEmailUser(saveUserDTO.getEmailUser()).isPresent()) {
-            throw new EmailAlreadyExistsException(saveUserDTO.getEmailUser());
-        }
+        validarEmailDisponivel(saveUserDTO.getEmailUser(), null);
 
         User user = User.builder()
                 .nomeUser(saveUserDTO.getNomeUser())
@@ -79,6 +78,12 @@ public class UserService {
                 .toList();
     }
 
+    public List<UserDTO> listUsersInativos() {
+        return userRepository.findAllInactive().stream()
+                .map(this::mapUserToDTO)
+                .toList();
+    }
+
     public UserDTO getUserById(String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + id));
@@ -91,9 +96,7 @@ public class UserService {
         if (email.isBlank()) {
             throw new IllegalArgumentException("E-mail é obrigatório");
         }
-        if (userRepository.findByEmailUser(email).isPresent()) {
-            throw new EmailAlreadyExistsException(email);
-        }
+        validarEmailDisponivel(email, null);
 
         String rawCpf = dto.getCpf();
         String cpfLimpo = rawCpf != null ? rawCpf.replaceAll("\\D", "").trim() : "";
@@ -111,6 +114,19 @@ public class UserService {
 
         // 1. Pessoa
         Pessoa pessoa = pessoaRepository.findByCPFPessoa(cpfLimpo).orElse(null);
+        if (pessoa != null) {
+            userRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()).ifPresent(existente -> {
+                if (!Boolean.TRUE.equals(existente.getAtivo())) {
+                    throw new InactiveResourceConflictException(
+                            "USUARIO",
+                            existente.getIdUser(),
+                            existente.getNomeUser(),
+                            "Já existe um usuário desativado vinculado a este CPF (" + existente.getNomeUser() + " - " + existente.getEmailUser() + "). Reative o cadastro existente."
+                    );
+                }
+                throw new IllegalArgumentException("Já existe um usuário ativo vinculado a este CPF (" + existente.getEmailUser() + ").");
+            });
+        }
         if (pessoa == null) {
             pessoa = Pessoa.builder()
                     .nomePessoa(dto.getNome() != null ? dto.getNome().trim() : "")
@@ -254,9 +270,7 @@ public class UserService {
             throw new IllegalArgumentException("E-mail é obrigatório");
         }
         if (!user.getEmailUser().equalsIgnoreCase(email)) {
-            if (userRepository.findByEmailUser(email).isPresent()) {
-                throw new EmailAlreadyExistsException(email);
-            }
+            validarEmailDisponivel(email, user.getIdUser());
             user.setEmailUser(email);
         }
 
@@ -404,6 +418,36 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + id));
         user.desativar();
         userRepository.save(user);
+    }
+
+    @Transactional
+    public UserDTO reativarUser(String id) {
+        User user = userRepository.findByIdAnyAtivo(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado: " + id));
+        user.setAtivo(true);
+        User saved = userRepository.save(user);
+        return mapUserToDTO(saved);
+    }
+
+    private void validarEmailDisponivel(String email, String ignoreUserId) {
+        if (email == null || email.isBlank()) {
+            return;
+        }
+        String normalized = email.trim().toLowerCase();
+        userRepository.findByEmailAnyAtivo(normalized).ifPresent(existente -> {
+            if (ignoreUserId != null && ignoreUserId.equals(existente.getIdUser())) {
+                return;
+            }
+            if (!Boolean.TRUE.equals(existente.getAtivo())) {
+                throw new InactiveResourceConflictException(
+                        "USUARIO",
+                        existente.getIdUser(),
+                        existente.getNomeUser(),
+                        "Já existe um usuário desativado com este e-mail (" + existente.getNomeUser() + "). Reative o cadastro existente."
+                );
+            }
+            throw new EmailAlreadyExistsException(normalized);
+        });
     }
 
     @Transactional

@@ -44,6 +44,22 @@ public class ClinicaRestResource {
         return ResponseEntity.ok(clinicas);
     }
 
+    @GetMapping("/inativos")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<List<ClinicaDTO>> listClinicasInativas() {
+        List<ClinicaDTO> clinicas = clinicaService.listClinicasInativas()
+                .stream()
+                .map(ClinicaDTO::create)
+                .toList();
+        return ResponseEntity.ok(clinicas);
+    }
+
+    @PatchMapping("/{id}/reativar")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ClinicaDTO> reativarClinica(@PathVariable String id) {
+        return ResponseEntity.ok(ClinicaDTO.create(clinicaService.reativarClinica(id)));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_CLINICA')")
     public ResponseEntity<ClinicaDTO> updateClinica(@PathVariable String id,

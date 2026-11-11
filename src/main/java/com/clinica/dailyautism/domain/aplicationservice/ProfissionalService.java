@@ -7,6 +7,7 @@ import com.clinica.dailyautism.domain.entity.ProfissionalClinica;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
+import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ProfissionalNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
@@ -88,6 +89,17 @@ public class ProfissionalService {
             clinicaAlvo = clinicaRepository.findById(idParaBuscar)
                     .orElseThrow(() -> new ClinicaNotFoundException(idParaBuscar));
         }
+
+        profissionalRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()).ifPresent(profInativo -> {
+            if (!Boolean.TRUE.equals(profInativo.getAtivo())) {
+                throw new InactiveResourceConflictException(
+                        "PROFISSIONAL",
+                        profInativo.getIdProf(),
+                        pessoa.getNomePessoa(),
+                        "Já existe um profissional desativado com este CPF (" + pessoa.getNomePessoa() + "). Reative o cadastro existente."
+                );
+            }
+        });
 
         Optional<Profissional> profExistenteOpt = profissionalRepository.findByPessoaProf(pessoa);
 
@@ -287,6 +299,70 @@ public class ProfissionalService {
         profissionalRepository.save(profissional);
     }
 
+    public List<Profissional> listProfissionaisInativosForUser(String email) {
+        User user = (email != null && !email.isBlank())
+                ? userRepository.findByEmailUser(email).orElse(null)
+                : null;
+        if (user == null) {
+            return List.of();
+        }
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        List<Profissional> inativos = profissionalRepository.findAllInactive();
+        if (isAdmin) {
+            return inativos;
+        }
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                        || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                        || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (!isClinica || user.getPessoa() == null) {
+            throw new AccessDeniedException("Você não tem permissão para listar profissionais inativos.");
+        }
+        Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                .map(v -> v.getClinica() != null ? v.getClinica().getIdClinica() : null)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        if (clinicaIds.isEmpty()) {
+            return List.of();
+        }
+        return inativos.stream()
+                .filter(p -> profissionalClinicaRepository.findByProfissionalIdProf(p.getIdProf()).stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica())))
+                .toList();
+    }
+
+    @Transactional
+    public Profissional reativarProfissional(String profissionalId, String email) {
+        Profissional profissional = profissionalRepository.findByIdAnyAtivo(profissionalId)
+                .orElseThrow(() -> new ProfissionalNotFoundException("Profissional não encontrado: " + profissionalId));
+        if (email != null && !email.isBlank()) {
+            User user = userRepository.findByEmailUser(email).orElse(null);
+            boolean isAdmin = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                    .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+            if (!isAdmin) {
+                boolean isClinica = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                        .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                                || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                                || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+                if (!isClinica || user.getPessoa() == null) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar profissionais.");
+                }
+                Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                        .map(v -> v.getClinica() != null ? v.getClinica().getIdClinica() : null)
+                        .filter(java.util.Objects::nonNull)
+                        .collect(java.util.stream.Collectors.toSet());
+                boolean pertence = profissionalClinicaRepository.findByProfissionalIdProf(profissional.getIdProf()).stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
+                if (!pertence) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar este profissional.");
+                }
+            }
+        }
+        profissional.setAtivo(true);
+        return profissionalRepository.save(profissional);
+    }
+
     public Profissional findByEmail(String email) {
         return profissionalRepository.findByPessoaProfEmailPessoa(email)
                 .orElseThrow(() -> new ProfissionalNotFoundException("Profissional não encontrado para o e-mail: " + email));
@@ -305,31 +381,36 @@ public class ProfissionalService {
         Set<Perfil> perfis = new HashSet<>();
         if (perfilProf != null) perfis.add(perfilProf);
 
-        userRepository.findByEmailUser(email).ifPresentOrElse(
-                userExistente -> {
-                    userExistente.setPessoa(pessoa);
-                    if (perfilProf != null) {
-                        if (userExistente.getPerfis() == null) {
-                            userExistente.setPerfis(new HashSet<>());
+        userRepository.findByEmailAnyAtivo(email)
+                .or(() -> userRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()))
+                .ifPresentOrElse(
+                        userExistente -> {
+                            if (!Boolean.TRUE.equals(userExistente.getAtivo())) {
+                                return;
+                            }
+                            userExistente.setPessoa(pessoa);
+                            if (perfilProf != null) {
+                                if (userExistente.getPerfis() == null) {
+                                    userExistente.setPerfis(new HashSet<>());
+                                }
+                                userExistente.getPerfis().add(perfilProf);
+                            }
+                            userRepository.save(userExistente);
+                        },
+                        () -> {
+                            String rawCpf = pessoa.getCPFPessoa();
+                            String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
+                                    ? rawCpf.replaceAll("\\D", "")
+                                    : "Daily@123";
+                            User novoUser = User.builder()
+                                    .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Profissional")
+                                    .emailUser(email)
+                                    .passwordUser(passwordEncoder.encode(senhaPadrao))
+                                    .pessoa(pessoa)
+                                    .perfis(perfis)
+                                    .build();
+                            userRepository.save(novoUser);
                         }
-                        userExistente.getPerfis().add(perfilProf);
-                    }
-                    userRepository.save(userExistente);
-                },
-                () -> {
-                    String rawCpf = pessoa.getCPFPessoa();
-                    String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
-                            ? rawCpf.replaceAll("\\D", "")
-                            : "Daily@123";
-                    User novoUser = User.builder()
-                            .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Profissional")
-                            .emailUser(email)
-                            .passwordUser(passwordEncoder.encode(senhaPadrao))
-                            .pessoa(pessoa)
-                            .perfis(perfis)
-                            .build();
-                    userRepository.save(novoUser);
-                }
-        );
+                );
     }
 }

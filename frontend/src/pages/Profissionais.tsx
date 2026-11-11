@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
 import {
   Users,
   UserPlus,
@@ -8,18 +8,25 @@ import {
   Phone,
   Mail,
   Trash2,
+  RotateCcw,
   Award,
   Pencil,
 } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 import { profissionalService } from '../services/profissionalService';
 import type { Profissional } from '../types/profissional';
 import ProfissionalModal from '../components/ProfissionalModal';
+import ActiveStatusFilter from '../components/ActiveStatusFilter';
+import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Profissionais() {
+  const auth = useContext(AuthContext);
+  const canManageInativos = auth ? auth.isAdmin || auth.isFuncionarioClinica : true;
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [showInativos, setShowInativos] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfissional, setEditingProfissional] = useState<Profissional | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -28,14 +35,14 @@ export default function Profissionais() {
     setLoading(true);
     setError('');
     try {
-      const data = await profissionalService.list();
+      const data = showInativos ? await profissionalService.listInativos() : await profissionalService.list();
       setProfissionais(data);
     } catch {
       setError('Não foi possível carregar a lista de profissionais.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showInativos]);
 
   useEffect(() => {
     fetchProfissionais();
@@ -54,6 +61,10 @@ export default function Profissionais() {
   }, [profissionais, search]);
 
   const handleSaved = (item: Profissional) => {
+    if (showInativos) {
+      setShowInativos(false);
+      return;
+    }
     setProfissionais((prev) => {
       const index = prev.findIndex((p) => p.idProf === item.idProf);
       if (index >= 0) {
@@ -72,8 +83,22 @@ export default function Profissionais() {
     try {
       await profissionalService.delete(id);
       setProfissionais((prev) => prev.filter((p) => p.idProf !== id));
-    } catch {
-      alert('Erro ao excluir profissional.');
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao desativar profissional.'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleReativar = async (id: string, nome: string) => {
+    if (!window.confirm(`Deseja reativar o profissional "${nome}"?`)) return;
+
+    setDeletingId(id);
+    try {
+      await profissionalService.reativar(id);
+      setProfissionais((prev) => prev.filter((p) => p.idProf !== id));
+    } catch (err) {
+      alert(extractApiErrorMessage(err, 'Erro ao reativar profissional.'));
     } finally {
       setDeletingId(null);
     }
@@ -108,8 +133,8 @@ export default function Profissionais() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="relative flex-1 min-w-[240px] max-w-md">
           <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -119,14 +144,19 @@ export default function Profissionais() {
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-colors"
           />
         </div>
-        {search && (
-          <button
-            onClick={() => setSearch('')}
-            className="text-xs text-gray-500 hover:text-gray-800 underline"
-          >
-            Limpar busca
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="text-xs text-gray-500 hover:text-gray-800 underline"
+            >
+              Limpar busca
+            </button>
+          )}
+          {canManageInativos && (
+            <ActiveStatusFilter showInativos={showInativos} onChange={setShowInativos} />
+          )}
+        </div>
       </div>
 
       {/* Error Alert */}
@@ -233,28 +263,46 @@ export default function Profissionais() {
 
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => {
-                              setEditingProfissional(prof);
-                              setIsModalOpen(true);
-                            }}
-                            className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                            title="Editar profissional"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(prof.idProf, prof.nomeProfissional)}
-                            disabled={deletingId === prof.idProf}
-                            className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                            title="Excluir profissional"
-                          >
-                            {deletingId === prof.idProf ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-600" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </button>
+                          {showInativos ? (
+                            <button
+                              onClick={() => handleReativar(prof.idProf, prof.nomeProfissional)}
+                              disabled={deletingId === prof.idProf}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50"
+                              title="Reativar profissional"
+                            >
+                              {deletingId === prof.idProf ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              )}
+                              Reativar
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setEditingProfissional(prof);
+                                  setIsModalOpen(true);
+                                }}
+                                className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                                title="Editar profissional"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(prof.idProf, prof.nomeProfissional)}
+                                disabled={deletingId === prof.idProf}
+                                className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                title="Excluir profissional"
+                              >
+                                {deletingId === prof.idProf ? (
+                                  <Loader2 className="h-4 w-4 animate-spin text-red-600" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

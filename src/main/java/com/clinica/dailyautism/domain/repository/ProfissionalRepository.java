@@ -19,6 +19,12 @@ public interface ProfissionalRepository extends JpaRepository<Profissional, Stri
     @Query(value = "SELECT * FROM profissional WHERE pessoa_prof = :idPessoa LIMIT 1", nativeQuery = true)
     Optional<Profissional> findByPessoaIdAnyAtivo(@Param("idPessoa") String idPessoa);
 
+    @Query(value = "SELECT * FROM profissional WHERE ativo = false", nativeQuery = true)
+    List<Profissional> findAllInactive();
+
+    @Query(value = "SELECT * FROM profissional WHERE id_prof = :id LIMIT 1", nativeQuery = true)
+    Optional<Profissional> findByIdAnyAtivo(@Param("id") String id);
+
     // Agenda da semana do profissional
     @Query("""
         SELECT c FROM Compromisso c

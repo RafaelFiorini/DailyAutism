@@ -4,6 +4,8 @@ import { profissionalService } from '../services/profissionalService';
 import { clinicaService } from '../services/clinicaService';
 import type { Profissional, SaveProfissionalInput } from '../types/profissional';
 import type { Clinica } from '../types/clinica';
+import { extractApiErrorMessage, extractInactiveConflict, type InactiveConflictInfo } from '../utils/apiError';
+import InactiveConflictAlert from './InactiveConflictAlert';
 
 interface ProfissionalModalProps {
   isOpen: boolean;
@@ -35,6 +37,9 @@ export default function ProfissionalModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [inactiveConflict, setInactiveConflict] = useState<InactiveConflictInfo | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<SaveProfissionalInput | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -68,6 +73,8 @@ export default function ProfissionalModal({
       }
       setErrors({});
       setApiError('');
+      setInactiveConflict(null);
+      setPendingPayload(null);
     }
   }, [isOpen, initialData]);
 
@@ -85,6 +92,7 @@ export default function ProfissionalModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setApiError('');
+    setInactiveConflict(null);
 
     if (!validate()) return;
 
@@ -105,6 +113,7 @@ export default function ProfissionalModal({
         idClinica: idClinica || undefined,
       };
 
+      setPendingPayload(payload);
       const result = isEditing && initialData
         ? await profissionalService.update(initialData.idProf, payload)
         : await profissionalService.create(payload);
@@ -112,22 +121,34 @@ export default function ProfissionalModal({
       onSuccess(result);
       onClose();
     } catch (err: unknown) {
-      let msg = isEditing ? 'Erro ao atualizar profissional.' : 'Erro ao cadastrar profissional.';
-      if (err && typeof err === 'object' && 'response' in err) {
-        const res = (err as { response?: { data?: { errorMessage?: string; message?: string; details?: string[] } } }).response;
-        if (res?.data) {
-          if (Array.isArray(res.data.details) && res.data.details.length > 0) {
-            msg = res.data.details.join(', ');
-          } else if (res.data.errorMessage) {
-            msg = res.data.errorMessage;
-          } else if (res.data.message) {
-            msg = res.data.message;
-          }
-        }
+      const conflict = extractInactiveConflict(err);
+      if (conflict) {
+        setInactiveConflict(conflict);
+      } else {
+        setApiError(
+          extractApiErrorMessage(err, isEditing ? 'Erro ao atualizar profissional.' : 'Erro ao cadastrar profissional.')
+        );
       }
-      setApiError(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleReactivateExisting = async () => {
+    if (!inactiveConflict) return;
+    setReactivating(true);
+    setApiError('');
+    try {
+      let reactivated = await profissionalService.reativar(inactiveConflict.resourceId);
+      if (pendingPayload) {
+        reactivated = await profissionalService.update(inactiveConflict.resourceId, pendingPayload);
+      }
+      onSuccess(reactivated);
+      onClose();
+    } catch (err: unknown) {
+      setApiError(extractApiErrorMessage(err, 'Não foi possível reativar o profissional.'));
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -161,6 +182,11 @@ export default function ProfissionalModal({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+          <InactiveConflictAlert
+            conflict={inactiveConflict}
+            onReactivate={handleReactivateExisting}
+            loading={reactivating}
+          />
           {apiError && (
             <div className="p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2 text-red-700 text-sm">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />

@@ -4,6 +4,7 @@ import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.ClinicaNotFoundException;
+import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ResponsavelNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
@@ -84,6 +85,17 @@ public class ResponsavelService {
                     .orElseThrow(() -> new ClinicaNotFoundException(idParaBuscar));
         }
 
+        responsavelRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()).ifPresent(respInativo -> {
+            if (!Boolean.TRUE.equals(respInativo.getAtivo())) {
+                throw new InactiveResourceConflictException(
+                        "RESPONSAVEL",
+                        respInativo.getIdResponsavel(),
+                        pessoa.getNomePessoa(),
+                        "Já existe um responsável desativado com este CPF (" + pessoa.getNomePessoa() + "). Reative o cadastro existente."
+                );
+            }
+        });
+
         Optional<Responsavel> respExistenteOpt = responsavelRepository.findByPessoaResponsavel(pessoa);
 
         if (respExistenteOpt.isPresent()) {
@@ -126,7 +138,7 @@ public class ResponsavelService {
 
         // Se o responsável também é paciente
         if (Boolean.TRUE.equals(saveResponsavelDTO.getIsPacienteTambem())) {
-            Paciente pacProprio = pacienteRepository.findByPessoaPaciente(pessoa)
+            Paciente pacProprio = pacienteRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa())
                     .orElseGet(() -> {
                         Paciente novoPac = Paciente.builder()
                                 .pessoaPaciente(pessoa)
@@ -134,6 +146,10 @@ public class ResponsavelService {
                                 .build();
                         return pacienteRepository.save(novoPac);
                     });
+            if (!Boolean.TRUE.equals(pacProprio.getAtivo())) {
+                pacProprio.setAtivo(true);
+                pacProprio = pacienteRepository.save(pacProprio);
+            }
             responsavel.getPacientes().add(pacProprio);
         }
 
@@ -327,7 +343,7 @@ public class ResponsavelService {
 
         // Se marcou que também é paciente
         if (Boolean.TRUE.equals(saveResponsavelDTO.getIsPacienteTambem())) {
-            Paciente pacProprio = pacienteRepository.findByPessoaPaciente(pessoa)
+            Paciente pacProprio = pacienteRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa())
                     .orElseGet(() -> {
                         Paciente novoPac = Paciente.builder()
                                 .pessoaPaciente(pessoa)
@@ -335,6 +351,10 @@ public class ResponsavelService {
                                 .build();
                         return pacienteRepository.save(novoPac);
                     });
+            if (!Boolean.TRUE.equals(pacProprio.getAtivo())) {
+                pacProprio.setAtivo(true);
+                pacProprio = pacienteRepository.save(pacProprio);
+            }
             if (!responsavel.getPacientes().contains(pacProprio)) {
                 responsavel.getPacientes().add(pacProprio);
             }
@@ -381,6 +401,78 @@ public class ResponsavelService {
         responsavelRepository.save(responsavel);
     }
 
+    public List<Responsavel> listResponsaveisInativosForUser(String email) {
+        User user = (email != null && !email.isBlank())
+                ? userRepository.findByEmailUser(email).orElse(null)
+                : null;
+        if (user == null) {
+            return List.of();
+        }
+        boolean isAdmin = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+        List<Responsavel> inativos = responsavelRepository.findAllInactive();
+        if (isAdmin) {
+            return inativos;
+        }
+        boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                        || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                        || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+        if (!isClinica || user.getPessoa() == null) {
+            throw new AccessDeniedException("Você não tem permissão para listar responsáveis inativos.");
+        }
+        Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                .map(v -> v.getClinica() != null ? v.getClinica().getIdClinica() : null)
+                .filter(Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        if (clinicaIds.isEmpty()) {
+            return List.of();
+        }
+        return inativos.stream()
+                .filter(r -> pertenceAClinicas(r, clinicaIds))
+                .toList();
+    }
+
+    @Transactional
+    public Responsavel reativarResponsavel(String responsavelId, String email) {
+        Responsavel responsavel = responsavelRepository.findByIdAnyAtivo(responsavelId)
+                .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado: " + responsavelId));
+        if (email != null && !email.isBlank()) {
+            User user = userRepository.findByEmailUser(email).orElse(null);
+            boolean isAdmin = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                    .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome()));
+            if (!isAdmin) {
+                boolean isClinica = user != null && user.getPerfis() != null && user.getPerfis().stream()
+                        .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome())
+                                || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome())
+                                || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
+                if (!isClinica || user.getPessoa() == null) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar responsáveis.");
+                }
+                Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+                        .map(v -> v.getClinica() != null ? v.getClinica().getIdClinica() : null)
+                        .filter(Objects::nonNull)
+                        .collect(java.util.stream.Collectors.toSet());
+                if (!pertenceAClinicas(responsavel, clinicaIds)) {
+                    throw new AccessDeniedException("Você não tem permissão para reativar este responsável.");
+                }
+            }
+        }
+        responsavel.setAtivo(true);
+        return responsavelRepository.save(responsavel);
+    }
+
+    private boolean pertenceAClinicas(Responsavel r, Set<String> clinicaIds) {
+        boolean viaClinica = responsavelClinicaRepository.findByResponsavelIdResponsavel(r.getIdResponsavel()).stream()
+                .anyMatch(rc -> rc.getClinica() != null && clinicaIds.contains(rc.getClinica().getIdClinica()));
+        if (viaClinica) {
+            return true;
+        }
+        return r.getPacientes() != null && r.getPacientes().stream()
+                .anyMatch(p -> p.getClinicas() != null && p.getClinicas().stream()
+                        .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica())));
+    }
+
     public Responsavel findByEmail(String email) {
         return responsavelRepository.findByPessoaResponsavelEmailPessoa(email)
                 .orElseThrow(() -> new ResponsavelNotFoundException("Responsável não encontrado para o e-mail: " + email));
@@ -399,31 +491,36 @@ public class ResponsavelService {
         Set<Perfil> perfis = new HashSet<>();
         if (perfilResp != null) perfis.add(perfilResp);
 
-        userRepository.findByEmailUser(email).ifPresentOrElse(
-                userExistente -> {
-                    userExistente.setPessoa(pessoa);
-                    if (perfilResp != null) {
-                        if (userExistente.getPerfis() == null) {
-                            userExistente.setPerfis(new HashSet<>());
+        userRepository.findByEmailAnyAtivo(email)
+                .or(() -> userRepository.findByPessoaIdAnyAtivo(pessoa.getIdPessoa()))
+                .ifPresentOrElse(
+                        userExistente -> {
+                            if (!Boolean.TRUE.equals(userExistente.getAtivo())) {
+                                return;
+                            }
+                            userExistente.setPessoa(pessoa);
+                            if (perfilResp != null) {
+                                if (userExistente.getPerfis() == null) {
+                                    userExistente.setPerfis(new HashSet<>());
+                                }
+                                userExistente.getPerfis().add(perfilResp);
+                            }
+                            userRepository.save(userExistente);
+                        },
+                        () -> {
+                            String rawCpf = pessoa.getCPFPessoa();
+                            String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
+                                    ? rawCpf.replaceAll("\\D", "")
+                                    : "Daily@123";
+                            User novoUser = User.builder()
+                                    .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Responsável")
+                                    .emailUser(email)
+                                    .passwordUser(passwordEncoder.encode(senhaPadrao))
+                                    .pessoa(pessoa)
+                                    .perfis(perfis)
+                                    .build();
+                            userRepository.save(novoUser);
                         }
-                        userExistente.getPerfis().add(perfilResp);
-                    }
-                    userRepository.save(userExistente);
-                },
-                () -> {
-                    String rawCpf = pessoa.getCPFPessoa();
-                    String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
-                            ? rawCpf.replaceAll("\\D", "")
-                            : "Daily@123";
-                    User novoUser = User.builder()
-                            .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Responsável")
-                            .emailUser(email)
-                            .passwordUser(passwordEncoder.encode(senhaPadrao))
-                            .pessoa(pessoa)
-                            .perfis(perfis)
-                            .build();
-                    userRepository.save(novoUser);
-                }
-        );
+                );
     }
 }

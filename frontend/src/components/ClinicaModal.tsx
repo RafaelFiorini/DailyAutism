@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { X, Building2, Loader2, AlertCircle } from 'lucide-react';
 import { clinicaService } from '../services/clinicaService';
 import type { Clinica, SaveClinicaInput } from '../types/clinica';
+import { extractApiErrorMessage, extractInactiveConflict, type InactiveConflictInfo } from '../utils/apiError';
+import InactiveConflictAlert from './InactiveConflictAlert';
 
 interface ClinicaModalProps {
   isOpen: boolean;
@@ -24,7 +26,10 @@ export default function ClinicaModal({
   const [enderecoClinica, setEnderecoClinica] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
   const [error, setError] = useState('');
+  const [inactiveConflict, setInactiveConflict] = useState<InactiveConflictInfo | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<SaveClinicaInput | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -43,6 +48,8 @@ export default function ClinicaModal({
       setEnderecoClinica('');
     }
     setError('');
+    setInactiveConflict(null);
+    setPendingPayload(null);
   }, [initialData, isOpen]);
 
   const formatCnpj = (value: string) => {
@@ -61,6 +68,7 @@ export default function ClinicaModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInactiveConflict(null);
 
     const rawCnpj = cnpjClinica.replace(/\D/g, '');
 
@@ -84,6 +92,7 @@ export default function ClinicaModal({
     };
 
     setLoading(true);
+    setPendingPayload(payload);
     try {
       let saved: Clinica;
       if (initialData?.idClinica) {
@@ -94,14 +103,34 @@ export default function ClinicaModal({
       onSuccess(saved);
       onClose();
     } catch (err: unknown) {
-      const apiErr = err as { response?: { data?: { errorMessage?: string; message?: string } } };
-      setError(
-        apiErr.response?.data?.errorMessage ||
-          apiErr.response?.data?.message ||
-          'Erro ao salvar clínica. Verifique se o CNPJ já está cadastrado.'
-      );
+      const conflict = extractInactiveConflict(err);
+      if (conflict) {
+        setInactiveConflict(conflict);
+      } else {
+        setError(
+          extractApiErrorMessage(err, 'Erro ao salvar clínica. Verifique se o CNPJ já está cadastrado.')
+        );
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReactivateExisting = async () => {
+    if (!inactiveConflict) return;
+    setReactivating(true);
+    setError('');
+    try {
+      let reactivated = await clinicaService.reativar(inactiveConflict.resourceId);
+      if (pendingPayload) {
+        reactivated = await clinicaService.update(inactiveConflict.resourceId, pendingPayload);
+      }
+      onSuccess(reactivated);
+      onClose();
+    } catch (err: unknown) {
+      setError(extractApiErrorMessage(err, 'Não foi possível reativar a clínica.'));
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -126,6 +155,11 @@ export default function ClinicaModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <InactiveConflictAlert
+            conflict={inactiveConflict}
+            onReactivate={handleReactivateExisting}
+            loading={reactivating}
+          />
           {error && (
             <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-xl border border-red-100">
               <AlertCircle className="h-4 w-4 shrink-0" />

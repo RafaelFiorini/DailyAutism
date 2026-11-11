@@ -15,6 +15,8 @@ import {
 import { AuthContext } from '../context/AuthContext';
 import { pacienteService } from '../services/pacienteService';
 import { periodicidadeService } from '../services/periodicidadeService';
+import { extractApiErrorMessage, extractInactiveConflict, type InactiveConflictInfo } from '../utils/apiError';
+import InactiveConflictAlert from './InactiveConflictAlert';
 import type {
   Paciente,
   SavePacienteInput,
@@ -79,6 +81,9 @@ export default function PacienteModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [inactiveConflict, setInactiveConflict] = useState<InactiveConflictInfo | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<SavePacienteInput | null>(null);
 
   const formatCPF = (value: string) => {
     const raw = value.replace(/\D/g, '').slice(0, 11);
@@ -169,6 +174,8 @@ export default function PacienteModal({
     }
     setErrors({});
     setApiError('');
+    setInactiveConflict(null);
+    setPendingPayload(null);
   }, [isOpen, initialData, loadOptions, jaTemOutroResponsavel, userIsResponsavel, user]);
 
   // Cálculo em tempo real da data estimada de término quando a guia for por quantidade de sessões
@@ -213,6 +220,7 @@ export default function PacienteModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setApiError('');
+    setInactiveConflict(null);
 
     if (!validate()) return;
 
@@ -255,6 +263,7 @@ export default function PacienteModal({
         idClinica: idClinica || undefined,
       };
 
+      setPendingPayload(payload);
       const result = isEditing && initialData
         ? await pacienteService.update(initialData.idPaciente, payload)
         : await pacienteService.create(payload);
@@ -262,22 +271,34 @@ export default function PacienteModal({
       onSuccess(result);
       onClose();
     } catch (err: unknown) {
-      let msg = isEditing ? 'Erro ao atualizar paciente.' : 'Erro ao cadastrar paciente.';
-      if (err && typeof err === 'object' && 'response' in err) {
-        const res = (err as { response?: { data?: { errorMessage?: string; message?: string; details?: string[] } } }).response;
-        if (res?.data) {
-          if (Array.isArray(res.data.details) && res.data.details.length > 0) {
-            msg = res.data.details.join(', ');
-          } else if (res.data.errorMessage) {
-            msg = res.data.errorMessage;
-          } else if (res.data.message) {
-            msg = res.data.message;
-          }
-        }
+      const conflict = extractInactiveConflict(err);
+      if (conflict) {
+        setInactiveConflict(conflict);
+      } else {
+        setApiError(
+          extractApiErrorMessage(err, isEditing ? 'Erro ao atualizar paciente.' : 'Erro ao cadastrar paciente.')
+        );
       }
-      setApiError(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleReactivateExisting = async () => {
+    if (!inactiveConflict) return;
+    setReactivating(true);
+    setApiError('');
+    try {
+      let reactivated = await pacienteService.reativar(inactiveConflict.resourceId);
+      if (pendingPayload) {
+        reactivated = await pacienteService.update(inactiveConflict.resourceId, pendingPayload);
+      }
+      onSuccess(reactivated);
+      onClose();
+    } catch (err: unknown) {
+      setApiError(extractApiErrorMessage(err, 'Não foi possível reativar o paciente.'));
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -309,6 +330,11 @@ export default function PacienteModal({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+          <InactiveConflictAlert
+            conflict={inactiveConflict}
+            onReactivate={handleReactivateExisting}
+            loading={reactivating}
+          />
           {apiError && (
             <div className="flex items-center gap-2 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />

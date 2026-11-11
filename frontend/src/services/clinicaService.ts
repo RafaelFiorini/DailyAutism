@@ -7,6 +7,16 @@ export const clinicaService = {
     return data;
   },
 
+  async listInativos(): Promise<Clinica[]> {
+    const { data } = await api.get<Clinica[]>('/clinicas/inativos');
+    return data;
+  },
+
+  async reativar(id: string): Promise<Clinica> {
+    const { data } = await api.patch<Clinica>(`/clinicas/${id}/reativar`);
+    return data;
+  },
+
   async getById(id: string): Promise<Clinica> {
     const { data } = await api.get<Clinica>(`/clinicas/${id}`);
     return data;

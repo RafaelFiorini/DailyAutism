@@ -7,6 +7,16 @@ export const responsavelService = {
     return response.data;
   },
 
+  async listInativos(): Promise<Responsavel[]> {
+    const response = await api.get<Responsavel[]>('/responsaveis/inativos');
+    return response.data;
+  },
+
+  async reativar(id: string): Promise<Responsavel> {
+    const response = await api.patch<Responsavel>(`/responsaveis/${id}/reativar`);
+    return response.data;
+  },
+
   async create(payload: SaveResponsavelInput): Promise<Responsavel> {
     const response = await api.post<Responsavel>('/responsaveis', payload);
     return response.data;
