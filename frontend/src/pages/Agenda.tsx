@@ -281,7 +281,7 @@ export default function Agenda() {
             setEditingCompromisso(null);
             setIsModalOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm self-start sm:self-auto shrink-0 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           Novo Agendamento
@@ -333,9 +333,9 @@ export default function Agenda() {
 
       {/* Barra de Filtros */}
       <div className="bg-white p-4 rounded-xl border border-gray-200/80 shadow-sm space-y-3">
-        <div className="flex flex-col lg:flex-row gap-3">
+        <div className="flex flex-col xl:flex-row gap-3">
           {/* Busca textual */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -440,13 +440,13 @@ export default function Agenda() {
             <table className="w-full text-left text-sm text-gray-600">
               <thead className="bg-gray-50/75 border-b border-gray-200/80 text-xs uppercase font-medium text-gray-500 tracking-wider">
                 <tr>
-                  <th className="px-6 py-3.5">Data & Horário</th>
-                  <th className="px-6 py-3.5">Paciente</th>
-                  <th className="px-6 py-3.5">Atendimento / Especialidade</th>
-                  <th className="px-6 py-3.5">Profissional / Terapeuta</th>
-                  <th className="px-6 py-3.5">Periodicidade & Local</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5 text-right">Ações</th>
+                  <th className="px-4 py-3.5">Data & Horário</th>
+                  <th className="px-4 py-3.5">Paciente</th>
+                  <th className="px-4 py-3.5">Atendimento / Especialidade</th>
+                  <th className="px-4 py-3.5">Profissional / Terapeuta</th>
+                  <th className="px-4 py-3.5">Periodicidade & Local</th>
+                  <th className="px-4 py-3.5">Status</th>
+                  <th className="px-4 py-3.5 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200/80">
@@ -458,7 +458,7 @@ export default function Agenda() {
                   return (
                     <tr key={c.idCompromisso} className="hover:bg-gray-50/50 transition-colors">
                       {/* Data & Horário */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
                           <div>
@@ -471,7 +471,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Paciente */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
                             {c.nomePaciente ? c.nomePaciente.charAt(0).toUpperCase() : 'P'}
@@ -483,7 +483,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Especialidade / Tipo */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
                           <Tag className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-gray-800 font-medium">{c.nomeTipoCompromisso || '-'}</span>
@@ -491,7 +491,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Profissional / Terapeuta */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         {c.nomeProfissional ? (
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-semibold shrink-0">
@@ -514,7 +514,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Periodicidade & Local */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5 text-xs text-gray-600">
                             <CalendarClock className="w-3.5 h-3.5 text-gray-400" />
@@ -530,7 +530,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}
                         >
@@ -540,7 +540,7 @@ export default function Agenda() {
                       </td>
 
                       {/* Ações */}
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-4 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {isActionLoading ? (
                             <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />

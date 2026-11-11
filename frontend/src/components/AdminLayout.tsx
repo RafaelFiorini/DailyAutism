@@ -121,7 +121,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
@@ -156,27 +156,27 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col pl-64">
+      <div className="flex-1 flex flex-col pl-64 min-w-0">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-0">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between gap-4 px-6 lg:px-8 sticky top-0 z-10 min-w-0">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-gray-800 truncate">
               {isAdmin ? 'Painel de Controle' : `Portal do ${roleLabel}`}
             </h2>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <span className="block text-sm font-medium text-gray-900">{user?.nomeUser}</span>
-              <span className="block text-xs text-gray-500">{user?.emailUser}</span>
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink-0">
+            <div className="text-right min-w-0 max-w-[220px] sm:max-w-xs">
+              <span className="block text-sm font-medium text-gray-900 truncate">{user?.nomeUser}</span>
+              <span className="block text-xs text-gray-500 truncate">{user?.emailUser}</span>
             </div>
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold flex items-center justify-center text-sm border-2 border-indigo-200">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold flex items-center justify-center text-sm border-2 border-indigo-200 shrink-0">
               {initials}
             </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-w-0 p-6 lg:p-8">
           <Outlet />
         </main>
       </div>
