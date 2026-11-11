@@ -23,6 +23,7 @@ import {
 import { AuthContext } from '../context/AuthContext';
 import { compromissoService } from '../services/compromissoService';
 import { profissionalService } from '../services/profissionalService';
+import { extractApiErrorMessage } from '../utils/apiError';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
 import CompromissoModal from '../components/CompromissoModal';
@@ -184,8 +185,8 @@ export default function Agenda() {
     try {
       await compromissoService.aprovar(compromisso.idCompromisso);
       await fetchCompromissos();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao aprovar agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao aprovar agendamento.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -200,8 +201,8 @@ export default function Agenda() {
       setCompromissos((prev) =>
         prev.map((c) => (c.idCompromisso === updated.idCompromisso ? updated : c))
       );
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao rejeitar agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao rejeitar agendamento.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -214,8 +215,8 @@ export default function Agenda() {
       setCompromissos((prev) =>
         prev.map((c) => (c.idCompromisso === updated.idCompromisso ? updated : c))
       );
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao atualizar status do agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao atualizar status do agendamento.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -228,8 +229,8 @@ export default function Agenda() {
     try {
       await compromissoService.delete(id);
       setCompromissos((prev) => prev.filter((c) => c.idCompromisso !== id));
-    } catch {
-      alert('Erro ao excluir agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao excluir agendamento.'));
     } finally {
       setActionLoadingId(null);
     }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -270,6 +271,34 @@ public class CompromissoService {
     @Transactional
     public List<Compromisso> aprovarCompromisso(String compromissoId, AprovarCompromissoDTO dto) {
         Compromisso original = loadCompromisso(compromissoId);
+
+        if (original.getDataHoraCompromisso() != null
+                && original.getDataHoraCompromisso().toLocalDate().isBefore(LocalDate.now())) {
+            String dataBr = original.getDataHoraCompromisso().toLocalDate()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            throw new IllegalArgumentException(
+                    "Não é possível aprovar um agendamento com data anterior a hoje (" + dataBr
+                            + "). Avise a clínica para cadastrar uma nova data."
+            );
+        }
+
+        Paciente paciente = original.getPaciente();
+        PacientePlanoSaude guiaAtiva = resolverGuiaAtiva(paciente);
+        LocalDate vencimentoPadrao = guiaAtiva != null
+                ? guiaAtiva.getVencimentoLiberacao()
+                : (paciente != null ? paciente.getVencimentoLiberacao() : null);
+        LocalDate dataFim = dto.getDataFim() != null ? dto.getDataFim() : vencimentoPadrao;
+
+        if (dataFim != null
+                && original.getDataHoraCompromisso() != null
+                && dataFim.isBefore(original.getDataHoraCompromisso().toLocalDate())) {
+            String vencBr = dataFim.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            throw new IllegalArgumentException(
+                    "A guia ou limite de sessões do paciente venceu em " + vencBr
+                            + ". Entre em contato com a clínica para atualizar antes de aprovar."
+            );
+        }
+
         original.setStatus(StatusCompromisso.AGENDADO);
         compromissoRepository.save(original);
 
@@ -279,13 +308,6 @@ public class CompromissoService {
         if (intervalo <= 0) {
             return List.of(original);
         }
-
-        Paciente paciente = original.getPaciente();
-        PacientePlanoSaude guiaAtiva = resolverGuiaAtiva(paciente);
-        LocalDate vencimentoPadrao = guiaAtiva != null
-                ? guiaAtiva.getVencimentoLiberacao()
-                : (paciente != null ? paciente.getVencimentoLiberacao() : null);
-        LocalDate dataFim = dto.getDataFim() != null ? dto.getDataFim() : vencimentoPadrao;
 
         TipoLiberacaoGuia tipoAtivo = guiaAtiva != null
                 ? guiaAtiva.getTipoLiberacao()

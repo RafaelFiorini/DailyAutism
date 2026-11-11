@@ -8,6 +8,7 @@ import { profissionalService } from '../services/profissionalService';
 import { responsavelService } from '../services/responsavelService';
 import { compromissoService } from '../services/compromissoService';
 import { financeiroService } from '../services/financeiroService';
+import { extractApiErrorMessage } from '../utils/apiError';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
 import type { GuiaFaturamento } from '../types/financeiro';
@@ -331,8 +332,8 @@ export default function Dashboard() {
     try {
       await compromissoService.aprovar(compromisso.idCompromisso);
       await loadDashboardData();
-    } catch {
-      alert('Erro ao aprovar agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao aprovar agendamento.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -345,8 +346,8 @@ export default function Dashboard() {
       setCompromissos((prev) =>
         prev.map((c) => (c.idCompromisso === updated.idCompromisso ? updated : c))
       );
-    } catch {
-      alert('Erro ao rejeitar agendamento.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao rejeitar agendamento.'));
     } finally {
       setActionLoadingId(null);
     }
@@ -359,8 +360,8 @@ export default function Dashboard() {
       setCompromissos((prev) =>
         prev.map((c) => (c.idCompromisso === updated.idCompromisso ? updated : c))
       );
-    } catch {
-      alert('Erro ao atualizar status.');
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao atualizar status.'));
     } finally {
       setActionLoadingId(null);
     }
