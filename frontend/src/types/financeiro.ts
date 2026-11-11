@@ -137,3 +137,78 @@ export interface SaveContratoParticularInput {
     quantidadeContratada: number;
   }[];
 }
+
+export type StatusGuiaFaturamento =
+  | 'RASCUNHO'
+  | 'AGUARDANDO_ASSINATURA'
+  | 'ASSINADA'
+  | 'ENVIADA_CONVENIO'
+  | 'PAGA'
+  | 'CANCELADA';
+
+export type ProvedorAssinatura = 'INTERNO_DAILYAUTISM' | 'GOV_BR';
+
+export interface SessaoElegivel {
+  idCompromisso: string;
+  tituloCompromisso: string;
+  dataHoraAtendimento: string;
+  idTipoCompromisso: string;
+  nomeTipoCompromisso: string;
+  nomeProfissional: string;
+  conselhoProfissional?: string | null;
+  valorUnitarioConvenio: number;
+}
+
+export interface GuiaFaturamentoItem {
+  idGuiaItem: string;
+  idCompromisso: string;
+  dataHoraAtendimento: string;
+  tipoCompromissoNome: string;
+  profissionalNome: string;
+  conselhoProfissional?: string | null;
+  valorUnitarioConvenio: number;
+}
+
+export interface GuiaFaturamento {
+  idGuiaFaturamento: string;
+  idClinica: string;
+  nomeClinica?: string | null;
+  idPaciente: string;
+  nomePaciente?: string | null;
+  idPlanoSaude: string;
+  nomePlanoSaude?: string | null;
+  idResponsavel?: string | null;
+  nomeResponsavel?: string | null;
+  numeroLoteGuia: string;
+  numeroCarteirinha?: string | null;
+  numeroGuiaOperadora?: string | null;
+  competenciaInicio: string;
+  competenciaFim: string;
+  valorTotal: number;
+  status: StatusGuiaFaturamento;
+  provedorAssinatura?: ProvedorAssinatura | null;
+  assinadoPorNome?: string | null;
+  assinadoPorCpf?: string | null;
+  dataHoraAssinatura?: string | null;
+  codigoVerificador?: string | null;
+  hashPdfOriginal?: string | null;
+  hashPdfAssinado?: string | null;
+  dataEnvioConvenio?: string | null;
+  dataPrevisaoPagamento?: string | null;
+  dataPagamento?: string | null;
+  observacoes?: string | null;
+  itens: GuiaFaturamentoItem[];
+}
+
+export interface GerarGuiaFaturamentoInput {
+  idClinica?: string;
+  idPaciente: string;
+  idPlanoSaude: string;
+  idResponsavel?: string;
+  competenciaInicio: string;
+  competenciaFim: string;
+  idsCompromissos?: string[];
+  observacoes?: string;
+  liberarParaAssinatura?: boolean;
+}
+

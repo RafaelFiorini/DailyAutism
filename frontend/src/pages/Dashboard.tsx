@@ -7,8 +7,11 @@ import { pacienteService } from '../services/pacienteService';
 import { profissionalService } from '../services/profissionalService';
 import { responsavelService } from '../services/responsavelService';
 import { compromissoService } from '../services/compromissoService';
+import { financeiroService } from '../services/financeiroService';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
+import type { GuiaFaturamento } from '../types/financeiro';
+import AssinarGuiaModal from '../components/AssinarGuiaModal';
 import {
   Users,
   Building2,
@@ -29,6 +32,8 @@ import {
   UserX,
   Wallet,
   CalendarCheck,
+  FileCheck2,
+  ShieldCheck,
 } from 'lucide-react';
 
 const STATUS_BADGE: Record<StatusCompromisso, { label: string; className: string }> = {
@@ -196,6 +201,8 @@ export default function Dashboard() {
   const [loadingAgenda, setLoadingAgenda] = useState(false);
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
+  const [guiasPendentesAssinatura, setGuiasPendentesAssinatura] = useState<GuiaFaturamento[]>([]);
+  const [guiaSelecionadaAssinar, setGuiaSelecionadaAssinar] = useState<GuiaFaturamento | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const loadDashboardData = useCallback(async () => {
@@ -248,12 +255,16 @@ export default function Dashboard() {
     if (isFuncionarioClinica || isProfissional || isResponsavel) {
       setLoadingAgenda(true);
       try {
-        const [compList, profList] = await Promise.all([
+        const [compList, profList, guiasPend] = await Promise.all([
           compromissoService.list().catch(() => []),
           isFuncionarioClinica ? profissionalService.list().catch(() => []) : Promise.resolve([]),
+          isResponsavel
+            ? financeiroService.listGuiasConvenio({ status: 'AGUARDANDO_ASSINATURA' }).catch(() => [])
+            : Promise.resolve([]),
         ]);
         setCompromissos(compList);
         setProfissionais(profList);
+        setGuiasPendentesAssinatura(guiasPend);
       } finally {
         setLoadingAgenda(false);
       }
@@ -892,6 +903,60 @@ export default function Dashboard() {
             Agenda Completa
           </Link>
         </div>
+
+        {guiasPendentesAssinatura.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 text-amber-900">
+                <FileCheck2 className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <h2 className="text-sm font-bold">
+                    {guiasPendentesAssinatura.length} guia(s) de convênio aguardando sua assinatura
+                  </h2>
+                  <p className="text-xs text-amber-800">
+                    Confira os atendimentos realizados e assine eletronicamente para a clínica enviar ao plano.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/admin/financeiro?tab=convenios"
+                className="text-xs font-semibold text-amber-900 underline self-start sm:self-center"
+              >
+                Ver todas no Financeiro
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {guiasPendentesAssinatura.map((g) => (
+                <div
+                  key={g.idGuiaFaturamento}
+                  className="bg-white rounded-lg border border-amber-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
+                  <div className="text-xs">
+                    <span className="font-bold text-gray-900">{g.numeroLoteGuia}</span>
+                    <span className="text-gray-600 ml-2">
+                      {g.nomePaciente} · {g.nomePlanoSaude} · {g.itens.length} sessão(ões)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setGuiaSelecionadaAssinar(g)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg self-start sm:self-auto"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Conferir e Assinar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <AssinarGuiaModal
+          isOpen={Boolean(guiaSelecionadaAssinar)}
+          guia={guiaSelecionadaAssinar}
+          onClose={() => setGuiaSelecionadaAssinar(null)}
+          onSigned={() => loadDashboardData()}
+        />
 
         <DayNavigator selectedDate={selectedDate} onChangeDate={setSelectedDate} />
 

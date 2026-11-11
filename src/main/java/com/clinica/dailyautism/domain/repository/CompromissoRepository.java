@@ -2,6 +2,7 @@ package com.clinica.dailyautism.domain.repository;
 
 import com.clinica.dailyautism.domain.entity.Compromisso;
 import com.clinica.dailyautism.domain.entity.Paciente;
+import com.clinica.dailyautism.domain.entity.StatusCompromisso;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +35,11 @@ public interface CompromissoRepository extends JpaRepository<Compromisso, String
 
     @Query("SELECT DISTINCT c.paciente FROM Compromisso c WHERE c.criadoPor.idUser = :idUser AND c.paciente IS NOT NULL")
     List<Paciente> findPacientesByCriadoPorIdUser(@Param("idUser") String idUser);
+
+    List<Compromisso> findByPacienteIdPacienteAndStatusAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(
+            String pacienteId,
+            StatusCompromisso status,
+            LocalDateTime de,
+            LocalDateTime ate
+    );
 }

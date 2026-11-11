@@ -13,6 +13,7 @@ vi.mock('../hooks/useAuth', () => ({
 vi.mock('../services/financeiroService', () => ({
   financeiroService: {
     listContratosParticulares: vi.fn(),
+    listGuiasConvenio: vi.fn(),
     listPrecos: vi.fn(),
     listPacotes: vi.fn(),
     listPrazosConvenios: vi.fn(),
@@ -24,6 +25,14 @@ vi.mock('../services/financeiroService', () => ({
     createContratoParticular: vi.fn(),
     registrarPagamentoContrato: vi.fn(),
     cancelarContratoParticular: vi.fn(),
+    listSessoesElegiveis: vi.fn(),
+    gerarGuiaConvenio: vi.fn(),
+    liberarGuiaAssinatura: vi.fn(),
+    assinarGuia: vi.fn(),
+    enviarGuiaConvenio: vi.fn(),
+    registrarPagamentoGuia: vi.fn(),
+    cancelarGuiaConvenio: vi.fn(),
+    downloadGuiaPdf: vi.fn(),
   },
 }));
 
@@ -56,6 +65,7 @@ describe('Financeiro Page', () => {
     ]);
     vi.mocked(financeiroService.listPacotes).mockResolvedValue([]);
     vi.mocked(financeiroService.listPrazosConvenios).mockResolvedValue([]);
+    vi.mocked(financeiroService.listGuiasConvenio).mockResolvedValue([]);
   });
 
   it('renderiza contratos particulares e tabela de preços para ADMIN_CLINICA', async () => {
@@ -137,6 +147,60 @@ describe('Financeiro Page', () => {
       expect(screen.getByText('Financeiro & Pacotes')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Novo Fechamento Particular/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Tabela de Preços & Combos/i })).not.toBeInTheDocument();
+    });
+  });
+
+  it('exibe aba de guias de convênio com opção de conferência e assinatura', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { idUser: '2', nomeUser: 'Carla', perfis: ['RESPONSAVEL'] },
+      isAdmin: false,
+      isAdminClinica: false,
+      isFuncionarioClinica: false,
+      isResponsavel: true,
+    });
+
+    vi.mocked(financeiroService.listContratosParticulares).mockResolvedValueOnce([]);
+    vi.mocked(financeiroService.listGuiasConvenio).mockResolvedValueOnce([
+      {
+        idGuiaFaturamento: 'g-1',
+        idClinica: 'cli-1',
+        idPaciente: 'pac-1',
+        nomePaciente: 'Matheus Mendes',
+        idPlanoSaude: 'pl-1',
+        nomePlanoSaude: 'Unimed Curitiba',
+        numeroLoteGuia: 'FAT-202611-0001',
+        competenciaInicio: '2026-11-01',
+        competenciaFim: '2026-11-30',
+        valorTotal: 210,
+        status: 'AGUARDANDO_ASSINATURA',
+        itens: [
+          {
+            idGuiaItem: 'i1',
+            idCompromisso: 'c1',
+            dataHoraAtendimento: '2026-11-05T09:00:00',
+            tipoCompromissoNome: 'Terapia Ocupacional',
+            profissionalNome: 'Dra. Camila',
+            valorUnitarioConvenio: 70,
+          },
+        ],
+      },
+    ]);
+
+    render(
+      <MemoryRouter>
+        <Financeiro />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Guias de Convênio/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Guias de Convênio/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('FAT-202611-0001')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Conferir e Assinar/i })).toBeInTheDocument();
     });
   });
 });

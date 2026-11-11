@@ -1,30 +1,43 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DollarSign, Wallet, Tag, FileCheck2, Loader2, AlertCircle, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { financeiroService } from '../services/financeiroService';
 import { pacienteService } from '../services/pacienteService';
 import { compromissoService } from '../services/compromissoService';
-import type { ClinicaPlanoPrazo, ContratoParticular, PacoteParticular, TabelaPreco } from '../types/financeiro';
+import type {
+  ClinicaPlanoPrazo,
+  ContratoParticular,
+  GuiaFaturamento,
+  PacoteParticular,
+  TabelaPreco,
+} from '../types/financeiro';
 import type { ClinicaOption, Paciente, PlanoSaudeOption } from '../types/paciente';
 import type { TipoCompromisso } from '../types/compromisso';
 import ContratosParticularesTab from '../components/ContratosParticularesTab';
 import TabelaPrecosTab from '../components/TabelaPrecosTab';
+import FaturamentoConveniosTab from '../components/FaturamentoConveniosTab';
 
 type TabKey = 'particulares' | 'precos' | 'convenios';
 
 export default function Financeiro() {
+  const [searchParams] = useSearchParams();
   const { user, isAdmin, isAdminClinica, isFuncionarioClinica, isResponsavel } = useAuth();
   const isResponsavelOnly = isResponsavel && !isAdmin && !isFuncionarioClinica;
   const canManageContratos = isAdmin || isFuncionarioClinica;
   const canManagePrecos = isAdmin || isAdminClinica;
+  const canManageConvenios = isAdmin || isFuncionarioClinica;
+  const canSignGuias = isResponsavel || isAdmin;
 
-  const [activeTab, setActiveTab] = useState<TabKey>('particulares');
+  const initialTab = searchParams.get('tab') === 'convenios' ? 'convenios' : 'particulares';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [selectedClinicaId, setSelectedClinicaId] = useState<string>(user?.idClinica || '');
   const [clinicas, setClinicas] = useState<ClinicaOption[]>([]);
   const [precos, setPrecos] = useState<TabelaPreco[]>([]);
   const [pacotes, setPacotes] = useState<PacoteParticular[]>([]);
   const [prazosConvenios, setPrazosConvenios] = useState<ClinicaPlanoPrazo[]>([]);
   const [contratos, setContratos] = useState<ContratoParticular[]>([]);
+  const [guiasConvenio, setGuiasConvenio] = useState<GuiaFaturamento[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [planos, setPlanos] = useState<PlanoSaudeOption[]>([]);
   const [tiposCompromisso, setTiposCompromisso] = useState<TipoCompromisso[]>([]);
@@ -36,13 +49,16 @@ export default function Financeiro() {
     setLoading(true);
     setError('');
     try {
-      const [ctrData, pacData] = await Promise.all([
-        financeiroService.listContratosParticulares(
-          !isResponsavelOnly && selectedClinicaId ? { clinicaId: selectedClinicaId } : undefined
-        ),
+      const clinicaParam = !isResponsavelOnly && selectedClinicaId ? selectedClinicaId : undefined;
+      const [ctrData, guiasData, pacData] = await Promise.all([
+        financeiroService.listContratosParticulares(clinicaParam ? { clinicaId: clinicaParam } : undefined),
+        financeiroService
+          .listGuiasConvenio(clinicaParam ? { clinicaId: clinicaParam } : undefined)
+          .catch(() => []),
         pacienteService.list().catch(() => []),
       ]);
       setContratos(ctrData);
+      setGuiasConvenio(guiasData);
       setPacientes(pacData);
 
       if (!isResponsavelOnly) {
@@ -75,6 +91,11 @@ export default function Financeiro() {
   useEffect(() => {
     loadBaseAndData();
   }, [loadBaseAndData]);
+
+  const guiasPendentesAssinatura = useMemo(
+    () => guiasConvenio.filter((g) => g.status === 'AGUARDANDO_ASSINATURA').length,
+    [guiasConvenio]
+  );
 
   return (
     <div className="space-y-6">
@@ -152,7 +173,12 @@ export default function Financeiro() {
           }`}
         >
           <FileCheck2 className="h-4 w-4" />
-          Guias de Convênio (Etapa 2)
+          Guias de Convênio
+          {guiasPendentesAssinatura > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950">
+              {guiasPendentesAssinatura}
+            </span>
+          )}
         </button>
       </div>
 
@@ -192,13 +218,16 @@ export default function Financeiro() {
           onRefresh={loadBaseAndData}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center space-y-2">
-          <FileCheck2 className="h-10 w-10 text-indigo-300 mx-auto" />
-          <h3 className="text-base font-bold text-gray-900">Faturamento de Convênios & Assinatura de Guias</h3>
-          <p className="text-xs text-gray-500 max-w-lg mx-auto">
-            Previsto na Etapa 2 do plano financeiro: consolidação dos comparecimentos mensais, emissão da guia em PDF, liberação para assinatura eletrônica do responsável e acompanhamento de recebimento pelos planos.
-          </p>
-        </div>
+        <FaturamentoConveniosTab
+          clinicaId={selectedClinicaId || user?.idClinica || ''}
+          canManage={canManageConvenios}
+          canSign={canSignGuias}
+          isResponsavelView={isResponsavelOnly}
+          guias={guiasConvenio}
+          pacientes={pacientes}
+          planos={planos}
+          onRefresh={loadBaseAndData}
+        />
       )}
     </div>
   );

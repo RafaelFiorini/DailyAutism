@@ -9,6 +9,7 @@ import { pacienteService } from '../services/pacienteService';
 import { profissionalService } from '../services/profissionalService';
 import { responsavelService } from '../services/responsavelService';
 import { compromissoService } from '../services/compromissoService';
+import { financeiroService } from '../services/financeiroService';
 import type { Compromisso } from '../types/compromisso';
 
 vi.mock('../services/userService', () => ({ userService: { list: vi.fn() } }));
@@ -16,6 +17,11 @@ vi.mock('../services/clinicaService', () => ({ clinicaService: { list: vi.fn() }
 vi.mock('../services/pacienteService', () => ({ pacienteService: { list: vi.fn() } }));
 vi.mock('../services/profissionalService', () => ({ profissionalService: { list: vi.fn() } }));
 vi.mock('../services/responsavelService', () => ({ responsavelService: { list: vi.fn() } }));
+vi.mock('../services/financeiroService', () => ({
+  financeiroService: {
+    listGuiasConvenio: vi.fn().mockResolvedValue([]),
+  },
+}));
 vi.mock('../services/compromissoService', () => ({
   compromissoService: {
     list: vi.fn(),
@@ -285,6 +291,37 @@ describe('Dashboard Page - Visão Geral por Perfil', () => {
     await waitFor(() => {
       expect(screen.queryByText('Lucas Filho')).not.toBeInTheDocument();
       expect(screen.getByLabelText('Sem agendamentos no dia')).toBeInTheDocument();
+    });
+  });
+
+  it('RESPONSAVEL: exibe alerta de guias aguardando assinatura eletrônica', async () => {
+    vi.mocked(compromissoService.list).mockResolvedValue([]);
+    vi.mocked(financeiroService.listGuiasConvenio).mockResolvedValueOnce([
+      {
+        idGuiaFaturamento: 'g-10',
+        idClinica: 'cli-1',
+        idPaciente: 'pac1',
+        nomePaciente: 'Lucas Filho',
+        idPlanoSaude: 'pl-1',
+        nomePlanoSaude: 'Unimed',
+        numeroLoteGuia: 'FAT-202611-0099',
+        competenciaInicio: '2026-11-01',
+        competenciaFim: '2026-11-30',
+        valorTotal: 70,
+        status: 'AGUARDANDO_ASSINATURA',
+        itens: [],
+      },
+    ]);
+
+    renderWithAuth({
+      isResponsavel: true,
+      user: { idUser: '5', nomeUser: 'Pai do Lucas', emailUser: 'pai@email.com', perfis: ['RESPONSAVEL'] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/guia\(s\) de convênio aguardando sua assinatura/i)).toBeInTheDocument();
+      expect(screen.getByText('FAT-202611-0099')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Conferir e Assinar/i })).toBeInTheDocument();
     });
   });
 });

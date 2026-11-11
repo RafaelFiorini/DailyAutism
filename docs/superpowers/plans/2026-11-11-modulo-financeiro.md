@@ -141,9 +141,9 @@
 - Create: `src/main/java/com/clinica/dailyautism/domain/aplicationservice/GuiaPdfService.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/aplicationservice/GuiaPdfServiceTest.java`
 
-- [ ] **Step 1:** Adicionar `openpdf` ao `pom.xml` e criar entidades `GuiaFaturamentoConvenio` e `GuiaFaturamentoItem` com hashes SHA-256, dados da assinatura e campos de envio/previsão de pagamento.
-- [ ] **Step 2:** Criar `GuiaPdfService` gerando PDF A4 legível contendo: cabeçalho da clínica, identificação do convênio e paciente (com nº carteirinha/guia), tabela cronológica de sessões (`data/hora`, `especialidade`, `profissional + conselho`, `valor`), valor total e bloco de assinatura (vazio em `RASCUNHO`/`AGUARDANDO_ASSINATURA`, ou preenchido com nome, CPF mascarado/completo conforme padrão interno, data/hora, IP e código verificador em `ASSINADA`).
-- [ ] **Step 3:** Escrever teste em `GuiaPdfServiceTest` validando que o PDF gerado abre/contém os bytes válidos (`%PDF-`) e retorna hash SHA-256 distinto entre rascunho e versão assinada.
+- [x] **Step 1:** Adicionar `openpdf` ao `pom.xml` e criar entidades `GuiaFaturamentoConvenio` e `GuiaFaturamentoItem` com hashes SHA-256, dados da assinatura e campos de envio/previsão de pagamento.
+- [x] **Step 2:** Criar `GuiaPdfService` gerando PDF A4 legível contendo: cabeçalho da clínica, identificação do convênio e paciente (com nº carteirinha/guia), tabela cronológica de sessões (`data/hora`, `especialidade`, `profissional + conselho`, `valor`), valor total e bloco de assinatura (vazio em `RASCUNHO`/`AGUARDANDO_ASSINATURA`, ou preenchido com nome, CPF mascarado/completo conforme padrão interno, data/hora, IP e código verificador em `ASSINADA`).
+- [x] **Step 3:** Escrever teste em `GuiaPdfServiceTest` validando que o PDF gerado abre/contém os bytes válidos (`%PDF-`) e retorna hash SHA-256 distinto entre rascunho e versão assinada.
 
 ---
 
@@ -158,14 +158,14 @@
 - Create: `src/main/java/com/clinica/dailyautism/infrastructure/controller/FaturamentoConvenioRestResource.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/aplicationservice/FaturamentoConvenioServiceTest.java`
 
-- [ ] **Step 1:** Escrever testes em `FaturamentoConvenioServiceTest` cobrindo:
+- [x] **Step 1:** Escrever testes em `FaturamentoConvenioServiceTest` cobrindo:
   - Consolidação de `Compromisso` (`REALIZADO`) no período sem duplicar atendimentos já faturados.
   - Cálculo de valor pela `TabelaPrecoClinica` do convênio na clínica e congelamento em `GuiaFaturamentoItem`.
   - Transição `RASCUNHO` → `AGUARDANDO_ASSINATURA` → `ASSINADA` (validando senha e vínculo do `RESPONSAVEL`).
   - Bloqueio de envio ao convênio se ainda não assinada (`ASSINADA`).
   - Cálculo de `dataPrevisaoPagamento = dataEnvio + prazoPagamentoDias` ao marcar `ENVIADA_CONVENIO` e baixa `PAGA`.
-- [ ] **Step 2:** Implementar `FaturamentoConvenioService` e endpoints REST em `/financeiro/guias-convenio` (gerar prévia/guia, listar pendentes de assinatura para o responsável, baixar PDF `/{id}/pdf`, liberar para assinatura, assinar `/{id}/assinar`, enviar ao convênio `/{id}/enviar`, marcar paga `/{id}/pagar`, cancelar `/{id}/cancelar`).
-- [ ] **Step 3:** Rodar testes unitários no backend.
+- [x] **Step 2:** Implementar `FaturamentoConvenioService` e endpoints REST em `/financeiro/guias-convenio` (gerar prévia/guia, listar pendentes de assinatura para o responsável, baixar PDF `/{id}/pdf`, liberar para assinatura, assinar `/{id}/assinar`, enviar ao convênio `/{id}/enviar`, marcar paga `/{id}/pagar`, cancelar `/{id}/cancelar`).
+- [x] **Step 3:** Rodar testes unitários no backend.
 
 ---
 
@@ -181,8 +181,8 @@
 - Test: `frontend/src/components/AssinarGuiaModal.test.tsx`
 - Modify: `frontend/src/pages/Financeiro.test.tsx`
 
-- [ ] **Step 1:** Implementar `FaturamentoConveniosTab.tsx` para a clínica gerar fechamentos por competência/convênio, baixar PDF, liberar para assinatura, registrar envio e dar baixa de recebimento.
-- [ ] **Step 2:** Implementar `AssinarGuiaModal.tsx` exibindo itens da guia, botão para visualizar/baixar PDF e campo de confirmação de senha para concluir a assinatura eletrônica pelo responsável.
-- [ ] **Step 3:** Adicionar banner/card de pendências no `Dashboard.tsx` do `RESPONSAVEL` listando guias aguardando assinatura.
-- [ ] **Step 4:** Escrever testes unitários para `AssinarGuiaModal` e fluxos da aba de convênios em `Financeiro.test.tsx`.
-- [ ] **Step 5:** Rodar `pnpm --dir frontend test --run`, `pnpm --dir frontend build`, recompilar `java_backend` no Docker e executar verificação E2E completa de Etapa 1 + Etapa 2.
+- [x] **Step 1:** Implementar `FaturamentoConveniosTab.tsx` para a clínica gerar fechamentos por competência/convênio, baixar PDF, liberar para assinatura, registrar envio e dar baixa de recebimento.
+- [x] **Step 2:** Implementar `AssinarGuiaModal.tsx` exibindo itens da guia, botão para visualizar/baixar PDF e campo de confirmação de senha para concluir a assinatura eletrônica pelo responsável.
+- [x] **Step 3:** Adicionar banner/card de pendências no `Dashboard.tsx` do `RESPONSAVEL` listando guias aguardando assinatura.
+- [x] **Step 4:** Escrever testes unitários para `AssinarGuiaModal` e fluxos da aba de convênios em `Financeiro.test.tsx`.
+- [x] **Step 5:** Rodar `pnpm --dir frontend test --run`, `pnpm --dir frontend build`, recompilar `java_backend` no Docker e executar verificação E2E completa de Etapa 1 + Etapa 2.
