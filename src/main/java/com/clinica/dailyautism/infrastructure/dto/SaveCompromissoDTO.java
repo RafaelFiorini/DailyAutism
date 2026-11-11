@@ -31,4 +31,6 @@ public class SaveCompromissoDTO {
     private final String idPeriodicidade;
 
     private final String idProfissional;
+
+    private final String idClinica;
 }

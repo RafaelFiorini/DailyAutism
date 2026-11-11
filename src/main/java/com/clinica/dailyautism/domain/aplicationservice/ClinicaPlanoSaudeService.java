@@ -25,10 +25,26 @@ public class ClinicaPlanoSaudeService {
         PlanoSaude plano = planoSaudeRepository.findById(dto.getIdPlanoSaude())
                 .orElseThrow(() -> new PlanoSaudeNotFoundException(dto.getIdPlanoSaude()));
 
-        ClinicaPlanoSaude vinculo = ClinicaPlanoSaude.builder()
-                .clinica(clinica)
-                .planoSaude(plano)
-                .build();
+        ClinicaPlanoSaude vinculo = clinicaPlanoSaudeRepository
+                .findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaude(clinica.getIdClinica(), plano.getIdPlanoSaude())
+                .orElseGet(() -> ClinicaPlanoSaude.builder()
+                        .clinica(clinica)
+                        .planoSaude(plano)
+                        .build());
+
+        vinculo.setDiaCorteEnvio(dto.getDiaCorteEnvio());
+        vinculo.setPrazoPagamentoDias(dto.getPrazoPagamentoDias() != null ? dto.getPrazoPagamentoDias() : 30);
+        return clinicaPlanoSaudeRepository.save(vinculo);
+    }
+
+    @Transactional
+    public ClinicaPlanoSaude atualizarPrazos(String idVinculo, SaveClinicaPlanoSaudeDTO dto) {
+        ClinicaPlanoSaude vinculo = clinicaPlanoSaudeRepository.findById(idVinculo)
+                .orElseThrow(() -> new RuntimeException("Vínculo clínica-plano não encontrado: " + idVinculo));
+        vinculo.setDiaCorteEnvio(dto.getDiaCorteEnvio());
+        if (dto.getPrazoPagamentoDias() != null) {
+            vinculo.setPrazoPagamentoDias(dto.getPrazoPagamentoDias());
+        }
         return clinicaPlanoSaudeRepository.save(vinculo);
     }
 

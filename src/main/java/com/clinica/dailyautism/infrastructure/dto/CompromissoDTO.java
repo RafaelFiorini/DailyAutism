@@ -23,6 +23,8 @@ public class CompromissoDTO {
     private final String idProfissional;
     private final String nomeProfissional;
     private final String conselhoProfissional;
+    private final String idClinica;
+    private final String nomeClinica;
     private final String idUser;
 
     public static CompromissoDTO create(Compromisso compromisso) {
@@ -47,6 +49,8 @@ public class CompromissoDTO {
         String nomePeriod = compromisso.getPeriodicidade() != null ? compromisso.getPeriodicidade().getNomePeriodicidade() : null;
 
         String idUser = compromisso.getCriadoPor() != null ? compromisso.getCriadoPor().getIdUser() : null;
+        String idClinica = compromisso.getClinica() != null ? compromisso.getClinica().getIdClinica() : null;
+        String nomeClinica = compromisso.getClinica() != null ? compromisso.getClinica().getNomeClinica() : null;
 
         return new CompromissoDTO(
                 compromisso.getIdCompromisso(),
@@ -64,6 +68,8 @@ public class CompromissoDTO {
                 idProf,
                 nomeProf,
                 conselhoProf,
+                idClinica,
+                nomeClinica,
                 idUser
         );
     }

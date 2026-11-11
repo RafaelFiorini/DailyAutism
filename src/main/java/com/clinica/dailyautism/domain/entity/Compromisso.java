@@ -51,6 +51,10 @@ public class Compromisso extends BaseEntity {
     private Profissional profissional;
 
     @ManyToOne
+    @JoinColumn(name = "idClinica")
+    private Clinica clinica;
+
+    @ManyToOne
     @JoinColumn(name = "idUser", nullable = false)
     private User criadoPor;
 }

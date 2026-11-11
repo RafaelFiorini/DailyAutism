@@ -101,7 +101,10 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_AGENDA",
                 // Pessoa
                 "CRIAR_PESSOA", "VER_PESSOA", "LISTAR_PESSOA",
-                "EDITAR_PESSOA", "DELETAR_PESSOA"
+                "EDITAR_PESSOA", "DELETAR_PESSOA",
+                // Financeiro
+                "VER_FINANCEIRO", "GERENCIAR_PRECOS_CLINICA", "GERENCIAR_CONTRATO_PARTICULAR",
+                "GERENCIAR_FATURAMENTO_CONVENIO", "ASSINAR_GUIA_CONVENIO"
         );
 
         acoes.forEach(nome -> {
@@ -128,7 +131,8 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_PLANO_SAUDE", "LISTAR_PLANO_SAUDE",
                 "VER_PACIENTE_PLANO_SAUDE", "VINCULAR_PACIENTE_PLANO_SAUDE", "EDITAR_PACIENTE_PLANO_SAUDE",
                 "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
-                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO"
+                "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO",
+                "VER_FINANCEIRO", "ASSINAR_GUIA_CONVENIO"
         )));
 
         // PROFISSIONAL — gerencia agenda e documentação dos seus pacientes
@@ -161,7 +165,8 @@ public class DataSeeder implements CommandLineRunner {
                 "CRIAR_PERIODICIDADE", "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE", "EDITAR_PERIODICIDADE", "DELETAR_PERIODICIDADE",
                 "CRIAR_TIPOCOMPROMISSO", "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO", "EDITAR_TIPOCOMPROMISSO", "DELETAR_TIPOCOMPROMISSO",
                 "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
-                "CRIAR_TIPOARQUIVO", "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO", "EDITAR_TIPOARQUIVO", "DELETAR_TIPOARQUIVO"
+                "CRIAR_TIPOARQUIVO", "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO", "EDITAR_TIPOARQUIVO", "DELETAR_TIPOARQUIVO",
+                "VER_FINANCEIRO", "GERENCIAR_PRECOS_CLINICA", "GERENCIAR_CONTRATO_PARTICULAR", "GERENCIAR_FATURAMENTO_CONVENIO"
         );
         criarPerfilSeNaoExistir("ADMIN_CLINICA", acaoRepository.findAllByNomeIn(acoesAdminClinica));
 
@@ -181,7 +186,8 @@ public class DataSeeder implements CommandLineRunner {
                 "VER_PERIODICIDADE", "LISTAR_PERIODICIDADE",
                 "VER_TIPOCOMPROMISSO", "LISTAR_TIPOCOMPROMISSO",
                 "CRIAR_ARQUIVO", "VER_ARQUIVO", "LISTAR_ARQUIVO", "BAIXAR_ARQUIVO", "DELETAR_ARQUIVO",
-                "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO"
+                "VER_TIPOARQUIVO", "LISTAR_TIPOARQUIVO",
+                "VER_FINANCEIRO", "GERENCIAR_CONTRATO_PARTICULAR", "GERENCIAR_FATURAMENTO_CONVENIO"
         );
         criarPerfilSeNaoExistir("CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));
         criarPerfilSeNaoExistir("FUNCIONARIO_CLINICA", acaoRepository.findAllByNomeIn(acoesFuncionarioClinica));

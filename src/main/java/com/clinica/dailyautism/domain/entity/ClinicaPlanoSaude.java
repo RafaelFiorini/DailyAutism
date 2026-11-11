@@ -25,4 +25,11 @@ public class ClinicaPlanoSaude extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "idPlanoSaude", nullable = false)
     private PlanoSaude planoSaude;
+
+    /** Dia do mês sugerido para envio do lote/guia ao convênio. */
+    private Integer diaCorteEnvio;
+
+    /** Prazo em dias após o envio para previsão de pagamento pelo convênio. */
+    @Builder.Default
+    private Integer prazoPagamentoDias = 30;
 }

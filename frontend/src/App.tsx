@@ -13,6 +13,7 @@ import PlanosSaude from './pages/PlanosSaude';
 import Periodicidades from './pages/Periodicidades';
 import Agenda from './pages/Agenda';
 import Arquivos from './pages/Arquivos';
+import Financeiro from './pages/Financeiro';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="periodicidades" element={<Periodicidades />} />
               <Route path="agenda" element={<Agenda />} />
               <Route path="arquivos" element={<Arquivos />} />
+              <Route path="financeiro" element={<Financeiro />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

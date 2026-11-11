@@ -29,6 +29,9 @@ public class CompromissoService {
     private final ProfissionalRepository profissionalRepository;
     private final ResponsavelRepository responsavelRepository;
     private final PacienteService pacienteService;
+    private final ClinicaRepository clinicaRepository;
+    private final ClinicaAccessHelper clinicaAccessHelper;
+    private final ContratoParticularService contratoParticularService;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
@@ -50,6 +53,8 @@ public class CompromissoService {
                     .orElse(null);
         }
 
+        Clinica clinica = resolverClinicaCriacao(saveCompromissoDTO.getIdClinica(), user, paciente, profissional);
+
         Compromisso compromisso = Compromisso.builder()
                 .tituloCompromisso(saveCompromissoDTO.getTituloCompromisso())
                 .descricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso())
@@ -60,10 +65,23 @@ public class CompromissoService {
                 .tipoCompromisso(tipoCompromisso)
                 .periodicidade(periodicidade)
                 .profissional(profissional)
+                .clinica(clinica)
                 .criadoPor(user)
                 .build();
 
         return compromissoRepository.save(compromisso);
+    }
+
+    private Clinica resolverClinicaCriacao(String idClinicaInformado, User user, Paciente paciente, Profissional profissional) {
+        if (idClinicaInformado != null && !idClinicaInformado.isBlank()) {
+            return clinicaRepository.findById(idClinicaInformado.trim()).orElse(null);
+        }
+        List<String> clinicasUsuario = clinicaAccessHelper.listarIdsClinicasDoUsuario(user);
+        if (!clinicasUsuario.isEmpty()) {
+            return clinicaRepository.findById(clinicasUsuario.get(0)).orElse(null);
+        }
+        Compromisso temp = Compromisso.builder().paciente(paciente).profissional(profissional).build();
+        return clinicaAccessHelper.resolverClinicaDoCompromisso(temp);
     }
 
     public Compromisso loadCompromisso(String compromissoId) {
@@ -170,8 +188,11 @@ public class CompromissoService {
     @Transactional
     public Compromisso updateStatus(String compromissoId, StatusCompromisso novoStatus) {
         Compromisso compromisso = loadCompromisso(compromissoId);
+        StatusCompromisso statusAnterior = compromisso.getStatus();
         compromisso.setStatus(novoStatus);
-        return compromissoRepository.save(compromisso);
+        Compromisso saved = compromissoRepository.save(compromisso);
+        contratoParticularService.processarAlteracaoStatusCompromisso(saved, statusAnterior, novoStatus);
+        return saved;
     }
 
 //    @Transactional
@@ -309,6 +330,7 @@ public class CompromissoService {
                     .tipoCompromisso(original.getTipoCompromisso())
                     .periodicidade(original.getPeriodicidade())
                     .profissional(original.getProfissional())
+                    .clinica(original.getClinica())
                     .criadoPor(original.getCriadoPor())
                     .build();
             replicas.add(replica);

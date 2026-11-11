@@ -7,4 +7,6 @@ import lombok.Data;
 public class SaveClinicaPlanoSaudeDTO {
     private String idClinica;
     private String idPlanoSaude;
+    private Integer diaCorteEnvio;
+    private Integer prazoPagamentoDias;
 }

@@ -44,11 +44,11 @@
 - Create: `src/main/java/com/clinica/dailyautism/domain/repository/PacoteParticularRepository.java`
 - Modify: `src/main/java/com/clinica/dailyautism/infrastructure/security/DataSeeder.java`
 
-- [ ] **Step 1:** Atualizar `ClinicaPlanoSaude` com `diaCorteEnvio` (`Integer`) e `prazoPagamentoDias` (`Integer`, default `30`), e adicionar relacionamento `@ManyToOne @JoinColumn(name = "idClinica") private Clinica clinica;` opcional em `Compromisso` (preenchido na criação/atualização quando resolvido pela clínica do usuário/paciente/profissional).
-- [ ] **Step 2:** Criar entidades `TabelaPrecoClinica` (com `clinica`, `tipoCompromisso`, `planoSaude` nullable, `valorSessao` `BigDecimal`), `PacoteParticular` e `PacoteParticularItem` estendendo `BaseEntity` com `@SQLRestriction("ativo = true")`.
-- [ ] **Step 3:** Criar repositórios JPA com queries filtradas por `idClinica`, `idTipoCompromisso` e `idPlanoSaude` (`isNull` para particular).
-- [ ] **Step 4:** Registrar em `DataSeeder` as novas ações (`VER_FINANCEIRO`, `GERENCIAR_PRECOS_CLINICA`, `GERENCIAR_CONTRATO_PARTICULAR`, `GERENCIAR_FATURAMENTO_CONVENIO`, `ASSINAR_GUIA_CONVENIO`) distribuídas nos perfis `ADMIN`, `ADMIN_CLINICA`, `FUNCIONARIO_CLINICA`, `CLINICA` e `RESPONSAVEL`.
-- [ ] **Step 5:** Compilar backend (`mvn test-compile`) e verificar criação de schema.
+- [x] **Step 1:** Atualizar `ClinicaPlanoSaude` com `diaCorteEnvio` (`Integer`) e `prazoPagamentoDias` (`Integer`, default `30`), e adicionar relacionamento `@ManyToOne @JoinColumn(name = "idClinica") private Clinica clinica;` opcional em `Compromisso` (preenchido na criação/atualização quando resolvido pela clínica do usuário/paciente/profissional).
+- [x] **Step 2:** Criar entidades `TabelaPrecoClinica` (com `clinica`, `tipoCompromisso`, `planoSaude` nullable, `valorSessao` `BigDecimal`), `PacoteParticular` e `PacoteParticularItem` estendendo `BaseEntity` com `@SQLRestriction("ativo = true")`.
+- [x] **Step 3:** Criar repositórios JPA com queries filtradas por `idClinica`, `idTipoCompromisso` e `idPlanoSaude` (`isNull` para particular).
+- [x] **Step 4:** Registrar em `DataSeeder` as novas ações (`VER_FINANCEIRO`, `GERENCIAR_PRECOS_CLINICA`, `GERENCIAR_CONTRATO_PARTICULAR`, `GERENCIAR_FATURAMENTO_CONVENIO`, `ASSINAR_GUIA_CONVENIO`) distribuídas nos perfis `ADMIN`, `ADMIN_CLINICA`, `FUNCIONARIO_CLINICA`, `CLINICA` e `RESPONSAVEL`.
+- [x] **Step 5:** Compilar backend (`mvn test-compile`) e verificar criação de schema.
 
 ---
 
@@ -65,10 +65,10 @@
 - Create: `src/main/java/com/clinica/dailyautism/infrastructure/controller/FinanceiroConfigRestResource.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/aplicationservice/TabelaPrecoServiceTest.java`
 
-- [ ] **Step 1:** Escrever testes unitários em `TabelaPrecoServiceTest` garantindo: (a) unicidade por `(clinica, tipoCompromisso, planoSaude)`, (b) fallback nulo de `planoSaude` representando Particular, (c) cálculo de `valorSemDescontoCalculado` no pacote particular, e (d) isolamento de clínica.
-- [ ] **Step 2:** Rodar `mvn test -Dtest=TabelaPrecoServiceTest` e confirmar falha inicial (TDD).
-- [ ] **Step 3:** Implementar `TabelaPrecoService`, `PacoteParticularService` e endpoints em `FinanceiroConfigRestResource` (`/financeiro/precos`, `/financeiro/pacotes`, `/financeiro/convenios-prazos`) com `@PreAuthorize("hasAuthority('GERENCIAR_PRECOS_CLINICA')")` e leitura com `VER_FINANCEIRO`.
-- [ ] **Step 4:** Rodar `mvn test -Dtest=TabelaPrecoServiceTest` e confirmar sucesso.
+- [x] **Step 1:** Escrever testes unitários em `TabelaPrecoServiceTest` garantindo: (a) unicidade por `(clinica, tipoCompromisso, planoSaude)`, (b) fallback nulo de `planoSaude` representando Particular, (c) cálculo de `valorSemDescontoCalculado` no pacote particular, e (d) isolamento de clínica.
+- [x] **Step 2:** Rodar `mvn test -Dtest=TabelaPrecoServiceTest` e confirmar falha inicial (TDD).
+- [x] **Step 3:** Implementar `TabelaPrecoService`, `PacoteParticularService` e endpoints em `FinanceiroConfigRestResource` (`/financeiro/precos`, `/financeiro/pacotes`, `/financeiro/convenios-prazos`) com `@PreAuthorize("hasAuthority('GERENCIAR_PRECOS_CLINICA')")` e leitura com `VER_FINANCEIRO`.
+- [x] **Step 4:** Rodar `mvn test -Dtest=TabelaPrecoServiceTest` e confirmar sucesso.
 
 ---
 
@@ -91,16 +91,16 @@
 - Create: `src/main/java/com/clinica/dailyautism/infrastructure/controller/ContratoParticularRestResource.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/aplicationservice/ContratoParticularServiceTest.java`
 
-- [ ] **Step 1:** Escrever testes em `ContratoParticularServiceTest` cobrindo:
+- [x] **Step 1:** Escrever testes em `ContratoParticularServiceTest` cobrindo:
   - Contratação de combo multi-especialidade (ex.: 4 TO + 2 Psico × 2 meses = 8 TO + 4 Psico) congelando `valorUnitarioReferencia`.
   - Abatimento automático quando `Compromisso` muda para `REALIZADO` (abate somente o item daquela especialidade).
   - Idempotência (re-salvar `REALIZADO` não abate duas vezes).
   - Estorno automático ao sair de `REALIZADO` para `CANCELADO`/`AGENDADO` (reabre contrato se estava `CONCLUIDO`).
   - Fechamento automático como `CONCLUIDO` quando todos os itens atingem `quantidadeConsumida == quantidadeContratada`.
   - Não bloqueio caso o paciente não tenha contrato particular com saldo.
-- [ ] **Step 2:** Implementar `ContratoParticularService` (`criarContrato`, `registrarPagamento`, `processarAlteracaoStatusCompromisso`, `listarPorClinica`, `listarParaResponsavel`, `cancelarContrato`) e integrar chamada transacional em `CompromissoService` quando o status do compromisso é alterado.
-- [ ] **Step 3:** Expor REST controller `/financeiro/contratos-particulares` com filtros por clínica, paciente e visão restrita ao responsável logado (`/meus`).
-- [ ] **Step 4:** Rodar testes de backend e validar fluxo ponta a ponta via Docker/API.
+- [x] **Step 2:** Implementar `ContratoParticularService` (`criarContrato`, `registrarPagamento`, `processarAlteracaoStatusCompromisso`, `listarPorClinica`, `listarParaResponsavel`, `cancelarContrato`) e integrar chamada transacional em `CompromissoService` quando o status do compromisso é alterado.
+- [x] **Step 3:** Expor REST controller `/financeiro/contratos-particulares` com filtros por clínica, paciente e visão restrita ao responsável logado (`/meus`).
+- [x] **Step 4:** Rodar testes de backend e validar fluxo ponta a ponta via Docker/API.
 
 ---
 
@@ -118,11 +118,11 @@
 - Test: `frontend/src/pages/Financeiro.test.tsx`
 - Test: `frontend/src/services/financeiroService.test.ts`
 
-- [ ] **Step 1:** Criar tipos e `financeiroService.ts` com testes unitários (`financeiroService.test.ts`).
-- [ ] **Step 2:** Criar `TabelaPrecosTab.tsx` permitindo ao `ADMIN_CLINICA` configurar valores particulares por especialidade, valores de repasse + prazos por convênio e combos/pacotes com desconto.
-- [ ] **Step 3:** Criar `ContratosParticularesTab.tsx` e `ContratoParticularModal.tsx` (suportando escolha de pacote pronto ou montagem de itens por especialidade × meses, registro de pagamento e extrato de sessões abatidas; modo somente leitura para `RESPONSAVEL`).
-- [ ] **Step 4:** Adicionar item **Financeiro** no menu lateral de `AdminLayout.tsx` (visível para `ADMIN`, `ADMIN_CLINICA`, `FUNCIONARIO_CLINICA`, `CLINICA` e `RESPONSAVEL`) e rota `/admin/financeiro` em `App.tsx`.
-- [ ] **Step 5:** Rodar `pnpm --dir frontend test --run` e `pnpm --dir frontend build` (todos passando) + rebuild Docker backend e teste de integração da Etapa 1.
+- [x] **Step 1:** Criar tipos e `financeiroService.ts` com testes unitários (`financeiroService.test.ts`).
+- [x] **Step 2:** Criar `TabelaPrecosTab.tsx` permitindo ao `ADMIN_CLINICA` configurar valores particulares por especialidade, valores de repasse + prazos por convênio e combos/pacotes com desconto.
+- [x] **Step 3:** Criar `ContratosParticularesTab.tsx` e `ContratoParticularModal.tsx` (suportando escolha de pacote pronto ou montagem de itens por especialidade × meses, registro de pagamento e extrato de sessões abatidas; modo somente leitura para `RESPONSAVEL`).
+- [x] **Step 4:** Adicionar item **Financeiro** no menu lateral de `AdminLayout.tsx` (visível para `ADMIN`, `ADMIN_CLINICA`, `FUNCIONARIO_CLINICA`, `CLINICA` e `RESPONSAVEL`) e rota `/admin/financeiro` em `App.tsx`.
+- [x] **Step 5:** Rodar `pnpm --dir frontend test --run` e `pnpm --dir frontend build` (todos passando) + rebuild Docker backend e teste de integração da Etapa 1.
 
 ---
 

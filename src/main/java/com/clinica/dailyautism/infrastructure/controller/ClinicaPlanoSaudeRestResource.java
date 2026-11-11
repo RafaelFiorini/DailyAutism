@@ -35,6 +35,14 @@ public class ClinicaPlanoSaudeRestResource {
         return ResponseEntity.ok(clinicaPlanoSaudeService.listarPorPlano(idPlanoSaude));
     }
 
+    @PutMapping("/{idVinculo}/prazos")
+    @PreAuthorize("hasAuthority('GERENCIAR_PRECOS_CLINICA') or hasAuthority('VINCULAR_PLANO_SAUDE')")
+    public ResponseEntity<ClinicaPlanoSaude> atualizarPrazos(
+            @PathVariable String idVinculo,
+            @RequestBody SaveClinicaPlanoSaudeDTO dto) {
+        return ResponseEntity.ok(clinicaPlanoSaudeService.atualizarPrazos(idVinculo, dto));
+    }
+
     @DeleteMapping("/{idVinculo}")
     @PreAuthorize("hasAuthority('DESVINCULAR_PLANO_SAUDE')")
     public ResponseEntity<Void> desvincular(@PathVariable String idVinculo) {
