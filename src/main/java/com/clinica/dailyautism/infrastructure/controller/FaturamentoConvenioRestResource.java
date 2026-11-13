@@ -99,6 +99,15 @@ public class FaturamentoConvenioRestResource {
         return ResponseEntity.ok(GuiaFaturamentoDTO.create(faturamentoService.marcarEnviadaAoConvenio(id, dto, email)));
     }
 
+    @PostMapping("/lote/enviar")
+    @PreAuthorize("hasAuthority('GERENCIAR_FATURAMENTO_CONVENIO')")
+    public ResponseEntity<ResultadoLoteGuiasDTO> enviarLoteAoConvenio(
+            @RequestBody EnviarLoteGuiasDTO dto,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        return ResponseEntity.ok(faturamentoService.enviarLoteAoConvenio(dto, email));
+    }
+
     @PatchMapping("/{id}/pagar")
     @PreAuthorize("hasAuthority('GERENCIAR_FATURAMENTO_CONVENIO')")
     public ResponseEntity<GuiaFaturamentoDTO> registrarPagamento(

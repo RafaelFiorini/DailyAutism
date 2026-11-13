@@ -81,8 +81,70 @@ export default function FaturamentoConveniosTab({
   const [loadingElegiveis, setLoadingElegiveis] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [despachandoLoteId, setDespachandoLoteId] = useState<string | null>(null);
   const [guiaParaAssinar, setGuiaParaAssinar] = useState<GuiaFaturamento | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  const lotesProntosEnvio = useMemo(() => {
+    const map = new Map<
+      string,
+      { idPlanoSaude: string; nomePlano: string; guias: GuiaFaturamento[]; totalValor: number }
+    >();
+    guias.forEach((g) => {
+      if (g.status === 'ASSINADA') {
+        const idPlano = g.idPlanoSaude;
+        const nomePlano =
+          g.nomePlanoSaude ||
+          planos.find((p) => p.idPlanoSaude === idPlano)?.nomePlano ||
+          'Convênio';
+        const entry = map.get(idPlano) || {
+          idPlanoSaude: idPlano,
+          nomePlano,
+          guias: [],
+          totalValor: 0,
+        };
+        entry.guias.push(g);
+        entry.totalValor += g.valorTotal || 0;
+        map.set(idPlano, entry);
+      }
+    });
+    return Array.from(map.values());
+  }, [guias, planos]);
+
+  const handleDespacharLoteTab = async (lote: {
+    idPlanoSaude: string;
+    nomePlano: string;
+    guias: GuiaFaturamento[];
+    totalValor: number;
+  }) => {
+    const confirmMsg = `Deseja despachar o lote de ${lote.guias.length} guia(s) assinada(s) do convênio "${lote.nomePlano}" no valor total de ${formatBRL(lote.totalValor)}?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setDespachandoLoteId(lote.idPlanoSaude);
+    setFeedback(null);
+    try {
+      const resultado = await financeiroService.enviarLoteConvenio({
+        idClinica: clinicaId || undefined,
+        idPlanoSaude: lote.idPlanoSaude,
+        idsGuias: lote.guias.map((g) => g.idGuiaFaturamento),
+      });
+      setFeedback({
+        type: 'ok',
+        text: `Lote com ${resultado.quantidadeGuias} guia(s) do convênio ${resultado.nomePlano} enviado com sucesso! Previsão de pagamento em ${resultado.dataPrevisaoPagamento}.`,
+      });
+      onRefresh();
+    } catch (err: unknown) {
+      let msg = 'Erro ao enviar lote ao convênio.';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const res = (err as { response?: { data?: { message?: string; errorMessage?: string } } })
+          .response;
+        msg = res?.data?.errorMessage || res?.data?.message || msg;
+      }
+      setFeedback({ type: 'err', text: msg });
+    } finally {
+      setDespachandoLoteId(null);
+    }
+  };
 
   const pacientesComPlano = useMemo(() => {
     const comPlano = pacientes.filter((p) => p.idPlanoSaude || (p.planos && p.planos.length > 0));
@@ -365,6 +427,63 @@ export default function FaturamentoConveniosTab({
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Lotes de Guias Assinadas Prontas para Despacho ao Convênio */}
+      {canManage && lotesProntosEnvio.length > 0 && (
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-200 p-5 space-y-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-emerald-100 text-emerald-700 rounded-lg">
+                <FileCheck2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-emerald-950">
+                  Lotes Prontos para Envio aos Convênios
+                </h3>
+                <p className="text-xs text-emerald-800">
+                  Guias que já foram assinadas pelos responsáveis e estão prontas para fechamento de remessa.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+            {lotesProntosEnvio.map((lote) => {
+              const isDespachando = despachandoLoteId === lote.idPlanoSaude;
+              return (
+                <div
+                  key={lote.idPlanoSaude}
+                  className="bg-white p-3.5 rounded-xl border border-emerald-200/80 shadow-xs flex items-center justify-between gap-3"
+                >
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">{lote.nomePlano}</h4>
+                    <p className="text-[11px] text-emerald-700 font-semibold">
+                      {lote.guias.length} guia(s) assinada(s)
+                    </p>
+                    <p className="text-xs font-bold text-gray-800 mt-0.5">
+                      {formatBRL(lote.totalValor)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDespacharLoteTab(lote)}
+                    disabled={isDespachando}
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1.5 shadow-xs transition disabled:opacity-50"
+                    title="Enviar todas as guias assinadas deste convênio"
+                  >
+                    {isDespachando ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    Enviar Lote
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

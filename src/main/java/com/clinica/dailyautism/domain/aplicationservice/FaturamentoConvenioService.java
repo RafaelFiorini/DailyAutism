@@ -257,6 +257,72 @@ public class FaturamentoConvenioService {
     }
 
     @Transactional
+    public ResultadoLoteGuiasDTO enviarLoteAoConvenio(EnviarLoteGuiasDTO dto, String emailUsuario) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Dados do lote são obrigatórios.");
+        }
+        if (dto.getIdPlanoSaude() == null || dto.getIdPlanoSaude().isBlank()) {
+            throw new IllegalArgumentException("Plano de saúde é obrigatório para envio do lote.");
+        }
+
+        Clinica clinica = clinicaAccessHelper.validarEAcessarClinica(dto.getIdClinica(), emailUsuario);
+        String idClinica = clinica != null ? clinica.getIdClinica() : null;
+        PlanoSaude plano = planoSaudeRepository.findById(dto.getIdPlanoSaude().trim())
+                .orElseThrow(() -> new IllegalArgumentException("Plano de saúde não encontrado: " + dto.getIdPlanoSaude()));
+
+        List<GuiaFaturamentoConvenio> guiasAssinadas = guiaRepository.findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaudeAndStatus(
+                idClinica,
+                plano.getIdPlanoSaude(),
+                StatusGuiaFaturamento.ASSINADA
+        );
+
+        if (dto.getIdsGuias() != null && !dto.getIdsGuias().isEmpty()) {
+            Set<String> permitidos = new HashSet<>(dto.getIdsGuias());
+            guiasAssinadas = guiasAssinadas.stream()
+                    .filter(g -> permitidos.contains(g.getIdGuiaFaturamento()))
+                    .toList();
+        }
+
+        if (guiasAssinadas.isEmpty()) {
+            throw new IllegalStateException("Nenhuma guia assinada pendente de envio para este convênio.");
+        }
+
+        LocalDate dataEnvio = dto.getDataEnvio() != null ? dto.getDataEnvio() : LocalDate.now();
+        int prazoDias = clinicaPlanoSaudeRepository
+                .findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaude(idClinica, plano.getIdPlanoSaude())
+                .map(ClinicaPlanoSaude::getPrazoPagamentoDias)
+                .filter(Objects::nonNull)
+                .orElse(30);
+
+        LocalDate previsaoPagamento = dataEnvio.plusDays(prazoDias);
+        BigDecimal valorTotalLote = BigDecimal.ZERO;
+        List<String> idsEnviados = new ArrayList<>();
+
+        for (GuiaFaturamentoConvenio g : guiasAssinadas) {
+            g.setStatus(StatusGuiaFaturamento.ENVIADA_CONVENIO);
+            g.setDataEnvioConvenio(dataEnvio);
+            g.setDataPrevisaoPagamento(previsaoPagamento);
+            if (g.getValorTotal() != null) {
+                valorTotalLote = valorTotalLote.add(g.getValorTotal());
+            }
+            idsEnviados.add(g.getIdGuiaFaturamento());
+        }
+
+        guiaRepository.saveAll(guiasAssinadas);
+
+        return ResultadoLoteGuiasDTO.builder()
+                .idPlanoSaude(plano.getIdPlanoSaude())
+                .nomePlano(plano.getNomePlano())
+                .quantidadeGuias(guiasAssinadas.size())
+                .valorTotal(valorTotalLote)
+                .dataEnvio(dataEnvio)
+                .dataPrevisaoPagamento(previsaoPagamento)
+                .prazoPagamentoDias(prazoDias)
+                .idsGuiasEnviadas(idsEnviados)
+                .build();
+    }
+
+    @Transactional
     public GuiaFaturamentoConvenio registrarPagamento(
             String idGuia,
             RegistrarPagamentoGuiaDTO dto,

@@ -18,4 +18,15 @@ public interface GuiaFaturamentoConvenioRepository extends JpaRepository<GuiaFat
     List<GuiaFaturamentoConvenio> findByPacienteIdPacienteInOrderByCompetenciaFimDesc(List<String> idsPacientes);
 
     long countByClinicaIdClinica(String idClinica);
+
+    List<GuiaFaturamentoConvenio> findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaudeAndStatus(
+            String idClinica,
+            String idPlanoSaude,
+            StatusGuiaFaturamento status
+    );
+
+    List<GuiaFaturamentoConvenio> findByClinicaIdClinicaAndStatus(
+            String idClinica,
+            StatusGuiaFaturamento status
+    );
 }

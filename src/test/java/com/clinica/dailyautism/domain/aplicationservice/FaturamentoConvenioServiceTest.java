@@ -163,4 +163,54 @@ class FaturamentoConvenioServiceTest {
         assertEquals(StatusGuiaFaturamento.ENVIADA_CONVENIO, enviada.getStatus());
         assertEquals(LocalDate.of(2027, 1, 16), enviada.getDataPrevisaoPagamento());
     }
+
+    @Test
+    void deveEnviarLoteAoConvenioComSucesso() {
+        Clinica clinica = Clinica.builder().idClinica("cli-1").nomeClinica("Attenzione").build();
+        PlanoSaude plano = PlanoSaude.builder().idPlanoSaude("pl-1").nomePlano("Unimed").build();
+
+        GuiaFaturamentoConvenio g1 = GuiaFaturamentoConvenio.builder()
+                .idGuiaFaturamento("g-1")
+                .clinica(clinica)
+                .planoSaude(plano)
+                .status(StatusGuiaFaturamento.ASSINADA)
+                .valorTotal(new BigDecimal("150.00"))
+                .build();
+
+        GuiaFaturamentoConvenio g2 = GuiaFaturamentoConvenio.builder()
+                .idGuiaFaturamento("g-2")
+                .clinica(clinica)
+                .planoSaude(plano)
+                .status(StatusGuiaFaturamento.ASSINADA)
+                .valorTotal(new BigDecimal("200.00"))
+                .build();
+
+        when(clinicaAccessHelper.validarEAcessarClinica("cli-1", "admin@teste.com")).thenReturn(clinica);
+        when(planoSaudeRepository.findById("pl-1")).thenReturn(Optional.of(plano));
+        when(guiaRepository.findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaudeAndStatus("cli-1", "pl-1", StatusGuiaFaturamento.ASSINADA))
+                .thenReturn(List.of(g1, g2));
+
+        ClinicaPlanoSaude cps = ClinicaPlanoSaude.builder()
+                .clinica(clinica).planoSaude(plano).prazoPagamentoDias(30).build();
+        when(clinicaPlanoSaudeRepository.findByClinicaIdClinicaAndPlanoSaudeIdPlanoSaude("cli-1", "pl-1"))
+                .thenReturn(Optional.of(cps));
+
+        com.clinica.dailyautism.infrastructure.dto.EnviarLoteGuiasDTO dto =
+                com.clinica.dailyautism.infrastructure.dto.EnviarLoteGuiasDTO.builder()
+                        .idClinica("cli-1")
+                        .idPlanoSaude("pl-1")
+                        .dataEnvio(LocalDate.of(2026, 11, 20))
+                        .build();
+
+        com.clinica.dailyautism.infrastructure.dto.ResultadoLoteGuiasDTO resultado =
+                faturamentoService.enviarLoteAoConvenio(dto, "admin@teste.com");
+
+        assertNotNull(resultado);
+        assertEquals(2, resultado.getQuantidadeGuias());
+        assertEquals(new BigDecimal("350.00"), resultado.getValorTotal());
+        assertEquals(LocalDate.of(2026, 12, 20), resultado.getDataPrevisaoPagamento());
+        assertEquals(StatusGuiaFaturamento.ENVIADA_CONVENIO, g1.getStatus());
+        assertEquals(StatusGuiaFaturamento.ENVIADA_CONVENIO, g2.getStatus());
+        verify(guiaRepository).saveAll(any());
+    }
 }

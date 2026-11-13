@@ -2,9 +2,11 @@ import api from './api';
 import type {
   ClinicaPlanoPrazo,
   ContratoParticular,
+  EnviarLoteGuiasInput,
   GerarGuiaFaturamentoInput,
   GuiaFaturamento,
   PacoteParticular,
+  ResultadoLoteGuias,
   SaveClinicaPlanoPrazoInput,
   SaveContratoParticularInput,
   SavePacoteParticularInput,
@@ -171,6 +173,14 @@ export const financeiroService = {
     const { data } = await api.get(`/financeiro/guias-convenio/${id}/pdf`, {
       responseType: 'blob',
     });
+    return data;
+  },
+
+  async enviarLoteConvenio(input: EnviarLoteGuiasInput): Promise<ResultadoLoteGuias> {
+    const { data } = await api.post<ResultadoLoteGuias>(
+      '/financeiro/guias-convenio/lote/enviar',
+      input
+    );
     return data;
   },
 };

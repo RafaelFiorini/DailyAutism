@@ -212,3 +212,21 @@ export interface GerarGuiaFaturamentoInput {
   liberarParaAssinatura?: boolean;
 }
 
+export interface EnviarLoteGuiasInput {
+  idClinica?: string;
+  idPlanoSaude: string;
+  idsGuias?: string[];
+  dataEnvio?: string;
+}
+
+export interface ResultadoLoteGuias {
+  idPlanoSaude: string;
+  nomePlano: string;
+  quantidadeGuias: number;
+  valorTotal: number;
+  dataEnvio: string;
+  dataPrevisaoPagamento: string;
+  prazoPagamentoDias: number;
+  idsGuiasEnviadas: string[];
+}
+
