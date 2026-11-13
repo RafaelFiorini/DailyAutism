@@ -132,7 +132,7 @@ describe('Dashboard Page - Visão Geral por Perfil', () => {
     });
   });
 
-  it('FUNCIONARIO_CLINICA: exibe agenda do dia organizada em ordem alfabética de profissional e navega dias', async () => {
+  it('FUNCIONARIO_CLINICA: exibe agenda do dia em sequência por horários e navega dias', async () => {
     const today = getTodayISO();
     const tomorrow = getTomorrowISO();
 
@@ -187,22 +187,21 @@ describe('Dashboard Page - Visão Geral por Perfil', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Ana Beatriz')).toBeInTheDocument();
-      expect(screen.getByText('Carlos Eduardo')).toBeInTheDocument();
+      expect(screen.getByText('10:00')).toBeInTheDocument();
       expect(screen.getByText('Pedro Henrique')).toBeInTheDocument();
+      expect(screen.getByText('Ana Beatriz')).toBeInTheDocument();
       expect(screen.queryByText('Maria Clara')).not.toBeInTheDocument();
+      expect(screen.queryByText('Carlos Eduardo')).not.toBeInTheDocument();
     });
-
-    // Verifica ordem alfabética (Ana Beatriz aparece antes de Carlos Eduardo no DOM)
-    const headings = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
-    expect(headings).toEqual(['Ana Beatriz', 'Carlos Eduardo']);
 
     // Navega para o próximo dia
     fireEvent.click(screen.getByTitle('Próximo dia'));
 
     await waitFor(() => {
       expect(screen.queryByText('Pedro Henrique')).not.toBeInTheDocument();
+      expect(screen.getByText('15:00')).toBeInTheDocument();
       expect(screen.getByText('Maria Clara')).toBeInTheDocument();
+      expect(screen.getByText('Carlos Eduardo')).toBeInTheDocument();
     });
   });
 

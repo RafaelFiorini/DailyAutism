@@ -38,7 +38,19 @@ public class Arquivo extends BaseEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String arquivoBase64;
 
+    @Column(length = 1000)
     private String urlArquivo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private TipoArmazenamento tipoArmazenamento = TipoArmazenamento.BANCO_BASE64;
+
+    @Column(length = 500)
+    private String objectKey;
+
+    @Column
+    private Long tamanhoBytes;
 
     @Column(nullable = false, length = 10)
     private String extensaoArquivo;

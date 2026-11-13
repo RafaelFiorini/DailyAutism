@@ -74,6 +74,15 @@ public class ArquivoService {
             profsComp.addAll(profissionalRepository.findAllById(dto.getIdsProfissionaisCompartilhados()));
         }
 
+        Long tamanho = dto.getTamanhoBytes();
+        if (tamanho == null && dto.getArquivoBase64() != null && !dto.getArquivoBase64().isBlank()) {
+            tamanho = calcularTamanhoBytesBase64(dto.getArquivoBase64());
+        }
+
+        TipoArmazenamento tipoArmazenamento = dto.getTipoArmazenamento() != null
+                ? dto.getTipoArmazenamento()
+                : TipoArmazenamento.BANCO_BASE64;
+
         Arquivo arquivo = Arquivo.builder()
                 .nomeArquivo(nomePadronizado)
                 .descricao(dto.getDescricao() != null ? dto.getDescricao().trim() : null)
@@ -82,6 +91,9 @@ public class ArquivoService {
                 .extensaoArquivo(ext)
                 .arquivoBase64(dto.getArquivoBase64())
                 .urlArquivo(dto.getUrlArquivo())
+                .tipoArmazenamento(tipoArmazenamento)
+                .objectKey(dto.getObjectKey())
+                .tamanhoBytes(tamanho)
                 .paciente(paciente)
                 .tipoArquivo(tipoArquivo)
                 .uploadadoPor(user)
@@ -391,5 +403,18 @@ public class ArquivoService {
             }
         }
         return sb.length() > 0 ? sb.toString() : fallback;
+    }
+
+    private Long calcularTamanhoBytesBase64(String base64) {
+        try {
+            String clean = base64.contains(",") ? base64.substring(base64.indexOf(",") + 1) : base64;
+            clean = clean.replaceAll("\\s+", "");
+            int padding = 0;
+            if (clean.endsWith("==")) padding = 2;
+            else if (clean.endsWith("=")) padding = 1;
+            return (long) ((clean.length() * 3L) / 4L - padding);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

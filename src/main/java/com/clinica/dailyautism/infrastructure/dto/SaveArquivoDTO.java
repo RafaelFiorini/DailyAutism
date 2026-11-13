@@ -1,5 +1,6 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
+import com.clinica.dailyautism.domain.entity.TipoArmazenamento;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,12 @@ public class SaveArquivoDTO {
     private String arquivoBase64;
 
     private String urlArquivo;
+
+    private TipoArmazenamento tipoArmazenamento;
+
+    private String objectKey;
+
+    private Long tamanhoBytes;
 
     @NotNull(message = "O ID do paciente é obrigatório")
     private String idPaciente;

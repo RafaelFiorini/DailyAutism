@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Loader2, AlertCircle, Clock, MapPin, User, Tag, CalendarClock, Briefcase } from 'lucide-react';
 import { compromissoService } from '../services/compromissoService';
+import { extractApiErrorMessage } from '../utils/apiError';
 import { pacienteService } from '../services/pacienteService';
 import { periodicidadeService } from '../services/periodicidadeService';
 import { profissionalService } from '../services/profissionalService';
@@ -173,7 +174,7 @@ export default function CompromissoModal({
       onSuccess(result);
       onClose();
     } catch (err: any) {
-      const msg = err.response?.data?.message || 'Erro ao salvar agendamento. Verifique os dados e tente novamente.';
+      const msg = extractApiErrorMessage(err, 'Erro ao salvar agendamento. Verifique os dados e tente novamente.');
       setError(msg);
     } finally {
       setSaving(false);

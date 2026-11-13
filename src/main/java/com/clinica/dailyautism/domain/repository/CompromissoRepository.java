@@ -42,4 +42,15 @@ public interface CompromissoRepository extends JpaRepository<Compromisso, String
             LocalDateTime de,
             LocalDateTime ate
     );
+
+    @Query("SELECT COUNT(c) FROM Compromisso c " +
+           "WHERE c.profissional.idProf = :idProf " +
+           "AND c.dataHoraCompromisso = :dataHora " +
+           "AND c.status NOT IN (com.clinica.dailyautism.domain.entity.StatusCompromisso.CANCELADO, com.clinica.dailyautism.domain.entity.StatusCompromisso.REJEITADO) " +
+           "AND (:idCompromissoIgnorado IS NULL OR c.idCompromisso <> :idCompromissoIgnorado)")
+    long countConflitosProfissional(
+            @Param("idProf") String idProf,
+            @Param("dataHora") LocalDateTime dataHora,
+            @Param("idCompromissoIgnorado") String idCompromissoIgnorado
+    );
 }

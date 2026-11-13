@@ -54,6 +54,10 @@ public class CompromissoService {
                     .orElse(null);
         }
 
+        if (profissional != null && saveCompromissoDTO.getDataHoraCompromisso() != null) {
+            validarConflitoHorarioProfissional(profissional.getIdProf(), saveCompromissoDTO.getDataHoraCompromisso(), null);
+        }
+
         Clinica clinica = resolverClinicaCriacao(saveCompromissoDTO.getIdClinica(), user, paciente, profissional);
 
         Compromisso compromisso = Compromisso.builder()
@@ -150,6 +154,17 @@ public class CompromissoService {
     @Transactional
     public Compromisso updateCompromisso(String compromissoId, SaveCompromissoDTO saveCompromissoDTO) {
         Compromisso compromisso = loadCompromisso(compromissoId);
+
+        String idProfAtualizado = saveCompromissoDTO.getIdProfissional() != null
+                ? (saveCompromissoDTO.getIdProfissional().isBlank() ? null : saveCompromissoDTO.getIdProfissional().trim())
+                : (compromisso.getProfissional() != null ? compromisso.getProfissional().getIdProf() : null);
+
+        LocalDateTime dataHoraAtualizada = saveCompromissoDTO.getDataHoraCompromisso() != null
+                ? saveCompromissoDTO.getDataHoraCompromisso()
+                : compromisso.getDataHoraCompromisso();
+
+        validarConflitoHorarioProfissional(idProfAtualizado, dataHoraAtualizada, compromisso.getIdCompromisso());
+
         compromisso.setTituloCompromisso(saveCompromissoDTO.getTituloCompromisso());
         compromisso.setDescricaoCompromisso(saveCompromissoDTO.getDescricaoCompromisso());
         compromisso.setDataHoraCompromisso(saveCompromissoDTO.getDataHoraCompromisso());
@@ -368,6 +383,24 @@ public class CompromissoService {
         resultado.add(original);
         resultado.addAll(replicas);
         return resultado;
+    }
+
+    private void validarConflitoHorarioProfissional(String idProfissional, LocalDateTime dataHoraCompromisso, String idCompromissoIgnorado) {
+        if (idProfissional == null || idProfissional.isBlank() || dataHoraCompromisso == null) {
+            return;
+        }
+
+        long conflitos = compromissoRepository.countConflitosProfissional(
+                idProfissional.trim(),
+                dataHoraCompromisso,
+                idCompromissoIgnorado
+        );
+
+        if (conflitos > 0) {
+            throw new IllegalArgumentException(
+                    "O profissional já possui um compromisso agendado neste mesmo dia e horário."
+            );
+        }
     }
 
     private PacientePlanoSaude resolverGuiaAtiva(Paciente paciente) {

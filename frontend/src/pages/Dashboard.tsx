@@ -13,6 +13,7 @@ import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
 import type { GuiaFaturamento } from '../types/financeiro';
 import AssinarGuiaModal from '../components/AssinarGuiaModal';
+import AgendaClinicaTimeline from '../components/AgendaClinicaTimeline';
 import {
   Users,
   Building2,
@@ -230,6 +231,7 @@ export default function Dashboard() {
 
     if (isAdminClinica) {
       setLoadingStats(true);
+      setLoadingAgenda(true);
       try {
         const todayISO = getTodayISO();
         const [pacientesList, profList, respList, compList] = await Promise.all([
@@ -247,8 +249,11 @@ export default function Dashboard() {
           responsaveis: respList.length,
           agendamentosHoje: hojeCount,
         });
+        setCompromissos(compList);
+        setProfissionais(profList);
       } finally {
         setLoadingStats(false);
+        setLoadingAgenda(false);
       }
       return;
     }
@@ -282,50 +287,6 @@ export default function Dashboard() {
       .filter((c) => c.dataHoraCompromisso && c.dataHoraCompromisso.slice(0, 10) === selectedDate)
       .sort((a, b) => (a.dataHoraCompromisso || '').localeCompare(b.dataHoraCompromisso || ''));
   }, [compromissos, selectedDate]);
-
-  // Agrupamento alfabético por profissional para o perfil Funcionário Clínica
-  const clinicaGroupedByProfissional = useMemo(() => {
-    const groupsMap = new Map<
-      string,
-      { idProf: string; nomeProfissional: string; conselhoProf?: string; itens: Compromisso[] }
-    >();
-
-    // Inicializa todos os profissionais cadastrados na clínica
-    profissionais.forEach((p) => {
-      groupsMap.set(p.idProf, {
-        idProf: p.idProf,
-        nomeProfissional: p.nomeProfissional,
-        conselhoProf: p.conselhoProf,
-        itens: [],
-      });
-    });
-
-    const semProfissional: Compromisso[] = [];
-
-    dayCompromissos.forEach((c) => {
-      if (c.idProfissional) {
-        const existing = groupsMap.get(c.idProfissional);
-        if (existing) {
-          existing.itens.push(c);
-        } else {
-          groupsMap.set(c.idProfissional, {
-            idProf: c.idProfissional,
-            nomeProfissional: c.nomeProfissional || 'Profissional',
-            conselhoProf: c.conselhoProfissional,
-            itens: [c],
-          });
-        }
-      } else {
-        semProfissional.push(c);
-      }
-    });
-
-    const sortedGroups = Array.from(groupsMap.values()).sort((a, b) =>
-      a.nomeProfissional.localeCompare(b.nomeProfissional, 'pt-BR', { sensitivity: 'base' })
-    );
-
-    return { sortedGroups, semProfissional };
-  }, [profissionais, dayCompromissos]);
 
   const handleAprovar = async (compromisso: Compromisso) => {
     setActionLoadingId(compromisso.idCompromisso);
@@ -557,6 +518,19 @@ export default function Dashboard() {
           })}
         </div>
 
+        {/* Agenda do Dia da Clínica por Horários */}
+        <AgendaClinicaTimeline
+          selectedDate={selectedDate}
+          onChangeDate={setSelectedDate}
+          compromissos={compromissos}
+          loading={loadingAgenda}
+          onUpdateStatus={handleUpdateStatus}
+          actionLoadingId={actionLoadingId}
+          title={`Agenda do Dia — ${user?.nomeClinica || 'Atendimentos da Clínica'}`}
+          subtitle="Atendimentos da equipe multidisciplinar organizados por horário."
+          showManageLink={true}
+        />
+
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h3 className="text-base font-semibold text-gray-900 mb-4">Módulos da Clínica</h3>
           <p className="text-sm text-gray-600 mb-4">
@@ -597,168 +571,22 @@ export default function Dashboard() {
   }
 
   // =========================================================================
-  // 3. VISÃO FUNCIONÁRIO DA CLÍNICA / RECEPÇÃO (Agenda por Profissional A-Z)
+  // 3. VISÃO FUNCIONÁRIO DA CLÍNICA / RECEPÇÃO (Agenda do Dia por Horários)
   // =========================================================================
   if (isFuncionarioClinica) {
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Agenda do Dia {user?.nomeClinica ? `— ${user.nomeClinica}` : ''}
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Atendimentos organizados em ordem alfabética por profissional.
-            </p>
-          </div>
-          <Link
-            to="/admin/agenda"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors self-start sm:self-auto"
-          >
-            <Calendar className="w-4 h-4" />
-            Gerenciar Agenda Completa
-          </Link>
-        </div>
-
-        <DayNavigator selectedDate={selectedDate} onChangeDate={setSelectedDate} />
-
-        {loadingAgenda ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-            <p className="text-sm text-gray-500">Carregando agenda do dia...</p>
-          </div>
-        ) : clinicaGroupedByProfissional.sortedGroups.length === 0 &&
-          clinicaGroupedByProfissional.semProfissional.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-base font-medium text-gray-900">Nenhum profissional ou atendimento</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Não há profissionais ou agendamentos cadastrados para este dia.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {clinicaGroupedByProfissional.sortedGroups.map((grupo) => (
-              <div
-                key={grupo.idProf}
-                className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden"
-              >
-                <div className="px-6 py-4 bg-gray-50/75 border-b border-gray-200/80 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                      {grupo.nomeProfissional.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-900">
-                        {grupo.nomeProfissional}
-                      </h3>
-                      {grupo.conselhoProf && (
-                        <p className="text-xs text-gray-500 font-mono">{grupo.conselhoProf}</p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-700">
-                    {grupo.itens.length} {grupo.itens.length === 1 ? 'atendimento' : 'atendimentos'}
-                  </span>
-                </div>
-
-                {grupo.itens.length === 0 ? (
-                  <div className="px-6 py-4 text-sm text-gray-400 italic">
-                    Nenhum paciente agendado para este profissional nesta data.
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {grupo.itens.map((c) => {
-                      const badge = STATUS_BADGE[c.status] || STATUS_BADGE.AGENDADO;
-                      return (
-                        <div
-                          key={c.idCompromisso}
-                          className="px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 transition-colors"
-                        >
-                          <div className="flex items-start sm:items-center gap-4">
-                            <div className="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-sm flex items-center gap-1.5 shrink-0">
-                              <Clock className="w-3.5 h-3.5" />
-                              {formatTime(c.dataHoraCompromisso)}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900 text-sm">
-                                {c.nomePaciente}
-                              </p>
-                              <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-0.5">
-                                <span className="flex items-center gap-1">
-                                  <Tag className="w-3 h-3 text-gray-400" />
-                                  {c.nomeTipoCompromisso || c.tituloCompromisso}
-                                </span>
-                                {c.localCompromisso && (
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-3 h-3 text-gray-400" />
-                                    {c.localCompromisso}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border self-start sm:self-center ${badge.className}`}
-                          >
-                            {badge.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {clinicaGroupedByProfissional.semProfissional.length > 0 && (
-              <div className="bg-white rounded-xl border border-amber-200/80 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 bg-amber-50/60 border-b border-amber-200/80 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-amber-600" />
-                    <h3 className="text-base font-semibold text-amber-900">
-                      Profissional a Definir
-                    </h3>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-amber-200 text-amber-800">
-                    {clinicaGroupedByProfissional.semProfissional.length}
-                  </span>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  {clinicaGroupedByProfissional.semProfissional.map((c) => {
-                    const badge = STATUS_BADGE[c.status] || STATUS_BADGE.AGENDADO;
-                    return (
-                      <div
-                        key={c.idCompromisso}
-                        className="px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-700 font-bold text-sm flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5" />
-                            {formatTime(c.dataHoraCompromisso)}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-gray-900 text-sm">{c.nomePaciente}</p>
-                            <p className="text-xs text-gray-500">
-                              {c.nomeTipoCompromisso || c.tituloCompromisso}
-                              {c.localCompromisso ? ` • ${c.localCompromisso}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border self-start sm:self-center ${badge.className}`}
-                        >
-                          {badge.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <AgendaClinicaTimeline
+          selectedDate={selectedDate}
+          onChangeDate={setSelectedDate}
+          compromissos={compromissos}
+          loading={loadingAgenda}
+          onUpdateStatus={handleUpdateStatus}
+          actionLoadingId={actionLoadingId}
+          title={`Agenda do Dia ${user?.nomeClinica ? `— ${user.nomeClinica}` : ''}`}
+          subtitle="Atendimentos organizados em sequência por horário com profissionais e pacientes."
+          showManageLink={true}
+        />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.infrastructure.dto;
 
 import com.clinica.dailyautism.domain.entity.Arquivo;
+import com.clinica.dailyautism.domain.entity.TipoArmazenamento;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.time.LocalDate;
@@ -16,6 +17,9 @@ public class ArquivoDTO {
     private final LocalDate dataUpload;
     private final String extensaoArquivo;
     private final String urlArquivo;
+    private final TipoArmazenamento tipoArmazenamento;
+    private final String objectKey;
+    private final Long tamanhoBytes;
     private final String idPaciente;
     private final String nomePaciente;
     private final String idTipoArquivo;
@@ -74,6 +78,9 @@ public class ArquivoDTO {
                 arquivo.getDataUpload(),
                 arquivo.getExtensaoArquivo(),
                 arquivo.getUrlArquivo(),
+                arquivo.getTipoArmazenamento(),
+                arquivo.getObjectKey(),
+                arquivo.getTamanhoBytes(),
                 idPac,
                 nomePac,
                 idTipo,
