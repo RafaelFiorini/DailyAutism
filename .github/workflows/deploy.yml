@@ -1,0 +1,93 @@
+name: CI/CD Pipeline - Deploy OCI
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    name: 🧪 CI - Testes e Validação de Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Instalar dependências do Frontend
+        run: pnpm --dir frontend install --frozen-lockfile
+
+      - name: Executar testes automatizados do Frontend
+        run: pnpm --dir frontend test -- --run
+
+      - name: Validar build de produção do Frontend
+        run: pnpm --dir frontend build
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Validar compilação do Backend Spring Boot
+        run: mvn clean package -DskipTests
+
+  deploy-oci:
+    name: 🚀 CD - Deploy Automático na OCI
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Conectar via SSH na VPS da OCI e Atualizar Containers
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USERNAME }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          port: ${{ secrets.OCI_PORT || 22 }}
+          script: |
+            echo "🚀 Iniciando deploy na OCI..."
+            
+            # Navega até o diretório do projeto na VPS (ajuste conforme a pasta na VPS)
+            if [ -d "$HOME/DailyAutism" ]; then
+              cd "$HOME/DailyAutism"
+            elif [ -d "/app/DailyAutism" ]; then
+              cd "/app/DailyAutism"
+            else
+              echo "⚠️ Diretório DailyAutism não encontrado no HOME, clonando repositório..."
+              git clone https://github.com/RafaelFiorini/DailyAutism.git "$HOME/DailyAutism"
+              cd "$HOME/DailyAutism"
+            fi
+            
+            # Atualiza código fonte com a master
+            echo "📥 Atualizando código fonte via Git..."
+            git fetch origin master
+            git reset --hard origin/master
+            
+            # Se o arquivo .env não existir na VPS, copia do exemplo
+            if [ ! -f .env ]; then
+              echo "⚙️ Criando .env a partir do template..."
+              cp .env.prod.example .env
+            fi
+            
+            # Sobe os containers de produção
+            echo "🐳 Subindo containers via Docker Compose..."
+            docker compose -f docker-compose.prod.yml up -d --build
+            
+            # Limpa imagens antigas não utilizadas para liberar espaço no disco da VPS
+            docker image prune -f
+            
+            echo "✅ Deploy concluído com sucesso na OCI!"
