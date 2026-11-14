@@ -11,7 +11,6 @@ import { financeiroService } from '../services/financeiroService';
 import { sistemaService } from '../services/sistemaService';
 import { extractApiErrorMessage } from '../utils/apiError';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
-import type { Profissional } from '../types/profissional';
 import type { GuiaFaturamento } from '../types/financeiro';
 import AssinarGuiaModal from '../components/AssinarGuiaModal';
 import AgendaClinicaTimeline from '../components/AgendaClinicaTimeline';
@@ -205,7 +204,6 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayISO());
   const [loadingAgenda, setLoadingAgenda] = useState(false);
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
-  const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [guiasPendentesAssinatura, setGuiasPendentesAssinatura] = useState<GuiaFaturamento[]>([]);
   const [guiaSelecionadaAssinar, setGuiaSelecionadaAssinar] = useState<GuiaFaturamento | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -257,7 +255,6 @@ export default function Dashboard() {
           agendamentosHoje: hojeCount,
         });
         setCompromissos(compList);
-        setProfissionais(profList);
       } finally {
         setLoadingStats(false);
         setLoadingAgenda(false);
@@ -268,15 +265,13 @@ export default function Dashboard() {
     if (isFuncionarioClinica || isProfissional || isResponsavel) {
       setLoadingAgenda(true);
       try {
-        const [compList, profList, guiasPend] = await Promise.all([
+        const [compList, guiasPend] = await Promise.all([
           compromissoService.list().catch(() => []),
-          isFuncionarioClinica ? profissionalService.list().catch(() => []) : Promise.resolve([]),
           isResponsavel
             ? financeiroService.listGuiasConvenio({ status: 'AGUARDANDO_ASSINATURA' }).catch(() => [])
             : Promise.resolve([]),
         ]);
         setCompromissos(compList);
-        setProfissionais(profList);
         setGuiasPendentesAssinatura(guiasPend);
       } finally {
         setLoadingAgenda(false);

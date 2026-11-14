@@ -54,7 +54,7 @@ describe('AgendaClinicaTimeline Component', () => {
       idPaciente: 'pac-4',
       nomePaciente: 'Alice Rocha',
     },
-  ];
+  ] as unknown as Compromisso[];
 
   it('renderiza os horários em sequência e as caixinhas de atendimento com paciente e profissional', () => {
     render(

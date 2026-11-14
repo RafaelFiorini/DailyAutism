@@ -9,13 +9,11 @@ import {
   Loader2,
   Check,
   UserX,
-  User,
   Stethoscope,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
   CalendarDays,
-  XCircle,
 } from 'lucide-react';
 
 const STATUS_BADGE: Record<StatusCompromisso, { label: string; className: string }> = {
