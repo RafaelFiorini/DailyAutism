@@ -12,14 +12,22 @@
 
 ## 1. Visão Geral do Produto
 
-O **DailyAutism** é uma plataforma multi-clínica para gestão de clínicas de atendimento multidisciplinar (especialmente voltadas a terapias para TEA — Terapia Ocupacional, Psicologia, Fonoaudiologia, etc.).
+O **DailyAutism** é uma plataforma multi-clínica para gestão de clínicas de atendimento multidisciplinar (especialmente voltadas a terapias para TEA — Terapia Ocupacional, Psicologia, Fonoaudiologia, Fisioterapia, Musicoterapia, etc.).
 
 ### Perfis de Acesso (RBAC)
-1. **`ADMIN` (Global):** Acesso total ao sistema, gerencia clínicas, usuários, papéis e todos os cadastros.
-2. **`ADMIN_CLINICA`:** Administrador de uma ou mais clínicas vinculadas; gerencia agenda, pacientes, equipe, tabela de preços, contratos particulares e faturamento de convênios apenas das suas clínicas.
-3. **`FUNCIONARIO_CLINICA` / `CLINICA`:** Recepção/operação da clínica vinculada (agenda, pacientes, responsáveis, documentos, operações autorizadas por permissões).
-4. **`PROFISSIONAL`:** Terapeuta/médico; visualiza sua agenda, pacientes vinculados/em atendimento e documentos compartilhados.
+1. **`ADMIN` (Global):** Acesso total ao sistema, gerencia clínicas, usuários, papéis e todos os cadastros globais.
+2. **`ADMIN_CLINICA`:** Administrador de uma clínica vinculada; gerencia agenda, pacientes, equipe, tabela de preços, contratos particulares, faturamento e remessas de convênios da sua clínica.
+3. **`FUNCIONARIO_CLINICA` / `CLINICA`:** Recepção/operação da clínica vinculada (agenda do dia, presença, pacientes, responsáveis, documentos e faturamento).
+4. **`PROFISSIONAL`:** Terapeuta/médico; visualiza sua agenda diária ordenada por horário, pacientes vinculados e documentos compartilhados.
 5. **`RESPONSAVEL`:** Pai, mãe ou tutor legal; acompanha seus dependentes, aprova/rejeita agendamentos pendentes, acompanha saldo de pacotes particulares, confere e assina eletronicamente guias de convênio em PDF e acessa documentos.
+
+### Usuários de Teste / Referência Configurados
+- **Admin Global:** `admin@dailyautism.com` (Senha: `admin123`)
+- **Admin Attenzione Clínica:** `admin@attenzione.com.br` (Senha: `admin123`) — Perfil `ADMIN_CLINICA` vinculado à *Attenzione Clínica Integrada*.
+- **Admin Clinica Secure:** `admin@securebv.com.br` (Senha: `admin123`) — Perfil `ADMIN_CLINICA` vinculado à *Clinica Secure*.
+- **Recepção Attenzione:** `ana@attenzione.com.br` (Senha: `admin123`) — Perfil `FUNCIONARIO_CLINICA`.
+- **Terapeuta:** `camila.ribeiro@attenzione.teste.com` (Dra. Camila Ribeiro - Psicologia / ABA).
+- **Responsáveis:** `carla.mendes@teste.com`, `patricia.rocha@teste.com`, `fernando.lima@teste.com`, etc.
 
 ---
 
@@ -27,12 +35,14 @@ O **DailyAutism** é uma plataforma multi-clínica para gestão de clínicas de 
 
 - **Backend:** Java 21, Spring Boot 3.5.4, Spring Data JPA / Hibernate, Spring Security + JWT (`jjwt` 0.12.3), Bean Validation, `springdoc-openapi-starter-webmvc-ui` 2.8.3, **OpenPDF** (`com.github.librepdf:openpdf:2.0.3`) para geração de guias em PDF.
 - **Banco de Dados:** MySQL 8.0 (`daily_autism_db`), `hibernate.ddl-auto: update` em `src/main/resources/application.yml`.
-- **Frontend Web:** React 18.3.1, TypeScript (~5.7.2), Vite 6.1.0, React Router DOM 6.28.2, Tailwind CSS 3.4.17, Axios 1.7.9 (`VITE_API_URL`), Lucide React, testes com Vitest 3.0.5 + Testing Library.
-- **Mobile (em paralelo no repo):** pasta `DApp/` (projeto Android/Gradle).
+- **Frontend Web:** React 18.3.1, TypeScript (~5.7.2), Vite 6.1.0, React Router DOM 6.28.2, Tailwind CSS 3.4.17, Axios 1.7.9 (`VITE_API_URL`), Lucide React, testes com Vitest 3.2.7 + Testing Library (119 testes unitários automatizados passando).
+- **Mobile (em paralelo no repo):** pasta `DApp/` (projeto Android/Gradle isolado).
 - **Containerização local atual:**
   - `Dockerfile` multi-stage para o backend (`maven:3.9.6-eclipse-temurin-21` -> `eclipse-temurin:21-jre`, porta `8080`).
   - `docker-compose.yml` com `database` (`mysql:8.0`, porta `3306`, volume `mysql_data`) e `app` (`java_backend`, porta `8080`).
-  - Frontend roda localmente via Vite (`localhost:5173`), ainda sem `Dockerfile`/Nginx próprio nem pipeline CI/CD configurada no `.github/workflows`.
+  - Frontend roda localmente via Vite (`localhost:5173`).
+- **Controle de Versão Git:**
+  - Repositório sincronizado via SSH com autenticação isolada no host `github.com-pessoal` para o perfil pessoal `rafaelfiorini`.
 
 ---
 
@@ -40,37 +50,45 @@ O **DailyAutism** é uma plataforma multi-clínica para gestão de clínicas de 
 
 ### 3.1 Núcleo de Cadastros e Soft Delete
 - **Todas as 30 entidades JPA** herdam `BaseEntity` (`ativo = true`) e usam `@SQLRestriction("ativo = true")`.
-- **Exclusões (`DELETE`)** apenas desativam (`ativo = false`) sem apagar registros do banco.
-- **Proteção contra `orphanRemoval`:** `PacoteParticular`, `ContratoParticular` e `GuiaFaturamentoConvenio` não usam `orphanRemoval = true`; na edição de pacotes, itens antigos são desativados (`ativo = false`) preservando histórico.
+- **Exclusões (`DELETE`)** apenas desativam (`ativo = false`) sem apagar registros fisicamente do banco de dados.
+- **Proteção contra `orphanRemoval`:** `PacoteParticular`, `ContratoParticular` e `GuiaFaturamentoConvenio` preservam histórico desativando itens antigos (`ativo = false`).
 - **Cadastros com índice `UNIQUE` no MySQL e fluxo de reativação:**
-  - **5 entidades:** `Clinica` (`cnpj_clinica`), `User` (`email_user`, `id_pessoa`), `Paciente` (`pessoa_paciente`), `Profissional` (`pessoa_prof`) e `Responsavel` (`pessoa_responsavel`).
-  - Ao tentar criar registro cujo identificador `UNIQUE` pertence a um registro desativado (`ativo = false`), a API retorna **HTTP `409 Conflict`** (`INACTIVE_RESOURCE_EXISTS` com `resourceId` e `resourceName`) e os modais no frontend oferecem o botão **"Reativar cadastro existente"**.
-  - As 5 telas possuem filtro **`Ativos | Inativos`** (`GET .../inativos` via queries nativas) e ação **`Reativar`** (`PATCH .../{id}/reativar`).
+  - **5 entidades críticas:** `Clinica` (`cnpj_clinica`), `User` (`email_user`, `id_pessoa`), `Paciente` (`pessoa_paciente`), `Profissional` (`pessoa_prof`) e `Responsavel` (`pessoa_responsavel`).
+  - Ao tentar criar registro cujo identificador `UNIQUE` pertence a um cadastro desativado, a API retorna **HTTP `409 Conflict`** (`INACTIVE_RESOURCE_EXISTS` com `resourceId` e `resourceName`) e os modais no frontend oferecem o botão **"Reativar cadastro existente"**.
+  - As telas possuem filtro **`Ativos | Inativos`** (`GET .../inativos` via queries nativas) e ação **`Reativar`** (`PATCH .../{id}/reativar`).
 
-### 3.2 Agenda e Aprovação de Sessões
-- **Entidades:** `Compromisso`, `TipoCompromisso` (especialidade), `Periodicidade`.
-- **Fluxo:** Compromissos podem nascer como `AGUARDANDO_APROVACAO` (ex.: para conferência do `RESPONSAVEL`) ou `AGENDADO`, passando depois para `REALIZADO`, `FALTOU`, `CANCELADO` ou `REJEITADO`.
-- **Regras recentes:**
-  - Aprovar agendamento com data anterior a hoje ou com guia/limite vencido retorna erro `400` claro orientando o responsável a avisar a clínica.
-  - Suporte completo a `PATCH` no CORS (`SecurityConfig`).
-  - Replicação recorrente respeitando periodicidade e limite da guia (`PERIODO` ou `QUANTIDADE`).
+### 3.2 Agenda, Timeline da Clínica e Prevenção de Conflitos
+- **Timeline de Horários no Dashboard da Clínica (`AgendaClinicaTimeline`):**
+  - No dashboard de `ADMIN_CLINICA` e `FUNCIONARIO_CLINICA`, a agenda do dia é renderizada agrupada em sequência cronológica de horas (`08:30`, `09:30`, etc.).
+  - Caixinhas visuais organizadas lado a lado para cada atendimento simultâneo (mostrando Paciente, Profissional, Especialidade e Sala) com botões de ação rápida de presença (**Realizado** e **Falta**).
+- **Validação Estrita de Conflito de Horário por Profissional:**
+  - Ao agendar (`POST /compromissos`) ou remarcar (`PUT /compromissos/{id}`), o sistema verifica se o profissional já possui compromisso ativo (`AGENDADO`, `AGUARDANDO_APROVACAO`, `REALIZADO`) no mesmo dia e horário.
+  - **Privacidade e Sigilo Multi-Clínica:** Se o profissional já estiver ocupado em outra clínica, o sistema bloqueia com erro `400 Bad Request` emitindo mensagem neutra:
+    > *"O profissional já possui um compromisso agendado neste mesmo dia e horário."*  
+    Sem revelar em hipótese alguma o nome da outra clínica ou os dados do paciente de terceiros (garantia de sigilo médico e LGPD).
+- **Regras de Aprovação e Periodicidade:**
+  - Aprovação com data anterior a hoje ou guia vencida retorna erro orientando o responsável.
+  - Replicação de sessões recorrentes respeitando limites da guia do convênio ou contrato.
 
 ### 3.3 Pacientes, Planos de Saúde e Documentos
 - **Vínculos multi-clínica:** `PacienteClinica`, `ProfissionalClinica`, `ResponsavelClinica`, `FuncionarioClinica`, `ClinicaPlanoSaude`, `PacientePlanoSaude`, `ProfissionalPlanoSaude`, `ProfissionalPaciente`.
-- **Controle de guias do paciente:** liberação por período (`dataInicio`/`vencimento`) ou por quantidade de sessões (`quantidadeSessoesLiberadas`), com cálculo de previsão de término no modal.
-- **Documentos (`Arquivo` / `TipoArquivo`):** upload multipart (até 20MB/25MB) e compartilhamento com profissionais.
+- **Controle de guias do paciente:** liberação por período (`dataInicio`/`vencimento`) ou por quantidade de sessões (`quantidadeSessoesLiberadas`).
+- **Massa de Dados Pronta:** Pacientes com sessões agendadas até janeiro de 2027 com distribuição equilibrada por especialidade, profissional e modalidade (particular vs convênios).
 
-### 3.4 Módulo Financeiro (Etapas 1 e 2 implementadas)
-Baseado na spec `docs/superpowers/specs/2026-11-11-modulo-financeiro-design.md`:
-- **Etapa 1 — Preços, Pacotes e Particular Pré-Pago:**
-  - `TabelaPrecoClinica`: valor por especialidade (`TipoCompromisso`) por clínica — particular (`planoSaude == null`) ou repasse negociado por convênio.
-  - `PacoteParticular` & `PacoteParticularItem`: pacotes/combos com desconto (ex.: 10 sessões ou combo mensal `4 TO + 2 Psico`).
-  - `ContratoParticular`, `ContratoParticularItem`, `MovimentacaoContratoParticular`: contratação pré-paga por sessões ou período, congelando valores na contratação, com **abatimento automático** ao marcar `Compromisso` como `REALIZADO` (e estorno ao reverter) e extrato visível ao responsável.
-- **Etapa 2 — Faturamento de Convênios, PDF e Assinatura Eletrônica:**
-  - `ClinicaPlanoSaude` com `diaCorteEnvio` e `prazoPagamentoDias`.
-  - `GuiaFaturamentoConvenio` & `GuiaFaturamentoItem`: consolidação de sessões `REALIZADO` não faturadas por paciente/convênio/competência.
-  - Geração de PDF no backend com **OpenPDF** (`GuiaPdfService`), com hash verificador e carimbo de assinatura.
-  - Fluxo de liberação para o `RESPONSAVEL`, alerta no `Dashboard`, conferência e **assinatura eletrônica própria no app/web** (validando senha e registrando data/hora, usuário, CPF, IP e hash), além de controle de envio ao convênio, previsão de recebimento e baixa de pagamento.
+### 3.4 Módulo Financeiro & Gestão de Convênios
+- **Particular Pré-Pago & Combos:**
+  - `TabelaPrecoClinica`: valores por especialidade (`TipoCompromisso`) por clínica (particular ou repasse de convênio).
+  - `PacoteParticular`: combos com desconto (ex.: 10 sessões de TO ou combo multidisciplinar).
+  - `ContratoParticular`: contratação pré-paga congelando valores, com **abatimento automático** de sessão ao marcar `Compromisso` como `REALIZADO` (e estorno ao cancelar).
+- **Faturamento de Convênios, PDF e Assinatura Eletrônica:**
+  - `GuiaFaturamentoConvenio` & `GuiaFaturamentoItem`: consolidação de atendimentos realizados por paciente/plano/competência.
+  - PDF gerado via OpenPDF com hash SHA-256 e assinatura eletrônica do responsável no portal/web.
+- **Envio de Remessa em Lote por Convênio (`POST /financeiro/guias-convenio/lote/enviar`):**
+  - Permite fechar a remessa mensal/quinzenal e despachar todas as guias com status `ASSINADA` de um convênio de uma só vez.
+  - Atualiza todas para `ENVIADA_CONVENIO` e calcula a `dataPrevisaoPagamento` em lote.
+- **Gestão de Prazos de Faturamento Descentralizada:**
+  - Configuração do **Dia de Corte** (envio do lote) e **Prazo de Pagamento** (dias para crédito) disponível tanto no Financeiro quanto diretamente na listagem de **Planos de Saúde** (`/planos-saude`) via `ConfigurarPrazoModal`.
+  - Ação de **"Enviar Lote"** disponível diretamente nos cards dos convênios com guias assinadas prontas.
 
 ---
 
@@ -78,19 +96,19 @@ Baseado na spec `docs/superpowers/specs/2026-11-11-modulo-financeiro-design.md`:
 
 ### Telas Web (`frontend/src/App.tsx`)
 - `/login` — Autenticação JWT
-- `/admin` — `Dashboard` (visão adaptada por perfil, alertas de aprovações e guias pendentes)
+- `/admin` — `Dashboard` (visão adaptada por perfil, com timeline de horas da clínica, KPIs e alertas de aprovações/assinaturas)
 - `/admin/agenda` — `Agenda` (filtros por busca, profissional, status, período, aprovar/rejeitar/status)
 - `/admin/pacientes` — `Pacientes` (com filtro Ativos/Inativos)
 - `/admin/responsaveis` — `Responsaveis` (com filtro Ativos/Inativos)
 - `/admin/profissionais` — `Profissionais` (com filtro Ativos/Inativos)
 - `/admin/usuarios` — `Usuarios` (Admin global, filtro Ativos/Inativos)
 - `/admin/clinicas` — `Clinicas` (Admin global, filtro Ativos/Inativos)
-- `/admin/planos` — `PlanosSaude`
+- `/admin/planos` — `PlanosSaude` (Gestão de convênios, configuração de prazos de corte/pagamento e despacho de lotes de guias assinadas)
 - `/admin/periodicidades` — `Periodicidades`
 - `/admin/arquivos` — `Arquivos`
-- `/admin/financeiro` — `Financeiro` (Tabela de preços/pacotes/prazos, Contratos particulares, Guias de convênio)
+- `/admin/financeiro` — `Financeiro` (Tabela de preços/pacotes/prazos, Contratos particulares, Guias de convênio e Lotes prontos)
 
-### Controllers REST (`src/main/java/.../infrastructure/controller`)
+### Principais Controllers REST
 - `AuthRestResource` (`/auth/login`, `/auth/register`)
 - `ClinicaRestResource` (`/clinicas`, `/clinicas/inativos`, `/clinicas/{id}/reativar`)
 - `UserRestResource` (`/users`, `/users/me`, `/users/inativos`, `/users/{id}/reativar`)
@@ -98,9 +116,10 @@ Baseado na spec `docs/superpowers/specs/2026-11-11-modulo-financeiro-design.md`:
 - `ProfissionalRestResource` (`/profissionais`, `/profissionais/me`, `/profissionais/inativos`, `/profissionais/{id}/reativar`)
 - `ResponsavelRestResource` (`/responsaveis`, `/responsaveis/me`, `/responsaveis/inativos`, `/responsaveis/{id}/reativar`)
 - `CompromissoRestResource` (`/compromissos`, `/{id}/aprovar`, `/{id}/rejeitar`, `/{id}/status`) & `AgendaRestResource`
-- `FinanceiroConfigRestResource`, `ContratoParticularRestResource`, `FaturamentoConvenioRestResource`
-- `ArquivoRestResource`, `TipoArquivoRestResource`, `TipoCompromissoRestResource`, `PeriodicidadeRestResource`, `PlanoSaudeRestResource`, `PessoaRestResource`
-- Vínculos: `ClinicaPlanoSaudeRestResource`, `PacienteClinicaRestResource`, `PacientePlanoSaudeRestResource`, `ProfissionalClinicaRestResource`, `ProfissionalPacienteRestResource`, `ProfissionalPlanoSaudeRestResource`
+- `FaturamentoConvenioRestResource` (`/financeiro/guias-convenio`, `/{id}/assinar`, `/{id}/enviar`, `/lote/enviar`, `/{id}/pagar`, `/{id}/pdf`)
+- `ClinicaPlanoSaudeRestResource` (`/clinica-plano-saude`, `/{idVinculo}/prazos`)
+- `FinanceiroConfigRestResource` & `ContratoParticularRestResource`
+- `ArquivoRestResource`, `TipoArquivoRestResource`, `TipoCompromissoRestResource`, `PeriodicidadeRestResource`, `PlanoSaudeRestResource`
 
 ---
 
@@ -108,11 +127,11 @@ Baseado na spec `docs/superpowers/specs/2026-11-11-modulo-financeiro-design.md`:
 
 1. **Refinamento Financeiro (V2):**
    - **Repasse aos profissionais:** regra de comissão/valor pago por atendimento ao terapeuta.
-   - **Regra de falta por antecedência:** se avisar com X horas/dias de antecedência não cobra/não abate; em cima da hora cobra integral ou parcial.
-   - **Assinatura gov.br:** avaliar após validação com os primeiros convênios se exigem assinatura ICP-Brasil/gov.br além da assinatura eletrônica própria com hash + senha.
-   - **NFSe / Cobrança automática (PIX/Boleto):** integração futura com gateway.
-2. **Notificações ativas:** WhatsApp / E-mail / Push (no `DApp` Android) para lembrar aprovações de agenda e guias liberadas para assinatura.
-3. **App Móvel (`DApp/`):** alinhamento de contratos de API com o fluxo de responsáveis/profissionais.
+   - **Regra de falta por antecedência:** cancelamentos com X horas de antecedência não abatem saldo; faltas sem aviso abatem sessão.
+   - **Assinatura gov.br:** avaliar após validação com operadoras se exigem integração gov.br além do hash eletrônico interno com senha.
+   - **NFSe / Cobrança automática (PIX/Boleto):** integração futura com gateway (Asaas/Iugu/MercadoPago).
+2. **Notificações ativas:** WhatsApp / E-mail / Push para lembrar pais sobre aprovações de agenda e guias liberadas para assinatura antes do dia de corte do convênio.
+3. **App Móvel (`DApp/`):** sincronização de contratos de API com o fluxo dos responsáveis e profissionais.
 4. **Publicação em Produção (CI/CD + Infra):** pipeline automatizada para build, testes e deploy de backend, banco e frontend.
 
 ---
@@ -122,50 +141,35 @@ Baseado na spec `docs/superpowers/specs/2026-11-11-modulo-financeiro-design.md`:
 Use esta lista para discutir melhorias antes de mexer no código:
 
 1. **Auditoria de Configuração de Produção (`application.yml` vs `application-prod.yml`):**
-   - Hoje `application.yml` tem `hibernate.ddl-auto: update` e URL/usuário/senha de banco locais (`jdbc:mysql://database:3306/daily_autism_db`, `rafael`/`teste123`).
-   - *Debate:* Quando migrar para **Flyway ou Liquibase** com `ddl-auto: validate`? Quais variáveis de ambiente precisam ser externalizadas (`SPRING_DATASOURCE_URL`, `USERNAME`, `PASSWORD`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`)?
+   - Hoje `application.yml` tem `hibernate.ddl-auto: update` e credenciais locais de banco (`rafael`/`teste123`).
+   - *Debate:* Migrar para **Flyway ou Liquibase** com `ddl-auto: validate`. Externalizar variáveis (`SPRING_DATASOURCE_URL`, `USERNAME`, `PASSWORD`, `JWT_SECRET`, `CORS_ALLOWED_ORIGINS`).
 
 2. **Auditoria de CORS e Segurança (`SecurityConfig`):**
-   - Hoje `setAllowedOrigins` aceita apenas `http://localhost:5173` e `http://127.0.0.1:5173`.
-   - *Debate:* Parametrizar origens permitidas via variável de ambiente para o domínio de produção; revisar tempo de expiração do JWT, política de troca de senha inicial (atualmente `Daily@...` ou prefixo de CPF em cadastros automáticos) e proteção de endpoints públicos (`/swagger-ui`, `/v3/api-docs` devem ficar fechados em produção?).
+   - Hoje `setAllowedOrigins` aceita `http://localhost:5173`.
+   - *Debate:* Parametrizar origens permitidas via variável de ambiente para o domínio web de produção; expiração do JWT e fechamento de endpoints do Swagger em produção.
 
 3. **Auditoria de Persistência de Arquivos (`Arquivo` e PDFs):**
-   - *Status da Fase 1 (Concluída em 12/11/2026):*
-     - Entidade `Arquivo` e tabela `arquivo` atualizadas com colunas para nuvem:
-       - `tipo_armazenamento` (`BANCO_BASE64` vs `OCI_OBJECT_STORAGE`, padrão atual: `BANCO_BASE64`).
-       - `object_key` (`VARCHAR(500)`) para identificar o arquivo dentro do bucket da nuvem.
-       - `tamanho_bytes` (`BIGINT`) calculado automaticamente no upload em Base64 ou enviado pelo client.
-       - `url_arquivo` expandido para `VARCHAR(1000)` para suportar URLs assinadas longas.
-     - Backend continua salvando no MySQL até que a infraestrutura da OCI esteja configurada e testada.
+   - *Status da Fase 1 (Concluída):*
+     - Entidade `Arquivo` preparada com colunas para nuvem: `tipo_armazenamento` (`BANCO_BASE64` vs `OCI_OBJECT_STORAGE`), `object_key`, `tamanho_bytes`, `url_arquivo`.
+     - Backend mantém gravação local no MySQL até validação do bucket na Oracle Cloud.
    - *Fase 2 (Antes de subir para Produção na OCI):*
-     - Ativação do `StorageService` S3-compatible para OCI Object Storage (bucket privado, URLs pré-assinadas temporárias / PAR com expiração de 10-15min).
+     - Ativação do bucket no OCI Object Storage via SDK S3-compatible com URLs pré-assinadas (PAR) temporárias.
 
 4. **Auditoria de Soft Delete Residual (`@ManyToMany` e Auditoria de Alterações):**
-   - Todas as 30 entidades usam `ativo`, mas as 4 tabelas de junção puras (`acao_perfil`, `arquivo_profissional`, `responsavel_paciente`, `user_perfil`) ainda são atualizadas fisicamente ao editar vínculos.
-   - *Debate:* Vale adicionar trilha de auditoria (`created_at`, `updated_at`, `created_by`, `updated_by` via Spring Data JPA Auditing) nas entidades críticas (Agenda, Financeiro, Prontuário/Arquivos) para saber *quem* alterou/desativou cada registro?
+   - 30 entidades possuem `ativo`, mas tabelas de junção puras ainda têm remoção física de relacionamentos.
+   - *Debate:* Adicionar Spring Data JPA Auditing (`created_at`, `updated_at`, `created_by`, `updated_by`) nas entidades críticas para rastreabilidade de ações clínicas e financeiras.
 
-5. **Auditoria de Performance & Escalabilidade (Paginação e N+1):**
-   - Hoje listagens como `Compromisso`, `Paciente`, `User` retornam listas completas (`findAll()`). Alguns filtros (ex.: inativos por clínica) iteram vínculos em memória.
-   - *Debate:* Quais telas vão crescer mais rápido no primeiro ano de operação (provavelmente `Agenda` e `Financeiro`) e devem ganhar paginação no servidor (`Pageable`) e filtros por mês/intervalo de datas primeiro?
+5. **Auditoria de Performance & Escalabilidade (Paginação):**
+   - `Agenda` e `Financeiro` crescem com rapidez no primeiro ano de operação.
+   - *Debate:* Implementar `Pageable` e filtros por mês/competência diretamente nos endpoints de listagem do Spring Data JPA.
 
 6. **Auditoria de LGPD & Backups:**
-   - O sistema lida com dados sensíveis de saúde e de menores de idade (pacientes autistas).
-   - *Debate:* Rotina automática de backup diário do MySQL com retenção e teste de restauração, HTTPS obrigatório, mascaramento de dados em logs e termo de aceite/consentimento no portal do responsável.
+   - Sistema manipula prontuários e dados de saúde de menores de idade.
+   - *Debate:* Rotina automatizada de backup diário do MySQL, termo de consentimento LGPD no portal dos pais e mascaramento de logs.
 
-7. **Auditoria de Pipeline de Deploy (Back + Front):**
-   - *Debate de Topologia:*
-     - **Opção Oracle Cloud (OCI):** VM Compute Always Free ou Ampere A1 + MySQL Database Service/Docker + OCI Object Storage S3-compatible + Nginx/Traefik com SSL Let's Encrypt.
-     - **Opção VPS clássica (Hetzner / DigitalOcean / AWS Lightsail):** Docker Compose simples com Caddy/Nginx com HTTPS automático.
-   - *Checklist de Passos da Pipeline (Antes de subir para Produção):*
-     1. **Step Pré-Deploy OCI Storage:**
-        - Criar Bucket privado no OCI Object Storage (com retenção e versionamento opcionais).
-        - Gerar *Customer Secret Key* no IAM da OCI para autenticação compatível com S3.
-        - Definir variáveis de ambiente no deploy: `OCI_ENDPOINT`, `OCI_BUCKET_NAME`, `OCI_ACCESS_KEY`, `OCI_SECRET_KEY`.
-        - Chavear `app.storage.type=OCI_OBJECT_STORAGE` e ativar a implementação S3 no backend.
-        - *(Opcional)* Rodar script único de migração para enviar os PDFs antigos salvos em Base64 para o bucket e limpar o `arquivo_base64` no banco.
-     2. **Step Build & Testes:**
-        - Build do backend com Maven e testes automatizados (`mvn test`).
-        - Build do frontend Vite (`pnpm build`).
-     3. **Step Container & Deploy:**
-        - Publicação de imagem Docker ou deploy direto via runner com reinício seguro (`docker compose up -d`).
-        - Validação de healthcheck da API e cert SSL.
+7. **Pipeline de Deploy (Back + Front):**
+   - *Checklist Pré-Deploy:*
+     1. Bucket OCI Object Storage configurado e credenciais IAM geradas.
+     2. Build e testes do backend (`mvn test`) e frontend (`pnpm build`).
+     3. Containerização e orquestração via Docker Compose com Nginx e certificado Let's Encrypt (HTTPS).
+     4. Healthcheck e verificação de conectividade com banco de dados de produção.
