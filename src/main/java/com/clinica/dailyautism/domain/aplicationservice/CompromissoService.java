@@ -33,6 +33,7 @@ public class CompromissoService {
     private final ClinicaRepository clinicaRepository;
     private final ClinicaAccessHelper clinicaAccessHelper;
     private final ContratoParticularService contratoParticularService;
+    private final ConfiguracaoSistemaService configuracaoSistemaService;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
@@ -204,6 +205,7 @@ public class CompromissoService {
     @Transactional
     public Compromisso updateStatus(String compromissoId, StatusCompromisso novoStatus) {
         Compromisso compromisso = loadCompromisso(compromissoId);
+        validarBaixaSessaoFutura(compromisso, novoStatus);
         StatusCompromisso statusAnterior = compromisso.getStatus();
         compromisso.setStatus(novoStatus);
         Compromisso saved = compromissoRepository.save(compromisso);
@@ -400,6 +402,32 @@ public class CompromissoService {
             throw new IllegalArgumentException(
                     "O profissional já possui um compromisso agendado neste mesmo dia e horário."
             );
+        }
+    }
+
+    private void validarBaixaSessaoFutura(Compromisso compromisso, StatusCompromisso novoStatus) {
+        if (novoStatus == null || compromisso == null || compromisso.getDataHoraCompromisso() == null) {
+            return;
+        }
+
+        // Cancelamento ou rejeição são explicitamente permitidos antes da data
+        if (novoStatus == StatusCompromisso.CANCELADO || novoStatus == StatusCompromisso.REJEITADO) {
+            return;
+        }
+
+        // Se o status for de execução/baixa da sessão (REALIZADO ou FALTOU)
+        if (novoStatus == StatusCompromisso.REALIZADO || novoStatus == StatusCompromisso.FALTOU) {
+            LocalDate dataSessao = compromisso.getDataHoraCompromisso().toLocalDate();
+            LocalDate hoje = LocalDate.now();
+
+            if (dataSessao.isAfter(hoje) && configuracaoSistemaService.isTravaBaixaSessoesFuturasAtiva()) {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                throw new IllegalArgumentException(
+                        "Não é permitido dar baixa em sessões futuras antes da data do atendimento (Data da sessão: "
+                                + dataSessao.format(fmt)
+                                + "). A trava pode ser desativada pelo administrador do sistema para realização de testes."
+                );
+            }
         }
     }
 

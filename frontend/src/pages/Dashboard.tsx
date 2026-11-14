@@ -8,6 +8,7 @@ import { profissionalService } from '../services/profissionalService';
 import { responsavelService } from '../services/responsavelService';
 import { compromissoService } from '../services/compromissoService';
 import { financeiroService } from '../services/financeiroService';
+import { sistemaService } from '../services/sistemaService';
 import { extractApiErrorMessage } from '../utils/apiError';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
@@ -36,6 +37,8 @@ import {
   CalendarCheck,
   FileCheck2,
   ShieldCheck,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 
 const STATUS_BADGE: Record<StatusCompromisso, { label: string; className: string }> = {
@@ -206,16 +209,19 @@ export default function Dashboard() {
   const [guiasPendentesAssinatura, setGuiasPendentesAssinatura] = useState<GuiaFaturamento[]>([]);
   const [guiaSelecionadaAssinar, setGuiaSelecionadaAssinar] = useState<GuiaFaturamento | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [travaBaixaFutura, setTravaBaixaFutura] = useState<boolean>(true);
+  const [loadingTrava, setLoadingTrava] = useState<boolean>(false);
 
   const loadDashboardData = useCallback(async () => {
     if (isAdmin) {
       setLoadingStats(true);
       try {
-        const [usersList, clinicasList, pacientesList, profList] = await Promise.all([
+        const [usersList, clinicasList, pacientesList, profList, travaRes] = await Promise.all([
           userService.list().catch(() => []),
           clinicaService.list().catch(() => []),
           pacienteService.list().catch(() => []),
           profissionalService.list().catch(() => []),
+          sistemaService.getTravaBaixaFutura().catch(() => ({ ativa: true, mensagem: '' })),
         ]);
         setAdminStats({
           usuarios: usersList.length,
@@ -223,6 +229,7 @@ export default function Dashboard() {
           pacientes: pacientesList.length,
           profissionais: profList.length,
         });
+        setTravaBaixaFutura(travaRes.ativa);
       } finally {
         setLoadingStats(false);
       }
@@ -328,6 +335,18 @@ export default function Dashboard() {
     }
   };
 
+  const handleToggleTrava = async () => {
+    setLoadingTrava(true);
+    try {
+      const res = await sistemaService.setTravaBaixaFutura(!travaBaixaFutura);
+      setTravaBaixaFutura(res.ativa);
+    } catch (err: unknown) {
+      alert(extractApiErrorMessage(err, 'Erro ao alterar configuração da trava.'));
+    } finally {
+      setLoadingTrava(false);
+    }
+  };
+
   // =========================================================================
   // 1. VISÃO ADMIN GERAL
   // =========================================================================
@@ -403,6 +422,61 @@ export default function Dashboard() {
               </Link>
             );
           })}
+        </div>
+
+        {/* Painel de Políticas e Travas Operacionais */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                  travaBaixaFutura ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                }`}
+              >
+                {travaBaixaFutura ? <Lock className="h-6 w-6" /> : <Unlock className="h-6 w-6" />}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-gray-900">
+                    Trava de Baixa de Sessões Futuras
+                  </h3>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                      travaBaixaFutura
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}
+                  >
+                    {travaBaixaFutura ? 'ATIVA (Produção / Seguro)' : 'DESATIVADA (Modo de Testes)'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+                  {travaBaixaFutura
+                    ? 'Bloqueia operadores e recepcionistas de marcarem sessões como "Realizado" ou "Falta" antes da data real do atendimento. Cancelamentos continuam permitidos normalmente.'
+                    : 'Modo de testes ativo: permite simular atendimentos e dar baixa em sessões com datas futuras livremente.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleToggleTrava}
+              disabled={loadingTrava}
+              className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition shadow-xs self-start md:self-auto disabled:opacity-50 ${
+                travaBaixaFutura
+                  ? 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+              }`}
+            >
+              {loadingTrava ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : travaBaixaFutura ? (
+                <Unlock className="h-4 w-4" />
+              ) : (
+                <Lock className="h-4 w-4" />
+              )}
+              {travaBaixaFutura ? 'Desativar Trava (Liberar Testes)' : 'Ativar Trava (Modo Produção)'}
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6">

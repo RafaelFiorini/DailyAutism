@@ -10,7 +10,15 @@ import { profissionalService } from '../services/profissionalService';
 import { responsavelService } from '../services/responsavelService';
 import { compromissoService } from '../services/compromissoService';
 import { financeiroService } from '../services/financeiroService';
+import { sistemaService } from '../services/sistemaService';
 import type { Compromisso } from '../types/compromisso';
+
+vi.mock('../services/sistemaService', () => ({
+  sistemaService: {
+    getTravaBaixaFutura: vi.fn().mockResolvedValue({ ativa: true, mensagem: 'Trava ativa' }),
+    setTravaBaixaFutura: vi.fn().mockResolvedValue({ ativa: false, mensagem: 'Trava desativada' }),
+  },
+}));
 
 vi.mock('../services/userService', () => ({ userService: { list: vi.fn() } }));
 vi.mock('../services/clinicaService', () => ({ clinicaService: { list: vi.fn() } }));
@@ -321,6 +329,32 @@ describe('Dashboard Page - Visão Geral por Perfil', () => {
       expect(screen.getByText(/guia\(s\) de convênio aguardando sua assinatura/i)).toBeInTheDocument();
       expect(screen.getByText('FAT-202611-0099')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Conferir e Assinar/i })).toBeInTheDocument();
+    });
+  });
+
+  it('ADMIN: exibe o painel de trava de baixa de sessões futuras e permite alternar o status', async () => {
+    vi.mocked(compromissoService.list).mockResolvedValue([]);
+    vi.mocked(userService.list).mockResolvedValue([]);
+    vi.mocked(clinicaService.list).mockResolvedValue([]);
+    vi.mocked(pacienteService.list).mockResolvedValue([]);
+    vi.mocked(profissionalService.list).mockResolvedValue([]);
+
+    renderWithAuth({
+      isAdmin: true,
+      user: { idUser: '1', nomeUser: 'Admin Geral', emailUser: 'admin@sistema.com', perfis: ['ADMIN'] },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Trava de Baixa de Sessões Futuras')).toBeInTheDocument();
+      expect(screen.getByText(/ATIVA \(Produção \/ Seguro\)/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Desativar Trava/i })).toBeInTheDocument();
+    });
+
+    const toggleButton = screen.getByRole('button', { name: /Desativar Trava/i });
+    fireEvent.click(toggleButton);
+
+    await waitFor(() => {
+      expect(sistemaService.setTravaBaixaFutura).toHaveBeenCalledWith(false);
     });
   });
 });
