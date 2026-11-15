@@ -3,7 +3,7 @@ import axios from 'axios';
 export const TOKEN_STORAGE_KEY = 'dailyautism_token';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -40,8 +40,14 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login({ emailUser: email, passwordUser: password });
-    } catch {
-      setError('E-mail ou senha incorretos');
+    } catch (err: any) {
+      if (err?.response?.status === 401 || err?.response?.status === 403) {
+        setError('E-mail ou senha incorretos');
+      } else if (!err?.response) {
+        setError('Não foi possível conectar ao servidor. Verifique sua conexão.');
+      } else {
+        setError(err?.response?.data?.message || 'Erro ao realizar login. Tente novamente.');
+      }
     } finally {
       setSubmitting(false);
     }
