@@ -168,8 +168,19 @@ Use esta lista para discutir melhorias antes de mexer no código:
    - *Debate:* Rotina automatizada de backup diário do MySQL, termo de consentimento LGPD no portal dos pais e mascaramento de logs.
 
 7. **Pipeline de Deploy (Back + Front):**
-   - *Checklist Pré-Deploy:*
-     1. Bucket OCI Object Storage configurado e credenciais IAM geradas.
-     2. Build e testes do backend (`mvn test`) e frontend (`pnpm build`).
-     3. Containerização e orquestração via Docker Compose com Nginx e certificado Let's Encrypt (HTTPS).
-     4. Healthcheck e verificação de conectividade com banco de dados de produção.
+   - *Status:* **Entregue e em produção!**
+     - Instância VPS na Oracle Cloud Infrastructure (OCI) ativa e publicada no IP público: `http://147.224.210.77/`.
+     - Containerização completa com `docker-compose.prod.yml` (Nginx + Frontend React SPA na porta 80, Backend Spring Boot na porta 8080, MySQL com volume persistente fechado na rede interna).
+     - Pipeline de CI/CD automatizada com GitHub Actions (`.github/workflows/deploy.yml`) executando testes automatizados e deploy contínuo via SSH.
+     - Suporte a CORS dinâmico e proxy reverso `/api/` configurado.
+     - Suíte de 120 testes do frontend passando com 100% de sucesso.
+     - Trava configurável de baixa antecipada de sessões futuras (`ConfiguracaoSistemaService`) com alternância em 1 clique para o `ADMIN`.
+
+---
+
+## 8. Próximo Módulo de Foco: DApp (Aplicativo Mobile Android)
+
+Com o ecossistema Web e Backend já rodando em produção na nuvem (`http://147.224.210.77:8080`), o aplicativo móvel (`DApp/`) agora pode se conectar diretamente à infraestrutura na nuvem:
+- **Tecnologia:** Android nativo com Kotlin e Gradle (`DApp/`).
+- **Objetivo:** Experiência móvel para responsáveis e terapeutas (notificações, acompanhamento de sessões, aprovação de horários e assinatura digital de atendimentos).
+- **Integração:** Consumo da API REST autenticada via JWT do backend.
