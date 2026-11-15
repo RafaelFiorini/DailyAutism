@@ -51,3 +51,12 @@ build/
 .superpowers/
 node_modules/
 dist/
+
+# Android & Gradle
+.gradle/
+**/build/
+*.apk
+*.aab
+local.properties
+.cxx/
+DApp/
