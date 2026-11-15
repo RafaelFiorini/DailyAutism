@@ -13,7 +13,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${api.security.token.secret}")
+    @Value("${api.security.token.secret:${JWT_SECRET:DailyAutismSecretKeyForJwtTokenGenerationMustBe256BitsLong2026!}}")
     private String secret;
 
     private static final long EXPIRACAO = 1000 * 60 * 60 * 8; // 8 horas

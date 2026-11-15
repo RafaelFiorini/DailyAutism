@@ -2,10 +2,8 @@
 target/
 *.class
 
-# Spring Boot - arquivos sensíveis
-src/main/resources/application.yml
-src/main/resources/application.properties
-src/main/resources/application-*.yml
+# Spring Boot - arquivos locais sensíveis
+src/main/resources/application-local.yml
 src/main/resources/application-*.properties
 
 # IntelliJ
