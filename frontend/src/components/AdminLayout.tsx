@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import logoImg from '../assets/logo.png';
 import {
-  Brain,
   LayoutDashboard,
   Users,
   Building2,
@@ -110,8 +110,8 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 z-10">
         <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-200">
-          <div className="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-            <Brain className="h-5 w-5" />
+          <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center p-1.5 shadow-sm">
+            <img src={logoImg} alt="DailyAutism" className="w-full h-full object-contain" />
           </div>
           <div>
             <span className="font-bold text-gray-900 leading-tight block">DailyAutism</span>

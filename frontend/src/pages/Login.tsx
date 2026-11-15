@@ -1,8 +1,9 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, Brain, UserPlus } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, UserPlus } from 'lucide-react';
 import RegisterModal from '../components/RegisterModal';
+import logoImg from '../assets/logo.png';
 
 export default function Login() {
   const { login, isAuthenticated, loading: authLoading } = useAuth();
@@ -67,8 +68,8 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Logo & Title */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
-              <Brain className="h-8 w-8 text-indigo-600" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white shadow-md border border-slate-100 p-2 mb-4">
+              <img src={logoImg} alt="DailyAutism" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">DailyAutism</h1>
             <h2 className="text-sm text-gray-500 mt-1">Painel Administrativo</h2>
