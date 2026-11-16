@@ -121,3 +121,14 @@
 - [x] **Step 3:** Fazer push do DApp para `origin/master` (`b88e9df`).
 - [x] **Step 4:** Monitorar e validar execução do workflow `Build Android APK (DApp)` no GitHub Actions.
 - [x] **Step 5:** Confirmar geração da nova release com o APK atualizado.
+
+---
+
+### Task 7: Separação de Rotas no Frontend Web (Refatoração Arquitetural)
+
+> Detalhado no plano complementar: [2026-11-16-separacao-paginas-financeiro-frontend.md](file:///c:/Users/rafael.fiorini/DailyAutism/docs/superpowers/plans/2026-11-16-separacao-paginas-financeiro-frontend.md)
+- [ ] Task 1: Criar a Página Dedicada `FinanceiroProfissionalPage.tsx` e Testes.
+- [ ] Task 2: Registrar Rotas e Atualizar Navegação na Sidebar (`/admin/meu-financeiro`).
+- [ ] Task 3: Limpar e Simplificar `Financeiro.tsx` (exclusivo para gestão de clínica/admin).
+- [ ] Task 4: Validação Geral da Suite de Testes e Build de Produção.
+
