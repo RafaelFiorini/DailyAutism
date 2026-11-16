@@ -69,7 +69,7 @@
 - Modify: `DApp/app/src/main/java/com/dailyautism/dapp/navigation/AppNavigation.kt`
 - Modify: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/login/LoginScreen.kt`
 
-- [ ] **Step 1:** Adicionar `Screen.Register : Screen("register")` em `AppNavigation.kt`.
-- [ ] **Step 2:** Adicionar botão "Não tem uma conta? Cadastre-se" em `LoginScreen.kt` com callback `onNavigateToRegister`.
-- [ ] **Step 3:** Configurar a rota `Screen.Register.route` em `AppNavigation.kt` direcionando pós-sucesso para a home do perfil.
-- [ ] **Step 4:** Commit e push das alterações no DApp.
+- [x] **Step 1:** Adicionar `Screen.Register : Screen("register")` em `AppNavigation.kt`.
+- [x] **Step 2:** Adicionar botão "Não tem uma conta? Cadastre-se" em `LoginScreen.kt` com callback `onNavigateToRegister`.
+- [x] **Step 3:** Configurar a rota `Screen.Register.route` em `AppNavigation.kt` direcionando pós-sucesso para a home do perfil.
+- [x] **Step 4:** Commit e push das alterações no DApp.
