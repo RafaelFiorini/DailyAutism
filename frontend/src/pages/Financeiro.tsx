@@ -52,6 +52,10 @@ export default function Financeiro() {
   const [error, setError] = useState('');
 
   const loadBaseAndData = useCallback(async () => {
+    if (isProfissionalOnly) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -92,7 +96,7 @@ export default function Financeiro() {
     } finally {
       setLoading(false);
     }
-  }, [isResponsavelOnly, selectedClinicaId, user?.idClinica]);
+  }, [isProfissionalOnly, isResponsavelOnly, selectedClinicaId, user?.idClinica]);
 
   useEffect(() => {
     loadBaseAndData();
