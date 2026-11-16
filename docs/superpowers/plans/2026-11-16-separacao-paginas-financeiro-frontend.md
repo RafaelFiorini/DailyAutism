@@ -35,11 +35,11 @@
 - Create: `frontend/src/pages/FinanceiroProfissionalPage.tsx`
 - Create: `frontend/src/pages/FinanceiroProfissionalPage.test.tsx`
 
-- [ ] **Step 1:** Escrever o teste unitário inicial `FinanceiroProfissionalPage.test.tsx` validando que a página renderiza o cabeçalho "Meu Financeiro & Repasses" e o componente `FinanceiroProfissionalTab`.
-- [ ] **Step 2:** Executar o teste com vitest e validar a falha inicial esperada (arquivo ainda não existe).
-- [ ] **Step 3:** Implementar `frontend/src/pages/FinanceiroProfissionalPage.tsx` contendo o cabeçalho informativo limpo e renderizando `<FinanceiroProfissionalTab />`.
-- [ ] **Step 4:** Executar novamente o teste unitário e verificar 100% de sucesso.
-- [ ] **Step 5:** Commit isolado da nova página.
+- [x] **Step 1:** Escrever o teste unitário inicial `FinanceiroProfissionalPage.test.tsx` validando que a página renderiza o cabeçalho "Meu Financeiro & Repasses" e o componente `FinanceiroProfissionalTab`.
+- [x] **Step 2:** Executar o teste com vitest e validar a falha inicial esperada (arquivo ainda não existe).
+- [x] **Step 3:** Implementar `frontend/src/pages/FinanceiroProfissionalPage.tsx` contendo o cabeçalho informativo limpo e renderizando `<FinanceiroProfissionalTab />`.
+- [x] **Step 4:** Executar novamente o teste unitário e verificar 100% de sucesso.
+- [x] **Step 5:** Commit isolado da nova página.
 
 ---
 
