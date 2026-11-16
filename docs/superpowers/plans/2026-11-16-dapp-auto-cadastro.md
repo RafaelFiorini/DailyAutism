@@ -55,11 +55,11 @@
 **Files:**
 - Create: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/cadastro/RegisterScreen.kt`
 
-- [ ] **Step 1:** Construir a interface com seletor de perfil (Tabs ou SegmentedButtons: "Responsável" / "Profissional").
-- [ ] **Step 2:** Adicionar campos de formulário: Nome, CPF com máscara, E-mail, Celular, Senha, Confirmação de Senha e Conselho (se profissional).
-- [ ] **Step 3:** Implementar validações visuais de formulário e botão de submissão com estado de loading.
-- [ ] **Step 4:** Adicionar botão de navegação "Já tem uma conta? Faça Login".
-- [ ] **Step 5:** Commit da tela de registro.
+- [x] **Step 1:** Construir a interface com seletor de perfil (Tabs ou SegmentedButtons: "Responsável" / "Profissional").
+- [x] **Step 2:** Adicionar campos de formulário: Nome, CPF com máscara, E-mail, Celular, Senha, Confirmação de Senha e Conselho (se profissional).
+- [x] **Step 3:** Implementar validações visuais de formulário e botão de submissão com estado de loading.
+- [x] **Step 4:** Adicionar botão de navegação "Já tem uma conta? Faça Login".
+- [x] **Step 5:** Commit da tela de registro.
 
 ---
 
