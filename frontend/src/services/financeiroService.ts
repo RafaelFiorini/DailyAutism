@@ -183,4 +183,48 @@ export const financeiroService = {
     );
     return data;
   },
+
+  // =================== FINANCEIRO PROFISSIONAL ===================
+  async getResumoProfissional(mesAno?: string) {
+    const { data } = await api.get('/financeiro/profissional/resumo', {
+      params: mesAno ? { mesAno } : {},
+    });
+    return data;
+  },
+
+  async listLancamentosProfissional(params?: { mesAno?: string; idClinica?: string; status?: string }) {
+    const { data } = await api.get('/financeiro/profissional/lancamentos', {
+      params,
+    });
+    return data;
+  },
+
+  async baixarLancamentoProfissional(id: string, dataPagamento?: string) {
+    const { data } = await api.post(`/financeiro/profissional/lancamentos/${id}/baixar`, null, {
+      params: dataPagamento ? { dataPagamento } : {},
+    });
+    return data;
+  },
+
+  async reverterLancamentoProfissional(id: string) {
+    const { data } = await api.post(`/financeiro/profissional/lancamentos/${id}/reverter`);
+    return data;
+  },
+
+  async baixarLoteClinicaProfissional(idClinica: string, mesAno?: string, dataPagamento?: string) {
+    const { data } = await api.post(`/financeiro/profissional/clinicas/${idClinica}/baixar-mes`, null, {
+      params: {
+        ...(mesAno ? { mesAno } : {}),
+        ...(dataPagamento ? { dataPagamento } : {}),
+      },
+    });
+    return data;
+  },
+
+  async configurarValorParticularProfissional(valorSessao: number) {
+    const { data } = await api.put('/financeiro/profissional/meu-valor-particular', {
+      valorSessao,
+    });
+    return data;
+  },
 };

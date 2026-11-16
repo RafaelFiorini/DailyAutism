@@ -3,12 +3,27 @@ export interface UserDTO {
   nomeUser: string;
   emailUser: string;
   idPessoa?: string | null;
+  nomePessoa?: string | null;
+  cpf?: string | null;
+  datanasc?: string | null;
+  rg?: string | null;
+  endereco?: string | null;
+  telefone?: string | null;
+  celular?: string | null;
   perfis: string[];
+  isResponsavel?: boolean;
   idResponsavel?: string | null;
+  isProfissional?: boolean;
   idProfissional?: string | null;
+  conselhoProf?: string | null;
+  isFuncionarioClinica?: boolean;
+  isAdminClinica?: boolean;
   idClinica?: string | null;
   nomeClinica?: string | null;
   cargoClinica?: string | null;
+  isAdmin?: boolean;
+  ativo?: boolean;
+  pacientesIds?: string[];
 }
 
 export interface User {

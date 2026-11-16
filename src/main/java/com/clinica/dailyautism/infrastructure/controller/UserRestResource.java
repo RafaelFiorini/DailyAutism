@@ -2,6 +2,7 @@ package com.clinica.dailyautism.infrastructure.controller;
 
 import com.clinica.dailyautism.domain.aplicationservice.UserService;
 import com.clinica.dailyautism.domain.entity.security.User;
+import com.clinica.dailyautism.infrastructure.dto.SaveMeuPerfilDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveUserFullDTO;
 import com.clinica.dailyautism.infrastructure.dto.UserDTO;
 import jakarta.validation.Valid;
@@ -89,5 +90,12 @@ public class UserRestResource {
     public ResponseEntity<UserDTO> getMe(Authentication authentication) {
         User user = userService.findByEmail(authentication.getName());
         return ResponseEntity.ok(userService.mapUserToDTO(user));
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> updateMe(@RequestBody SaveMeuPerfilDTO dto, Authentication authentication) {
+        UserDTO atualizado = userService.atualizarMeuPerfil(authentication.getName(), dto);
+        return ResponseEntity.ok(atualizado);
     }
 }

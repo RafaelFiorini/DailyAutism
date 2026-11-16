@@ -21,6 +21,7 @@ import com.clinica.dailyautism.domain.repository.PessoaRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
 import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
+import com.clinica.dailyautism.infrastructure.dto.SaveMeuPerfilDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveUserDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveUserFullDTO;
 import com.clinica.dailyautism.infrastructure.dto.UserDTO;
@@ -427,6 +428,34 @@ public class UserService {
         user.setAtivo(true);
         User saved = userRepository.save(user);
         return mapUserToDTO(saved);
+    }
+
+    @Transactional
+    public UserDTO atualizarMeuPerfil(String emailUsuarioLogado, SaveMeuPerfilDTO dto) {
+        User user = findByEmail(emailUsuarioLogado);
+        if (dto.getNovaSenha() != null && !dto.getNovaSenha().isBlank()) {
+            if (dto.getNovaSenha().trim().length() < 6) {
+                throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
+            }
+            user.setPasswordUser(passwordEncoder.encode(dto.getNovaSenha().trim()));
+            userRepository.save(user);
+        }
+
+        Pessoa pessoa = user.getPessoa();
+        if (pessoa != null) {
+            if (dto.getTelefone() != null) {
+                pessoa.setTelefonePessoa(dto.getTelefone().trim());
+            }
+            if (dto.getCelular() != null) {
+                pessoa.setCelularPessoa(dto.getCelular().trim());
+            }
+            if (dto.getEndereco() != null) {
+                pessoa.setEnderecoPessoa(dto.getEndereco().trim());
+            }
+            pessoaRepository.save(pessoa);
+        }
+
+        return mapUserToDTO(user);
     }
 
     private void validarEmailDisponivel(String email, String ignoreUserId) {

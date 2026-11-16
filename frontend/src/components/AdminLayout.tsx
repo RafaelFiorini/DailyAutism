@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import MeuPerfilModal from './MeuPerfilModal';
 import logoImg from '../assets/logo.png';
 import {
   LayoutDashboard,
@@ -19,6 +20,7 @@ import {
 
 export default function AdminLayout() {
   const { user, logout, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica } = useAuth();
+  const [isPerfilModalOpen, setIsPerfilModalOpen] = useState(false);
 
   const navigation = useMemo(() => {
     if (isAdmin) {
@@ -72,6 +74,7 @@ export default function AdminLayout() {
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
+        { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
         { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
@@ -165,13 +168,21 @@ export default function AdminLayout() {
             </h2>
           </div>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink-0">
-            <div className="text-right min-w-0 max-w-[220px] sm:max-w-xs">
-              <span className="block text-sm font-medium text-gray-900 truncate">{user?.nomeUser}</span>
-              <span className="block text-xs text-gray-500 truncate">{user?.emailUser}</span>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold flex items-center justify-center text-sm border-2 border-indigo-200 shrink-0">
-              {initials}
-            </div>
+            <button
+              onClick={() => setIsPerfilModalOpen(true)}
+              className="flex items-center gap-3 text-left hover:opacity-85 transition-opacity group cursor-pointer"
+              title="Clique para editar seu perfil e senha"
+            >
+              <div className="text-right min-w-0 max-w-[220px] sm:max-w-xs">
+                <span className="block text-sm font-medium text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
+                  {user?.nomeUser}
+                </span>
+                <span className="block text-xs text-gray-500 truncate">{user?.emailUser}</span>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-semibold flex items-center justify-center text-sm border-2 border-indigo-200 shrink-0 group-hover:border-indigo-400 transition-colors">
+                {initials}
+              </div>
+            </button>
           </div>
         </header>
 
@@ -180,6 +191,11 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      <MeuPerfilModal
+        isOpen={isPerfilModalOpen}
+        onClose={() => setIsPerfilModalOpen(false)}
+      />
     </div>
   );
 }

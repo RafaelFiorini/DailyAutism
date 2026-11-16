@@ -1,8 +1,9 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, UserPlus } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, UserPlus, KeyRound } from 'lucide-react';
 import RegisterModal from '../components/RegisterModal';
+import AtualizarCadastroModal from '../components/AtualizarCadastroModal';
 import logoImg from '../assets/logo.png';
 
 export default function Login() {
@@ -16,6 +17,7 @@ export default function Login() {
   const [validationError, setValidationError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isAtualizarOpen, setIsAtualizarOpen] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -149,19 +151,30 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divisor Primeiro Acesso */}
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-500 mb-3">
-              É responsável por um paciente ou profissional de saúde?
-            </p>
+          {/* Opções de Autoatendimento */}
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center space-y-3">
             <button
               type="button"
-              onClick={() => setIsRegisterOpen(true)}
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold transition-colors"
+              onClick={() => setIsAtualizarOpen(true)}
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1.5 transition-colors hover:underline"
             >
-              <UserPlus className="h-4 w-4" />
-              Primeiro Acesso / Cadastre-se
+              <KeyRound className="h-3.5 w-3.5" />
+              Esqueci minha senha ou quero atualizar meus dados
             </button>
+
+            <div className="pt-2">
+              <p className="text-xs text-gray-500 mb-2">
+                É responsável por um paciente ou profissional de saúde?
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsRegisterOpen(true)}
+                className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-semibold transition-colors"
+              >
+                <UserPlus className="h-4 w-4" />
+                Primeiro Acesso / Cadastre-se
+              </button>
+            </div>
           </div>
 
           {/* Footer */}
@@ -174,6 +187,12 @@ export default function Login() {
       <RegisterModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
+      />
+
+      <AtualizarCadastroModal
+        isOpen={isAtualizarOpen}
+        onClose={() => setIsAtualizarOpen(false)}
+        emailInicial={email}
       />
     </div>
   );

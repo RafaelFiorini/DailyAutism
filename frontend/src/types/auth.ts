@@ -37,3 +37,33 @@ export interface RegisterInput {
   isPacienteTambem?: boolean;
   pacientes?: PacienteInicialInput[];
 }
+
+export interface ConsultaCadastroInput {
+  email: string;
+  cpf: string;
+}
+
+export interface DadosUsuarioRecuperacao {
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone?: string;
+  celular?: string;
+  endereco?: string;
+}
+
+export interface AtualizarCadastroInput {
+  email: string;
+  cpf: string;
+  novaSenha?: string;
+  telefone?: string;
+  celular?: string;
+  endereco?: string;
+}
+
+export interface UpdateMeInput {
+  novaSenha?: string;
+  telefone?: string;
+  celular?: string;
+  endereco?: string;
+}

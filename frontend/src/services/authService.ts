@@ -1,5 +1,13 @@
 import api, { TOKEN_STORAGE_KEY } from './api';
-import { LoginCredentials, AuthResponse, RegisterInput } from '../types/auth';
+import {
+  LoginCredentials,
+  AuthResponse,
+  RegisterInput,
+  ConsultaCadastroInput,
+  DadosUsuarioRecuperacao,
+  AtualizarCadastroInput,
+  UpdateMeInput,
+} from '../types/auth';
 import { UserDTO } from '../types/user';
 
 export const authService = {
@@ -13,8 +21,22 @@ export const authService = {
     return response.data;
   },
 
+  async consultarCadastro(payload: ConsultaCadastroInput): Promise<DadosUsuarioRecuperacao> {
+    const response = await api.post<DadosUsuarioRecuperacao>('/auth/consultar-cadastro', payload);
+    return response.data;
+  },
+
+  async atualizarCadastro(payload: AtualizarCadastroInput): Promise<void> {
+    await api.post('/auth/atualizar-cadastro', payload);
+  },
+
   async getMe(): Promise<UserDTO> {
     const response = await api.get<UserDTO>('/users/me');
+    return response.data;
+  },
+
+  async updateMe(payload: UpdateMeInput): Promise<UserDTO> {
+    const response = await api.put<UserDTO>('/users/me', payload);
     return response.data;
   },
 

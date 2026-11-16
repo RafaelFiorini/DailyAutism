@@ -230,3 +230,44 @@ export interface ResultadoLoteGuias {
   idsGuiasEnviadas: string[];
 }
 
+export interface LancamentoRepasseProfissional {
+  idLancamento: string;
+  idProfissional?: string;
+  nomeProfissional?: string;
+  idClinica?: string;
+  nomeClinica?: string;
+  idPaciente?: string;
+  nomePaciente?: string;
+  idCompromisso?: string;
+  tituloCompromisso?: string;
+  dataCompetencia: string;
+  dataAtendimento: string;
+  tipoOrigem: 'CLINICA_FIXO' | 'CLINICA_PERCENTUAL' | 'PARTICULAR_DIRETO';
+  valorBruto?: number;
+  percentualRepasse?: number;
+  valorLiquidoRepasse: number;
+  statusPagamento: 'PENDENTE' | 'PAGO' | 'CANCELADO';
+  dataPagamento?: string;
+  observacoes?: string;
+}
+
+export interface TotalPorOrigem {
+  idOrigem: string;
+  nomeOrigem: string;
+  isParticular: boolean;
+  total: number;
+  totalRecebido: number;
+  totalPendente: number;
+  quantidadeSessoes: number;
+}
+
+export interface ResumoFinanceiroProfissional {
+  competencia: string;
+  totalFaturado: number;
+  totalRecebido: number;
+  totalPendente: number;
+  quantidadeTotalSessoes: number;
+  valorSessaoParticularPadrao?: number;
+  totaisPorOrigem: TotalPorOrigem[];
+}
+

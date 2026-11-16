@@ -8,6 +8,8 @@ import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.exception.EmailAlreadyExistsException;
 import com.clinica.dailyautism.domain.repository.*;
+import com.clinica.dailyautism.infrastructure.dto.AtualizarCadastroDTO;
+import com.clinica.dailyautism.infrastructure.dto.DadosUsuarioRecuperacaoDTO;
 import com.clinica.dailyautism.infrastructure.dto.LoginDTO;
 import com.clinica.dailyautism.infrastructure.dto.RegisterDTO;
 import com.clinica.dailyautism.infrastructure.security.JwtService;
@@ -185,5 +187,79 @@ public class AuthService {
         user = userRepository.save(user);
 
         return jwtService.gerarToken(user);
+    }
+
+    public DadosUsuarioRecuperacaoDTO buscarDadosParaAtualizacao(String email, String cpf) {
+        if (email == null || email.isBlank() || cpf == null || cpf.isBlank()) {
+            throw new IllegalArgumentException("E-mail e CPF são obrigatórios para identificação.");
+        }
+
+        String emailNorm = email.trim().toLowerCase();
+        String cleanCpf = cpf.replaceAll("\\D", "").trim();
+
+        User user = userRepository.findByEmailAnyAtivo(emailNorm)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado para o e-mail informado."));
+
+        if (!Boolean.TRUE.equals(user.getAtivo())) {
+            throw new IllegalArgumentException("Esta conta está inativa. Entre em contato com a clínica ou suporte.");
+        }
+
+        Pessoa pessoa = user.getPessoa();
+        if (pessoa == null || pessoa.getCPFPessoa() == null || !pessoa.getCPFPessoa().equals(cleanCpf)) {
+            throw new IllegalArgumentException("O CPF informado não corresponde ao titular deste e-mail.");
+        }
+
+        return DadosUsuarioRecuperacaoDTO.builder()
+                .nome(pessoa.getNomePessoa())
+                .email(emailNorm)
+                .cpf(pessoa.getCPFPessoa())
+                .telefone(pessoa.getTelefonePessoa())
+                .celular(pessoa.getCelularPessoa())
+                .endereco(pessoa.getEnderecoPessoa())
+                .build();
+    }
+
+    @Transactional
+    public void atualizarCadastro(AtualizarCadastroDTO dto) {
+        if (dto.getEmail() == null || dto.getEmail().isBlank() || dto.getCpf() == null || dto.getCpf().isBlank()) {
+            throw new IllegalArgumentException("E-mail e CPF são obrigatórios.");
+        }
+
+        String emailNorm = dto.getEmail().trim().toLowerCase();
+        String cleanCpf = dto.getCpf().replaceAll("\\D", "").trim();
+
+        User user = userRepository.findByEmailAnyAtivo(emailNorm)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+
+        if (!Boolean.TRUE.equals(user.getAtivo())) {
+            throw new IllegalArgumentException("Esta conta está inativa.");
+        }
+
+        Pessoa pessoa = user.getPessoa();
+        if (pessoa == null || pessoa.getCPFPessoa() == null || !pessoa.getCPFPessoa().equals(cleanCpf)) {
+            throw new IllegalArgumentException("O CPF informado não confere com o cadastro deste e-mail.");
+        }
+
+        // Se informou nova senha
+        if (dto.getNovaSenha() != null && !dto.getNovaSenha().isBlank()) {
+            if (dto.getNovaSenha().trim().length() < 6) {
+                throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
+            }
+            user.setPasswordUser(passwordEncoder.encode(dto.getNovaSenha().trim()));
+            userRepository.save(user);
+        }
+
+        // Atualiza contatos na Pessoa (e-mail e CPF continuam inalterados)
+        if (dto.getTelefone() != null) {
+            pessoa.setTelefonePessoa(dto.getTelefone().trim());
+        }
+        if (dto.getCelular() != null) {
+            pessoa.setCelularPessoa(dto.getCelular().trim());
+        }
+        if (dto.getEndereco() != null) {
+            pessoa.setEnderecoPessoa(dto.getEndereco().trim());
+        }
+
+        pessoaRepository.save(pessoa);
     }
 }
