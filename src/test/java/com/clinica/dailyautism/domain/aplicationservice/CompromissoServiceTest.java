@@ -31,6 +31,8 @@ class CompromissoServiceTest {
     @Mock private ClinicaRepository clinicaRepository;
     @Mock private ClinicaAccessHelper clinicaAccessHelper;
     @Mock private ContratoParticularService contratoParticularService;
+    @Mock private ConfiguracaoSistemaService configuracaoSistemaService;
+    @Mock private LancamentoRepasseService lancamentoRepasseService;
 
     @InjectMocks
     private CompromissoService compromissoService;

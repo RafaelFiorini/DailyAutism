@@ -34,6 +34,7 @@ public class CompromissoService {
     private final ClinicaAccessHelper clinicaAccessHelper;
     private final ContratoParticularService contratoParticularService;
     private final ConfiguracaoSistemaService configuracaoSistemaService;
+    private final LancamentoRepasseService lancamentoRepasseService;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
@@ -210,6 +211,12 @@ public class CompromissoService {
         compromisso.setStatus(novoStatus);
         Compromisso saved = compromissoRepository.save(compromisso);
         contratoParticularService.processarAlteracaoStatusCompromisso(saved, statusAnterior, novoStatus);
+
+        if (novoStatus == StatusCompromisso.REALIZADO) {
+            lancamentoRepasseService.gerarOuAtualizarLancamentoPorCompromisso(saved);
+        } else if (novoStatus == StatusCompromisso.CANCELADO || novoStatus == StatusCompromisso.FALTOU || novoStatus == StatusCompromisso.REJEITADO) {
+            lancamentoRepasseService.cancelarLancamentoPorCompromisso(saved.getIdCompromisso());
+        }
         return saved;
     }
 

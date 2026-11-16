@@ -3,6 +3,7 @@ package com.clinica.dailyautism.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -25,6 +26,9 @@ public class Profissional extends BaseEntity {
     private Pessoa pessoaProf;
 
     private String conselhoProf;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal valorSessaoParticular;
 
     @OneToMany(mappedBy = "profissional")
     private List<ProfissionalPaciente> pacientes;

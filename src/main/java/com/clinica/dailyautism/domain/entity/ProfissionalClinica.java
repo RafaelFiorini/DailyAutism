@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
+
 @Entity
 @Data
 @Builder
@@ -29,4 +31,11 @@ public class ProfissionalClinica extends BaseEntity {
     private String diasAtendimento;
 
     private String horariosAtendimento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private TipoRepasseProfissional tipoRepasse;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal valorRepasse;
 }
