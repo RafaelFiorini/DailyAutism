@@ -1,95 +1,108 @@
-# DailyAutism
+# 🧩 DailyAutism — Plataforma Integrada de Gestão Clínica e Terapêutica do TEA
 
-DailyAutism is a system designed to help parents, caregivers, and professionals organize daily routines, therapies, and important information related to people with Autism Spectrum Disorder (ASD).
-
-The goal of the project is to centralize relevant information such as appointments, therapy sessions, behavioral records, and medical data in a structured and accessible way.
+> **DailyAutism** é um ecossistema digital desenvolvido para conectar **Clínicas Especializadas**, **Terapeutas/Profissionais Multidisciplinares** e **Famílias/Responsáveis** de pessoas no Espectro Autista (TEA), centralizando rotinas terapêuticas, agendamentos, documentos clínicos e conciliação financeira.
 
 ---
 
-## Motivation
+## 💙 Motivação
 
-DailyAutism was created from a real personal need.
+O **DailyAutism** nasceu de uma vivência real e profunda. Como pai de uma criança diagnosticada com Transtorno do Espectro Autista (TEA) nível 3 de suporte, senti na pele a sobrecarga de gerenciar terapias diárias, múltiplos profissionais, guias de convênio, laudos espalhados e repasses financeiros.
 
-As the father of a child diagnosed with Autism Spectrum Disorder (ASD) level 3, I realized how difficult it can be to organize and track all the information related to therapies, routines, appointments, and daily observations.
-
-This project aims to create a practical digital tool that helps families manage these responsibilities and keep an organized history of important events.
+Este projeto existe para transformar essa jornada: dando às famílias transparência e facilidade, aos profissionais autonomia para organizar sua agenda e finanças, e às clínicas uma gestão eficiente, segura e em conformidade com as normas de saúde.
 
 ---
 
-## Main Features
+## 🏗️ Arquitetura do Sistema
 
-- Daily routine and activity tracking
-- Therapy and appointment scheduling
-- Behavioral event recording
-- Organization of medical and therapeutic information
-- Centralized data for caregivers and family members
+O repositório principal é composto por uma arquitetura desacoplada e escalável:
 
----
-
-## Technology Stack
-
-Backend:
-
-- Java
-- REST API
-- Git / GitHub
-
-Future improvements may include:
-
-- Spring Boot
-- Database integration
-- Authentication and user roles
-- Reporting and analytics
+* **Backend:** API RESTful robusta desenvolvida em **Java 17** com **Spring Boot 3**, orientada a Domínio (DDD) e Clean Architecture, com persistência em **PostgreSQL**, controle de migrações via **Flyway**, auditoria de entidades (`AuditorAware`) e soft-delete.
+* **Segurança:** Autenticação stateless via **JWT** e controle de acesso baseado em papéis (**RBAC**): `ADMIN`, `ADMIN_CLINICA`, `FUNCIONARIO_CLINICA`, `PROFISSIONAL` e `RESPONSAVEL`.
+* **Frontend Web:** SPA moderna e responsiva construída em **React 18**, **TypeScript**, **Vite** e **Tailwind CSS**, com tipagem estrita e suite de testes automatizados com **Vitest**.
 
 ---
 
-## Project Status
+## ✨ Principais Funcionalidades
 
-The project is currently under active development.
+### 🏥 1. Gestão Multi-Clínicas e Pacientes
+* Cadastro e gestão de clínicas, profissionais, pacientes e seus respectivos responsáveis legais.
+* Vínculo de operadoras de planos de saúde, prazos contratuais de faturamento e regras de carência.
+* Prontuário terapêutico digital com histórico unificado de intervenções.
 
-At the moment the focus is on building the backend structure and defining the main APIs that will support the system.
+### 📅 2. Agenda Inteligente & Multi-Clínicas
+* Timeline de compromissos com detecção automática de conflitos de horários entre salas e profissionais.
+* Suporte a atendimentos recorrentes (periodicidades configuráveis) e presença/status em tempo real.
+* Visão contextual por clínica e conciliação imediata com o faturamento.
+
+### 📑 3. Gestão Eletrônica de Documentos & Laudos
+* Repositório central de arquivos clínicos (PEI, relatórios multidisciplinares, laudos e receitas).
+* Níveis de privacidade granular: liberação seletiva para a família e controle de sigilo profissional.
+
+### 💰 4. Módulo Financeiro Institucional (Clínicas & Admins)
+* **Contratos Particulares & Combos:** Gestão de pacotes pré-pagos, controle de saldo de sessões consumidas e extrato de utilizações.
+* **Tabela de Preços:** Parametrização de valores particulares e convênios por especialidade.
+* **Faturamento de Convênios & Guias:** Geração de lotes de faturamento, conferência e fluxo de assinatura eletrônica de guias.
+
+### 💼 5. Portal do Profissional & Repasses
+* **Conta Corrente de Repasses:** Registro contábil congelado por sessão realizada (valor fixo ou percentual acordado com cada clínica).
+* **Atendimentos Particulares Diretos:** Autonomia para precificar e registrar sessões particulares fora das clínicas.
+* **Extrato e Quitação:** Baixa individual ou em lote por clínica no fechamento do mês.
 
 ---
 
-## Possible Future Features
+## 🛠️ Tecnologias Utilizadas
 
-- Multi-user support
-- Mobile interface
-- Therapist access
-- Progress reports
-- Notification system
-- Integration with therapy schedules
+| Camada | Tecnologias |
+| :--- | :--- |
+| **Backend** | Java 17, Spring Boot 3, Spring Data JPA, Spring Security, Hibernate, PostgreSQL, Flyway, Maven, JUnit 5, Mockito |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons, React Router 6, Vitest, Testing Library |
+| **Mobile** | Aplicativo nativo complementar em Android (Kotlin + Jetpack Compose) em repositório dedicado `DApp` |
 
 ---
 
-## Installation (Example)
+## 🚀 Como Executar o Projeto Localmente
 
-Clone the repository:
+### Pré-requisitos
+* Java JDK 17+
+* Node.js 18+ e pnpm / npm
+* PostgreSQL 14+
+* Maven 3.8+
 
+### 1. Clonar o Repositório
+```bash
 git clone https://github.com/RafaelFiorini/DailyAutism.git
-
-Navigate to the project folder:
-
 cd DailyAutism
+```
 
-Run the application according to the backend configuration.
+### 2. Configurar o Banco de Dados
+Configure as credenciais do seu banco PostgreSQL no arquivo `src/main/resources/application.yml` ou via variáveis de ambiente:
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dailyautism
+    username: seu_usuario
+    password: sua_senha
+```
+
+### 3. Executar o Backend
+```bash
+./mvnw spring-boot:run
+```
+*A API iniciará por padrão na porta `8080` e executará automaticamente as migrações do banco via Flyway.*
+
+### 4. Executar o Frontend Web
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*Acesse no navegador através de `http://localhost:5173`.*
 
 ---
 
-## Contribution
+## 👨‍💻 Autor
 
-Suggestions, feedback, and contributions are welcome.
-
-If you have ideas that can improve the project or help families dealing with autism, feel free to open an issue or submit a pull request.
-
----
-
-## Author
-
-Rafael Henrique Fiorini
-
-LinkedIn:
-https://linkedin.com/in/rafael-henrique-fiorini
-
-GitHub:
-https://github.com/RafaelFiorini
+**Rafael Henrique Fiorini**  
+* Desenvolvedor & Idealizador do Projeto  
+* LinkedIn: [rafael-henrique-fiorini](https://linkedin.com/in/rafael-henrique-fiorini)  
+* GitHub: [@RafaelFiorini](https://github.com/RafaelFiorini)
