@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Financeiro from './Financeiro';
 import { financeiroService } from '../services/financeiroService';
 
@@ -202,5 +202,27 @@ describe('Financeiro Page', () => {
       expect(screen.getByText('FAT-202611-0001')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Conferir e Assinar/i })).toBeInTheDocument();
     });
+  });
+
+  it('redireciona para /admin/meu-financeiro quando o usuário é estritamente PROFISSIONAL', async () => {
+    mockUseAuth.mockReturnValue({
+      user: { idUser: '3', nomeUser: 'Dra. Julia', perfis: ['PROFISSIONAL'] },
+      isAdmin: false,
+      isAdminClinica: false,
+      isFuncionarioClinica: false,
+      isResponsavel: false,
+      isProfissional: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/admin/financeiro']}>
+        <Routes>
+          <Route path="/admin/financeiro" element={<Financeiro />} />
+          <Route path="/admin/meu-financeiro" element={<div>Redirecionado para Meu Financeiro</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Redirecionado para Meu Financeiro')).toBeInTheDocument();
   });
 });

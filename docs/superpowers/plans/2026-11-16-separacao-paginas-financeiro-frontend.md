@@ -67,14 +67,14 @@
 - Modify: `frontend/src/pages/Financeiro.tsx`
 - Modify: `frontend/src/pages/Financeiro.test.tsx`
 
-- [ ] **Step 1:** Atualizar os testes em `Financeiro.test.tsx` para refletir que a página agora é estritamente o módulo de gestão financeira da clínica.
-- [ ] **Step 2:** Em `frontend/src/pages/Financeiro.tsx`:
+- [x] **Step 1:** Atualizar os testes em `Financeiro.test.tsx` para refletir que a página agora é estritamente o módulo de gestão financeira da clínica.
+- [x] **Step 2:** Em `frontend/src/pages/Financeiro.tsx`:
   - Se `isProfissionalOnly`, renderizar `<Navigate to="/admin/meu-financeiro" replace />`.
   - Remover a aba `'meu-financeiro'` do tipo `TabKey` e do estado inicial.
   - Remover o botão da aba "Meu Extrato & Repasses" e a importação de `FinanceiroProfissionalTab`.
   - Limpar as condicionais residuais `!isProfissionalOnly` dos botões das outras abas (já que profissionais exclusivos são redirecionados).
-- [ ] **Step 3:** Executar `npm test` em `Financeiro.test.tsx` e validar 100% de aprovação.
-- [ ] **Step 4:** Commit da limpeza do módulo financeiro administrativo.
+- [x] **Step 3:** Executar `npm test` em `Financeiro.test.tsx` e validar 100% de aprovação.
+- [x] **Step 4:** Commit da limpeza do módulo financeiro administrativo.
 
 ---
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { DollarSign, Wallet, Tag, FileCheck2, Loader2, AlertCircle, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { financeiroService } from '../services/financeiroService';
@@ -17,25 +17,25 @@ import type { TipoCompromisso } from '../types/compromisso';
 import ContratosParticularesTab from '../components/ContratosParticularesTab';
 import TabelaPrecosTab from '../components/TabelaPrecosTab';
 import FaturamentoConveniosTab from '../components/FaturamentoConveniosTab';
-import FinanceiroProfissionalTab from '../components/FinanceiroProfissionalTab';
 
-type TabKey = 'meu-financeiro' | 'particulares' | 'precos' | 'convenios';
+type TabKey = 'particulares' | 'precos' | 'convenios';
 
 export default function Financeiro() {
   const [searchParams] = useSearchParams();
   const { user, isAdmin, isAdminClinica, isFuncionarioClinica, isResponsavel, isProfissional } = useAuth();
-  const isResponsavelOnly = isResponsavel && !isAdmin && !isFuncionarioClinica && !isProfissional;
+  const isResponsavelOnly = isResponsavel && !isAdmin && !isFuncionarioClinica;
   const isProfissionalOnly = isProfissional && !isAdmin && !isFuncionarioClinica;
+
+  if (isProfissionalOnly) {
+    return <Navigate to="/admin/meu-financeiro" replace />;
+  }
+
   const canManageContratos = isAdmin || isFuncionarioClinica;
   const canManagePrecos = isAdmin || isAdminClinica;
   const canManageConvenios = isAdmin || isFuncionarioClinica;
   const canSignGuias = isResponsavel || isAdmin;
 
-  const initialTab: TabKey = searchParams.get('tab') === 'convenios'
-    ? 'convenios'
-    : isProfissionalOnly
-    ? 'meu-financeiro'
-    : 'particulares';
+  const initialTab: TabKey = searchParams.get('tab') === 'convenios' ? 'convenios' : 'particulares';
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [selectedClinicaId, setSelectedClinicaId] = useState<string>(user?.idClinica || '');
   const [clinicas, setClinicas] = useState<ClinicaOption[]>([]);
@@ -52,10 +52,6 @@ export default function Financeiro() {
   const [error, setError] = useState('');
 
   const loadBaseAndData = useCallback(async () => {
-    if (isProfissionalOnly) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError('');
     try {
@@ -96,7 +92,7 @@ export default function Financeiro() {
     } finally {
       setLoading(false);
     }
-  }, [isProfissionalOnly, isResponsavelOnly, selectedClinicaId, user?.idClinica]);
+  }, [isResponsavelOnly, selectedClinicaId, user?.idClinica]);
 
   useEffect(() => {
     loadBaseAndData();
@@ -117,16 +113,10 @@ export default function Financeiro() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              {isProfissionalOnly
-                ? 'Meu Financeiro & Repasses'
-                : isResponsavelOnly
-                ? 'Financeiro & Pacotes'
-                : 'Módulo Financeiro'}
+              {isResponsavelOnly ? 'Financeiro & Pacotes' : 'Módulo Financeiro'}
             </h1>
             <p className="text-xs text-gray-500">
-              {isProfissionalOnly
-                ? 'Acompanhe repasses de múltiplas clínicas, sessões particulares e quitações.'
-                : isResponsavelOnly
+              {isResponsavelOnly
                 ? 'Acompanhe os pacotes particulares pagos e o saldo de sessões por especialidade.'
                 : 'Tabela de preços, combos particulares pré-pagos e controle por clínica.'}
             </p>
@@ -154,35 +144,19 @@ export default function Financeiro() {
 
       {/* Navegação por abas */}
       <div className="flex flex-wrap gap-2">
-        {isProfissional && (
-          <button
-            onClick={() => setActiveTab('meu-financeiro')}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
-              activeTab === 'meu-financeiro'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <DollarSign className="h-4 w-4" />
-            Meu Extrato & Repasses
-          </button>
-        )}
+        <button
+          onClick={() => setActiveTab('particulares')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
+            activeTab === 'particulares'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <Wallet className="h-4 w-4" />
+          Particulares & Pacotes
+        </button>
 
-        {!isProfissionalOnly && (
-          <button
-            onClick={() => setActiveTab('particulares')}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
-              activeTab === 'particulares'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <Wallet className="h-4 w-4" />
-            Particulares & Pacotes
-          </button>
-        )}
-
-        {!isResponsavelOnly && !isProfissionalOnly && (
+        {!isResponsavelOnly && (
           <button
             onClick={() => setActiveTab('precos')}
             className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
@@ -196,24 +170,22 @@ export default function Financeiro() {
           </button>
         )}
 
-        {!isProfissionalOnly && (
-          <button
-            onClick={() => setActiveTab('convenios')}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
-              activeTab === 'convenios'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <FileCheck2 className="h-4 w-4" />
-            Guias de Convênio
-            {guiasPendentesAssinatura > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950">
-                {guiasPendentesAssinatura}
-              </span>
-            )}
-          </button>
-        )}
+        <button
+          onClick={() => setActiveTab('convenios')}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition ${
+            activeTab === 'convenios'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          <FileCheck2 className="h-4 w-4" />
+          Guias de Convênio
+          {guiasPendentesAssinatura > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-amber-950">
+              {guiasPendentesAssinatura}
+            </span>
+          )}
+        </button>
       </div>
 
       {error && (
@@ -223,13 +195,11 @@ export default function Financeiro() {
         </div>
       )}
 
-      {loading && activeTab !== 'meu-financeiro' ? (
+      {loading ? (
         <div className="bg-white rounded-2xl border border-gray-200 p-12 flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
           <span className="text-sm text-gray-500">Carregando dados financeiros...</span>
         </div>
-      ) : activeTab === 'meu-financeiro' ? (
-        <FinanceiroProfissionalTab />
       ) : activeTab === 'particulares' ? (
         <ContratosParticularesTab
           clinicaId={selectedClinicaId || user?.idClinica || ''}
