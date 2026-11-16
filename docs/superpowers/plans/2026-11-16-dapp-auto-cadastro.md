@@ -44,9 +44,9 @@
 **Files:**
 - Create: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/cadastro/RegisterViewModel.kt`
 
-- [ ] **Step 1:** Definir `RegisterUiState` (`Idle`, `Loading`, `Success(token, userMe)`, `Error(message)`).
-- [ ] **Step 2:** Implementar método `cadastrar(request, context)` no `RegisterViewModel` que valida os campos, chama `AuthService.register`, salva o token no `TokenDataStore`, busca os dados com `UserService.getMe` e emite `Success`.
-- [ ] **Step 3:** Commit do ViewModel.
+- [x] **Step 1:** Definir `RegisterUiState` (`Idle`, `Loading`, `Success(token, userMe)`, `Error(message)`).
+- [x] **Step 2:** Implementar método `cadastrar(request, context)` no `RegisterViewModel` que valida os campos, chama `AuthService.register`, salva o token no `TokenDataStore`, busca os dados com `UserService.getMe` e emite `Success`.
+- [x] **Step 3:** Commit do ViewModel.
 
 ---
 
