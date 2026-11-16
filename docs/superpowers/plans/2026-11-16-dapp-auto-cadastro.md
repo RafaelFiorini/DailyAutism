@@ -33,9 +33,9 @@
 - Create: `DApp/app/src/main/java/com/dailyautism/dapp/model/RegisterModels.kt`
 - Modify: `DApp/app/src/main/java/com/dailyautism/dapp/network/AuthService.kt`
 
-- [ ] **Step 1:** Criar data class `RegisterRequest` em `RegisterModels.kt` com suporte a `tipo`, `nome`, `email`, `senha`, `cpf`, `celular`, `telefone`, `conselhoProf`.
-- [ ] **Step 2:** Adicionar endpoint `@POST("auth/register") suspend fun register(@Body request: RegisterRequest): LoginResponse` em `AuthService.kt`.
-- [ ] **Step 3:** Commit das alterações de rede e modelos.
+- [x] **Step 1:** Criar data class `RegisterRequest` em `RegisterModels.kt` com suporte a `tipo`, `nome`, `email`, `senha`, `cpf`, `celular`, `telefone`, `conselhoProf`.
+- [x] **Step 2:** Adicionar endpoint `@POST("auth/register") suspend fun register(@Body request: RegisterRequest): LoginResponse` em `AuthService.kt`.
+- [x] **Step 3:** Commit das alterações de rede e modelos.
 
 ---
 
