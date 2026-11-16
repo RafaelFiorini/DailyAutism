@@ -83,6 +83,6 @@
 **Files:**
 - Todos os arquivos modificados.
 
-- [ ] **Step 1:** Executar `npm --prefix frontend run build` para garantir zero erros de TypeScript e bundle limpo.
-- [ ] **Step 2:** Executar `npm --prefix frontend test -- --run` para garantir que toda a suíte de testes unitários passe com sucesso.
-- [ ] **Step 3:** Commit final e push para o repositório remoto (`origin/master`).
+- [x] **Step 1:** Executar `npm --prefix frontend run build` para garantir zero erros de TypeScript e bundle limpo.
+- [x] **Step 2:** Executar `npm --prefix frontend test -- --run` para garantir que toda a suíte de testes unitários passe com sucesso.
+- [x] **Step 3:** Commit final e push para o repositório remoto (`origin/master`).

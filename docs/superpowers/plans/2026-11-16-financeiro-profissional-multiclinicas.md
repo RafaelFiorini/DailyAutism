@@ -127,8 +127,8 @@
 ### Task 7: Separação de Rotas no Frontend Web (Refatoração Arquitetural)
 
 > Detalhado no plano complementar: [2026-11-16-separacao-paginas-financeiro-frontend.md](file:///c:/Users/rafael.fiorini/DailyAutism/docs/superpowers/plans/2026-11-16-separacao-paginas-financeiro-frontend.md)
-- [ ] Task 1: Criar a Página Dedicada `FinanceiroProfissionalPage.tsx` e Testes.
-- [ ] Task 2: Registrar Rotas e Atualizar Navegação na Sidebar (`/admin/meu-financeiro`).
-- [ ] Task 3: Limpar e Simplificar `Financeiro.tsx` (exclusivo para gestão de clínica/admin).
-- [ ] Task 4: Validação Geral da Suite de Testes e Build de Produção.
+- [x] Task 1: Criar a Página Dedicada `FinanceiroProfissionalPage.tsx` e Testes.
+- [x] Task 2: Registrar Rotas e Atualizar Navegação na Sidebar (`/admin/meu-financeiro`).
+- [x] Task 3: Limpar e Simplificar `Financeiro.tsx` (exclusivo para gestão de clínica/admin).
+- [x] Task 4: Validação Geral da Suite de Testes e Build de Produção.
 
