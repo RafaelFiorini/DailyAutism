@@ -230,45 +230,52 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedTiposCompromisso() {
-        if (tipoCompromissoRepository.count() == 0) {
-            List<TipoCompromisso> padroes = List.of(
-                    TipoCompromisso.builder()
-                            .nomeTipo("Terapia Ocupacional")
-                            .descricaoTipo("Integração sensorial, autonomia nas atividades diárias e coordenação motora")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Fonoaudiologia")
-                            .descricaoTipo("Desenvolvimento de fala, linguagem, comunicação verbal/alternativa e deglutição")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Psicologia / ABA")
-                            .descricaoTipo("Intervenção comportamental baseada em ABA, regulação emocional e habilidades sociais")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Fisioterapia")
-                            .descricaoTipo("Reabilitação física, coordenação motora global e psicomotricidade")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Psicopedagogia")
-                            .descricaoTipo("Acompanhamento escolar, processos cognitivos e mediação de aprendizagem")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Neuropediatria")
-                            .descricaoTipo("Avaliação médica especializada, diagnóstico neurológico e prescrição clínica")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Musicoterapia")
-                            .descricaoTipo("Estimulação sensorial e sócio-comunicativa através da vivência musical")
-                            .build(),
-                    TipoCompromisso.builder()
-                            .nomeTipo("Nutrição")
-                            .descricaoTipo("Orientação alimentar individualizada e manejo de seletividade alimentar")
-                            .build()
-            );
-            padroes.forEach(t -> {
-                if (t.getAtivo() == null) t.setAtivo(true);
-            });
-            tipoCompromissoRepository.saveAll(padroes);
+        List<TipoCompromisso> padroes = List.of(
+                TipoCompromisso.builder()
+                        .nomeTipo("Terapia Ocupacional")
+                        .descricaoTipo("Integração sensorial, autonomia nas atividades diárias e coordenação motora")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Fonoaudiologia")
+                        .descricaoTipo("Desenvolvimento de fala, linguagem, comunicação verbal/alternativa e deglutição")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Psicologia / ABA")
+                        .descricaoTipo("Intervenção comportamental baseada em ABA, regulação emocional e habilidades sociais")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Psicologia")
+                        .descricaoTipo("Psicoterapia infantil e do desenvolvimento, acolhimento clínico e suporte emocional")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Fisioterapia")
+                        .descricaoTipo("Reabilitação física, coordenação motora global e psicomotricidade")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Psicopedagogia")
+                        .descricaoTipo("Acompanhamento escolar, processos cognitivos e mediação de aprendizagem")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Neuropediatria")
+                        .descricaoTipo("Avaliação médica especializada, diagnóstico neurológico e prescrição clínica")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Musicoterapia")
+                        .descricaoTipo("Estimulação sensorial e sócio-comunicativa através da vivência musical")
+                        .build(),
+                TipoCompromisso.builder()
+                        .nomeTipo("Nutrição")
+                        .descricaoTipo("Orientação alimentar individualizada e manejo de seletividade alimentar")
+                        .build()
+        );
+
+        for (TipoCompromisso padrao : padroes) {
+            boolean existe = tipoCompromissoRepository.findAll().stream()
+                    .anyMatch(t -> t.getNomeTipo().trim().equalsIgnoreCase(padrao.getNomeTipo().trim()));
+            if (!existe) {
+                if (padrao.getAtivo() == null) padrao.setAtivo(true);
+                tipoCompromissoRepository.save(padrao);
+            }
         }
     }
 
