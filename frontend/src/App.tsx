@@ -14,6 +14,7 @@ import Periodicidades from './pages/Periodicidades';
 import Agenda from './pages/Agenda';
 import Arquivos from './pages/Arquivos';
 import Financeiro from './pages/Financeiro';
+import FinanceiroProfissionalPage from './pages/FinanceiroProfissionalPage';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="agenda" element={<Agenda />} />
               <Route path="arquivos" element={<Arquivos />} />
               <Route path="financeiro" element={<Financeiro />} />
+              <Route path="meu-financeiro" element={<FinanceiroProfissionalPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

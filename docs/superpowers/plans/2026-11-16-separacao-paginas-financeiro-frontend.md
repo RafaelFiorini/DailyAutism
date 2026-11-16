@@ -50,14 +50,14 @@
 - Modify: `frontend/src/components/AdminLayout.tsx`
 - Modify: `frontend/src/components/AdminLayout.test.tsx` (ou teste correspondente se houver)
 
-- [ ] **Step 1:** Em `frontend/src/App.tsx`, importar `FinanceiroProfissionalPage` e adicionar a rota:
+- [x] **Step 1:** Em `frontend/src/App.tsx`, importar `FinanceiroProfissionalPage` e adicionar a rota:
   `<Route path="meu-financeiro" element={<FinanceiroProfissionalPage />} />` dentro de `<Route path="/admin" element={<AdminLayout />}>`.
-- [ ] **Step 2:** Em `frontend/src/components/AdminLayout.tsx`:
+- [x] **Step 2:** Em `frontend/src/components/AdminLayout.tsx`:
   - No menu do `isProfissional`, alterar o item de Financeiro para:
     `{ name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false }`.
   - Garantir que `isAdmin` ou `isFuncionarioClinica` continuem apontando para `/admin/financeiro`.
-- [ ] **Step 3:** Executar testes do frontend para verificar integridade da navegação.
-- [ ] **Step 4:** Commit das configurações de rota e navegação.
+- [x] **Step 3:** Executar testes do frontend para verificar integridade da navegação.
+- [x] **Step 4:** Commit das configurações de rota e navegação.
 
 ---
 

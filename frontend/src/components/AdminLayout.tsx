@@ -24,7 +24,7 @@ export default function AdminLayout() {
 
   const navigation = useMemo(() => {
     if (isAdmin) {
-      return [
+      const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
@@ -37,6 +37,12 @@ export default function AdminLayout() {
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
         { name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false },
       ];
+
+      if (isProfissional) {
+        items.splice(4, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
+      }
+
+      return items;
     }
 
     if (isFuncionarioClinica) {
@@ -50,6 +56,10 @@ export default function AdminLayout() {
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
+
+      if (isProfissional) {
+        items.splice(4, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
+      }
 
       if (isAdminClinica) {
         items.push({ name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false });
@@ -74,7 +84,7 @@ export default function AdminLayout() {
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
-        { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
+        { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false },
         { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
       ];
