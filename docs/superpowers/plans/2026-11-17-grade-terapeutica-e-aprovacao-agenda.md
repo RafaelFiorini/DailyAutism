@@ -59,14 +59,14 @@
 - Modify: `src/main/java/com/clinica/dailyautism/domain/aplicationservice/CompromissoService.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/aplicationservice/GradeTerapeuticaServiceTest.java`
 
-- [ ] **Step 1:** Criar teste unitário `GradeTerapeuticaServiceTest` cobrindo:
+- [x] **Step 1:** Criar teste unitário `GradeTerapeuticaServiceTest` cobrindo:
   - Criação de grade e envio para aprovação.
   - Aprovação do responsável e replicação semana a semana.
   - Detecção de choques de horário gerando `PENDENTE_REAGENDAMENTO`.
   - Substituição de grade com corte de data e cancelamento de compromissos futuros.
   - Registro de sugestão de alteração pelo responsável.
-- [ ] **Step 2:** Executar testes para verificar falha inicial (TDD).
-- [ ] **Step 3:** Implementar `GradeTerapeuticaService` com os métodos:
+- [x] **Step 2:** Executar testes para verificar falha inicial (TDD).
+- [x] **Step 3:** Implementar `GradeTerapeuticaService` com os métodos:
   - `criarPropostaGrade(...)`
   - `enviarParaAprovacao(idGrade)`
   - `registrarSugestaoResponsavel(idGrade, justificativa)`
@@ -74,8 +74,8 @@
   - `rejeitar(idGrade, motivo)`
   - `proporAlteracao(idGradeVigente, dataCorte, novaGradeDTO)`
   - `listarConflitosPendentes(idClinica, idPaciente)`
-- [ ] **Step 4:** Executar testes unitários e garantir 100% aprovados.
-- [ ] **Step 5:** Commit do serviço de aplicação.
+- [x] **Step 4:** Executar testes unitários e garantir 100% aprovados.
+- [x] **Step 5:** Commit do serviço de aplicação.
 
 ---
 
