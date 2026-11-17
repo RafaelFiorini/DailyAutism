@@ -112,10 +112,10 @@
 - Create: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/home/GradeTerapeuticaViewModel.kt`
 - Modify: `DApp/app/src/main/java/com/dailyautism/dapp/network/RetrofitClient.kt`
 
-- [ ] **Step 1:** Criar data classes Kotlin para grade, itens e payload de sugestão/aprovação.
-- [ ] **Step 2:** Criar interface `GradeTerapeuticaService` no Retrofit e registrar no `RetrofitClient`.
-- [ ] **Step 3:** Criar `GradeTerapeuticaViewModel` com estados de carregamento de proposta pendente, aprovação e envio de contraproposta com texto.
-- [ ] **Step 4:** Commit da camada de dados no DApp.
+- [x] **Step 1:** Criar data classes Kotlin para grade, itens e payload de sugestão/aprovação.
+- [x] **Step 2:** Criar interface `GradeTerapeuticaService` no Retrofit e registrar no `RetrofitClient`.
+- [x] **Step 3:** Criar `GradeTerapeuticaViewModel` com estados de carregamento de proposta pendente, aprovação e envio de contraproposta com texto.
+- [x] **Step 4:** Commit da camada de dados no DApp.
 
 ---
 
