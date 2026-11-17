@@ -162,8 +162,8 @@
 **Files:**
 - Todos os arquivos modificados.
 
-- [ ] **Step 1:** Executar suite de testes do Backend Spring Boot (`./mvnw test`).
-- [ ] **Step 2:** Executar build e testes do Frontend Web (`npm run build`, `npm test`).
-- [ ] **Step 3:** Fazer push do repositório `DailyAutism` para acionar deploy automático na OCI.
-- [ ] **Step 4:** Fazer push do repositório `DApp` para acionar compilação automática do APK no GitHub Actions.
-- [ ] **Step 5:** Validar funcionamento de ponta a ponta.
+- [x] **Step 1:** Executar suite de testes do Backend Spring Boot (`./mvnw test`).
+- [x] **Step 2:** Executar build e testes do Frontend Web (`npm run build`, `npm test`).
+- [x] **Step 3:** Fazer push do repositório `DailyAutism` para acionar deploy automático na OCI.
+- [x] **Step 4:** Fazer push do repositório `DApp` para acionar compilação automática do APK no GitHub Actions.
+- [x] **Step 5:** Validar funcionamento de ponta a ponta.
