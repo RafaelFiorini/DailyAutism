@@ -89,8 +89,8 @@
 - Create: `src/main/java/com/clinica/dailyautism/infrastructure/controller/GradeTerapeuticaRestResource.java`
 - Test: `src/test/java/com/clinica/dailyautism/infrastructure/controller/GradeTerapeuticaRestResourceTest.java`
 
-- [ ] **Step 1:** Criar DTOs para entrada e saída de grades e itens semanais.
-- [ ] **Step 2:** Implementar controller `GradeTerapeuticaRestResource`:
+- [x] **Step 1:** Criar DTOs para entrada e saída de grades e itens semanais.
+- [x] **Step 2:** Implementar controller `GradeTerapeuticaRestResource`:
   - `POST /grades-terapeuticas`: Cria proposta.
   - `GET /grades-terapeuticas/paciente/{idPaciente}`: Lista histórico e grade vigente do paciente.
   - `POST /grades-terapeuticas/{id}/enviar`: Envia proposta para o responsável.
@@ -99,8 +99,8 @@
   - `POST /grades-terapeuticas/{id}/rejeitar`: Rejeita proposta.
   - `POST /grades-terapeuticas/{id}/alterar`: Proposta de nova versão com data de corte.
   - `GET /grades-terapeuticas/{id}/conflitos`: Lista compromissos que colidiram na geração.
-- [ ] **Step 3:** Criar testes de integração do controller validando permissões de acesso por perfil.
-- [ ] **Step 4:** Commit dos controllers e DTOs.
+- [x] **Step 3:** Criar testes de integração do controller validando permissões de acesso por perfil.
+- [x] **Step 4:** Commit dos controllers e DTOs.
 
 ---
 

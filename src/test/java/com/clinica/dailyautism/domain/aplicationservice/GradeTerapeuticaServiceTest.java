@@ -33,6 +33,8 @@ class GradeTerapeuticaServiceTest {
     @Mock private ClinicaRepository clinicaRepository;
     @Mock private UserRepository userRepository;
     @Mock private PeriodicidadeRepository periodicidadeRepository;
+    @Mock private TipoCompromissoRepository tipoCompromissoRepository;
+    @Mock private ProfissionalRepository profissionalRepository;
 
     @InjectMocks
     private GradeTerapeuticaService gradeTerapeuticaService;

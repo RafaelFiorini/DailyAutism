@@ -3,6 +3,9 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.*;
+import com.clinica.dailyautism.infrastructure.dto.ProporAlteracaoGradeDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveGradeTerapeuticaDTO;
+import com.clinica.dailyautism.infrastructure.dto.SaveGradeTerapeuticaItemDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,6 +31,8 @@ public class GradeTerapeuticaService {
     private final ClinicaRepository clinicaRepository;
     private final UserRepository userRepository;
     private final PeriodicidadeRepository periodicidadeRepository;
+    private final TipoCompromissoRepository tipoCompromissoRepository;
+    private final ProfissionalRepository profissionalRepository;
 
     @Transactional(readOnly = true)
     public GradeTerapeutica carregarGrade(String idGrade) {
@@ -247,7 +252,55 @@ public class GradeTerapeuticaService {
     }
 
     @Transactional
-    public GradeTerapeutica proporAlteracao(String idGradeVigente, LocalDate dataInicioNovaGrade, GradeTerapeutica novaGradeDados) {
+    public GradeTerapeutica criarProposta(SaveGradeTerapeuticaDTO dto) {
+        Paciente paciente = pacienteRepository.findById(dto.getIdPaciente())
+                .orElseThrow(() -> new IllegalArgumentException("Paciente não encontrado: " + dto.getIdPaciente()));
+
+        Clinica clinica = null;
+        if (dto.getIdClinica() != null && !dto.getIdClinica().isBlank()) {
+            clinica = clinicaRepository.findById(dto.getIdClinica()).orElse(null);
+        }
+
+        GradeTerapeutica grade = GradeTerapeutica.builder()
+                .paciente(paciente)
+                .clinica(clinica)
+                .numeroVersao(1)
+                .tipoOrigemVigencia(dto.getTipoOrigemVigencia())
+                .idOrigemVigencia(dto.getIdOrigemVigencia())
+                .dataInicioVigencia(dto.getDataInicioVigencia())
+                .dataFimVigencia(dto.getDataFimVigencia())
+                .itens(new ArrayList<>())
+                .build();
+
+        if (dto.getItens() != null) {
+            for (SaveGradeTerapeuticaItemDTO itemDTO : dto.getItens()) {
+                TipoCompromisso tipo = tipoCompromissoRepository.findById(itemDTO.getIdTipoCompromisso())
+                        .orElseThrow(() -> new IllegalArgumentException("Tipo de compromisso não encontrado: " + itemDTO.getIdTipoCompromisso()));
+
+                Profissional prof = null;
+                if (itemDTO.getIdProfissional() != null && !itemDTO.getIdProfissional().isBlank()) {
+                    prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
+                }
+
+                GradeTerapeuticaItem item = GradeTerapeuticaItem.builder()
+                        .diaSemana(itemDTO.getDiaSemana())
+                        .horaInicio(itemDTO.getHoraInicio())
+                        .horaFim(itemDTO.getHoraFim())
+                        .tipoCompromisso(tipo)
+                        .profissional(prof)
+                        .sala(itemDTO.getSala())
+                        .build();
+
+                grade.addItem(item);
+            }
+        }
+
+        boolean enviar = Boolean.TRUE.equals(dto.getEnviarParaAprovacao());
+        return salvarProposta(grade, enviar);
+    }
+
+    @Transactional
+    public GradeTerapeutica proporAlteracao(String idGradeVigente, ProporAlteracaoGradeDTO dto) {
         GradeTerapeutica gradeVigente = carregarGrade(idGradeVigente);
 
         GradeTerapeutica novaVersao = GradeTerapeutica.builder()
@@ -257,22 +310,30 @@ public class GradeTerapeuticaService {
                 .numeroVersao(gradeVigente.getNumeroVersao() + 1)
                 .tipoOrigemVigencia(gradeVigente.getTipoOrigemVigencia())
                 .idOrigemVigencia(gradeVigente.getIdOrigemVigencia())
-                .dataInicioVigencia(dataInicioNovaGrade)
+                .dataInicioVigencia(dto.getDataInicioNovaGrade())
                 .dataFimVigencia(gradeVigente.getDataFimVigencia())
                 .status(StatusGradeTerapeutica.PENDENTE_APROVACAO)
                 .dataEnvio(LocalDateTime.now())
                 .itens(new ArrayList<>())
                 .build();
 
-        if (novaGradeDados.getItens() != null) {
-            for (GradeTerapeuticaItem item : novaGradeDados.getItens()) {
+        if (dto.getItens() != null) {
+            for (SaveGradeTerapeuticaItemDTO itemDTO : dto.getItens()) {
+                TipoCompromisso tipo = tipoCompromissoRepository.findById(itemDTO.getIdTipoCompromisso())
+                        .orElseThrow(() -> new IllegalArgumentException("Tipo de compromisso não encontrado: " + itemDTO.getIdTipoCompromisso()));
+
+                Profissional prof = null;
+                if (itemDTO.getIdProfissional() != null && !itemDTO.getIdProfissional().isBlank()) {
+                    prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
+                }
+
                 novaVersao.addItem(GradeTerapeuticaItem.builder()
-                        .diaSemana(item.getDiaSemana())
-                        .horaInicio(item.getHoraInicio())
-                        .horaFim(item.getHoraFim())
-                        .tipoCompromisso(item.getTipoCompromisso())
-                        .profissional(item.getProfissional())
-                        .sala(item.getSala())
+                        .diaSemana(itemDTO.getDiaSemana())
+                        .horaInicio(itemDTO.getHoraInicio())
+                        .horaFim(itemDTO.getHoraFim())
+                        .tipoCompromisso(tipo)
+                        .profissional(prof)
+                        .sala(itemDTO.getSala())
                         .build());
             }
         }
