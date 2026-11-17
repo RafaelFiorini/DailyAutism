@@ -7,5 +7,6 @@ public enum StatusCompromisso {
     REJEITADO,             // responsável rejeitou
     REALIZADO,             // compromisso aconteceu
     CANCELADO,             // cancelado por qualquer motivo
-    FALTOU                 // paciente não compareceu
+    FALTOU,                // paciente não compareceu
+    PENDENTE_REAGENDAMENTO // conflito pontual de agenda gerado na replicação
 }

@@ -57,4 +57,8 @@ public class Compromisso extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "idUser", nullable = false)
     private User criadoPor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "idGradeTerapeutica")
+    private GradeTerapeutica gradeTerapeutica;
 }

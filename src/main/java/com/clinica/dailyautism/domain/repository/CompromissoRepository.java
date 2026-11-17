@@ -53,4 +53,16 @@ public interface CompromissoRepository extends JpaRepository<Compromisso, String
             @Param("dataHora") LocalDateTime dataHora,
             @Param("idCompromissoIgnorado") String idCompromissoIgnorado
     );
+
+    List<Compromisso> findByGradeTerapeuticaIdGradeTerapeuticaOrderByDataHoraCompromissoAsc(String idGradeTerapeutica);
+
+    List<Compromisso> findByGradeTerapeuticaIdGradeTerapeuticaAndDataHoraCompromissoGreaterThanEqualOrderByDataHoraCompromissoAsc(
+            String idGradeTerapeutica,
+            LocalDateTime dataHora
+    );
+
+    List<Compromisso> findByGradeTerapeuticaIdGradeTerapeuticaAndStatusOrderByDataHoraCompromissoAsc(
+            String idGradeTerapeutica,
+            StatusCompromisso status
+    );
 }

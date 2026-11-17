@@ -41,14 +41,14 @@
 - Modify: `src/main/java/com/clinica/dailyautism/domain/entity/Compromisso.java`
 - Test: `src/test/java/com/clinica/dailyautism/domain/repository/GradeTerapeuticaRepositoryTest.java`
 
-- [ ] **Step 1:** Criar enum `StatusGradeTerapeutica` e `DiaSemana`.
-- [ ] **Step 2:** Atualizar `StatusCompromisso.java` adicionando `PENDENTE_REAGENDAMENTO`.
-- [ ] **Step 3:** Adicionar `@ManyToOne @JoinColumn(name = "idGradeTerapeutica") private GradeTerapeutica gradeTerapeutica` em `Compromisso.java`.
-- [ ] **Step 4:** Criar entidade `GradeTerapeutica` herdando de `BaseEntity` com mapeamento JPA, versionamento (`numeroVersao`), vínculo com `Paciente`, `Clinica`, `idGradeAnterior` e campos de vigência e auditoria.
-- [ ] **Step 5:** Criar entidade `GradeTerapeuticaItem` com dia da semana, horários, tipo de compromisso e profissional.
-- [ ] **Step 6:** Criar repositórios `GradeTerapeuticaRepository` e `GradeTerapeuticaItemRepository`.
-- [ ] **Step 7:** Criar teste de repositório `GradeTerapeuticaRepositoryTest` validando persistência e consultas.
-- [ ] **Step 8:** Commit das entidades e repositórios.
+- [x] **Step 1:** Criar enum `StatusGradeTerapeutica` e `DiaSemana`.
+- [x] **Step 2:** Atualizar `StatusCompromisso.java` adicionando `PENDENTE_REAGENDAMENTO`.
+- [x] **Step 3:** Adicionar `@ManyToOne @JoinColumn(name = "idGradeTerapeutica") private GradeTerapeutica gradeTerapeutica` em `Compromisso.java`.
+- [x] **Step 4:** Criar entidade `GradeTerapeutica` herdando de `BaseEntity` com mapeamento JPA, versionamento (`numeroVersao`), vínculo com `Paciente`, `Clinica`, `idGradeAnterior` e campos de vigência e auditoria.
+- [x] **Step 5:** Criar entidade `GradeTerapeuticaItem` com dia da semana, horários, tipo de compromisso e profissional.
+- [x] **Step 6:** Criar repositórios `GradeTerapeuticaRepository` e `GradeTerapeuticaItemRepository`.
+- [x] **Step 7:** Criar teste de repositório `GradeTerapeuticaRepositoryTest` validando persistência e consultas.
+- [x] **Step 8:** Commit das entidades e repositórios.
 
 ---
 
