@@ -27,6 +27,9 @@ export interface GradeTerapeuticaItem {
   idProfissional?: string;
   nomeProfissional?: string;
   sala?: string;
+  idPeriodicidade?: string;
+  nomePeriodicidade?: string;
+  diasIntervalo?: number;
 }
 
 export interface SaveGradeTerapeuticaItem {
@@ -36,6 +39,7 @@ export interface SaveGradeTerapeuticaItem {
   idTipoCompromisso: string;
   idProfissional?: string;
   sala?: string;
+  idPeriodicidade?: string;
 }
 
 export interface GradeTerapeutica {

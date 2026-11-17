@@ -24,6 +24,9 @@ public class GradeTerapeuticaItemDTO {
     private String nomeTipoCompromisso;
     private String idProfissional;
     private String nomeProfissional;
+    private String idPeriodicidade;
+    private String nomePeriodicidade;
+    private Integer diasIntervalo;
     private String sala;
 
     public static GradeTerapeuticaItemDTO fromEntity(GradeTerapeuticaItem item) {
@@ -41,6 +44,15 @@ public class GradeTerapeuticaItemDTO {
             nomeProf = item.getProfissional().getPessoaProf().getNomePessoa();
         }
 
+        String idPer = null;
+        String nomePer = null;
+        Integer diasPer = null;
+        if (item.getPeriodicidade() != null) {
+            idPer = item.getPeriodicidade().getIdPeriodicidade();
+            nomePer = item.getPeriodicidade().getNomePeriodicidade();
+            diasPer = item.getPeriodicidade().getDiasIntervalo();
+        }
+
         return GradeTerapeuticaItemDTO.builder()
                 .idGradeTerapeuticaItem(item.getIdGradeTerapeuticaItem())
                 .diaSemana(item.getDiaSemana())
@@ -51,6 +63,9 @@ public class GradeTerapeuticaItemDTO {
                 .nomeTipoCompromisso(nomeTipo)
                 .idProfissional(item.getProfissional() != null ? item.getProfissional().getIdProf() : null)
                 .nomeProfissional(nomeProf)
+                .idPeriodicidade(idPer)
+                .nomePeriodicidade(nomePer)
+                .diasIntervalo(diasPer)
                 .sala(item.getSala())
                 .build();
     }

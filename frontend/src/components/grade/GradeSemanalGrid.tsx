@@ -115,6 +115,24 @@ export const GradeSemanalGrid: React.FC<GradeSemanalGridProps> = ({ itens, compa
                           <span className="truncate">{item.sala}</span>
                         </div>
                       )}
+
+                      {item.nomePeriodicidade && (
+                        <div className="mt-1.5 flex items-center">
+                          <span
+                            className={`inline-block text-[10px] px-1.5 py-0.5 rounded-md font-semibold tracking-wide ${
+                              item.nomePeriodicidade.toLowerCase().includes('quinzenal')
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                : item.nomePeriodicidade.toLowerCase().includes('mensal')
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                : item.nomePeriodicidade.toLowerCase().includes('avulsa')
+                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                            }`}
+                          >
+                            {item.nomePeriodicidade}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })

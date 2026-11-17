@@ -45,6 +45,10 @@ public class GradeTerapeuticaItem extends BaseEntity {
     @JoinColumn(name = "idProfissional")
     private Profissional profissional;
 
+    @ManyToOne
+    @JoinColumn(name = "idPeriodicidade")
+    private Periodicidade periodicidade;
+
     @Column(length = 100)
     private String sala;
 }

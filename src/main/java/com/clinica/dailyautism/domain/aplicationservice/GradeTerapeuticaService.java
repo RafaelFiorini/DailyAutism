@@ -134,7 +134,7 @@ public class GradeTerapeuticaService {
             });
         }
 
-        // 2. Resolver periodicidade semanal padrão
+        // 2. Resolver periodicidade semanal padrão de fallback
         Periodicidade periodicidadeSemanal = periodicidadeRepository.findAll().stream()
                 .filter(p -> p.getNomePeriodicidade() != null && p.getNomePeriodicidade().toLowerCase().contains("semanal"))
                 .findFirst()
@@ -144,26 +144,37 @@ public class GradeTerapeuticaService {
                         .build()
                 );
 
-        // 3. Motor de replicação semana a semana
+        // 3. Motor de replicação por item de grade respeitando sua periodicidade específica
         List<Compromisso> novosCompromissos = new ArrayList<>();
-        LocalDate dataAtual = grade.getDataInicioVigencia();
-        LocalDate dataFim = grade.getDataFimVigencia();
+        LocalDate dataInicioVigencia = grade.getDataInicioVigencia();
+        LocalDate dataFimVigencia = grade.getDataFimVigencia();
         LocalDateTime agora = LocalDateTime.now();
 
-        while (!dataAtual.isAfter(dataFim)) {
-            DayOfWeek dow = dataAtual.getDayOfWeek();
+        if (grade.getItens() != null) {
+            for (GradeTerapeuticaItem item : grade.getItens()) {
+                if (item.getDiaSemana() == null) continue;
 
-            if (grade.getItens() != null) {
-                for (GradeTerapeuticaItem item : grade.getItens()) {
-                    if (item.getDiaSemana() != null && item.getDiaSemana().getDayOfWeek() == dow) {
-                        LocalDateTime dataHora = dataAtual.atTime(item.getHoraInicio());
+                // 3.1 Encontra a primeira data válida para este dia da semana a partir de dataInicioVigencia
+                LocalDate dataOcorrencia = dataInicioVigencia;
+                while (dataOcorrencia.getDayOfWeek() != item.getDiaSemana().getDayOfWeek() && !dataOcorrencia.isAfter(dataFimVigencia)) {
+                    dataOcorrencia = dataOcorrencia.plusDays(1);
+                }
 
-                        // Não replica no passado remoto se já passou da hora atual
-                        if (dataHora.isBefore(agora)) {
-                            continue;
-                        }
+                // 3.2 Determina o intervalo de avanço da periodicidade do item
+                Periodicidade periodicidadeItem = item.getPeriodicidade() != null ? item.getPeriodicidade() : periodicidadeSemanal;
+                String nomePer = periodicidadeItem.getNomePeriodicidade() != null ? periodicidadeItem.getNomePeriodicidade().toLowerCase() : "";
+                Integer diasIntervalo = periodicidadeItem.getDiasIntervalo();
 
-                        // Verifica choque de horário com a agenda do profissional
+                boolean isQuinzenal = nomePer.contains("quinzenal") || (diasIntervalo != null && diasIntervalo == 14);
+                boolean isMensal = nomePer.contains("mensal") || (diasIntervalo != null && diasIntervalo >= 28);
+                boolean isAvulsa = nomePer.contains("avulsa") || (diasIntervalo != null && diasIntervalo == 0);
+
+                // 3.3 Replica as sessões do item até o fim da vigência
+                while (!dataOcorrencia.isAfter(dataFimVigencia)) {
+                    LocalDateTime dataHora = dataOcorrencia.atTime(item.getHoraInicio());
+
+                    // Não replica no passado remoto
+                    if (!dataHora.isBefore(agora)) {
                         StatusCompromisso statusCompromisso = StatusCompromisso.AGENDADO;
                         if (item.getProfissional() != null) {
                             long conflitos = compromissoRepository.countConflitosProfissional(
@@ -187,13 +198,13 @@ public class GradeTerapeuticaService {
 
                         Compromisso compromisso = Compromisso.builder()
                                 .tituloCompromisso(titulo)
-                                .descricaoCompromisso("Atendimento gerado pela Grade Terapêutica v" + grade.getNumeroVersao())
+                                .descricaoCompromisso("Atendimento gerado pela Grade Terapêutica v" + grade.getNumeroVersao() + " (" + periodicidadeItem.getNomePeriodicidade() + ")")
                                 .dataHoraCompromisso(dataHora)
                                 .localCompromisso(item.getSala() != null ? item.getSala() : "Clínica")
                                 .status(statusCompromisso)
                                 .paciente(grade.getPaciente())
                                 .tipoCompromisso(item.getTipoCompromisso())
-                                .periodicidade(periodicidadeSemanal)
+                                .periodicidade(periodicidadeItem)
                                 .profissional(item.getProfissional())
                                 .clinica(grade.getClinica())
                                 .criadoPor(usuario)
@@ -202,9 +213,21 @@ public class GradeTerapeuticaService {
 
                         novosCompromissos.add(compromisso);
                     }
+
+                    // Avança conforme a periodicidade configurada
+                    if (isAvulsa) {
+                        break;
+                    } else if (isQuinzenal) {
+                        dataOcorrencia = dataOcorrencia.plusWeeks(2); // De 15 em 15 dias (14 dias, mantendo o mesmo dia da semana)
+                    } else if (isMensal) {
+                        dataOcorrencia = dataOcorrencia.plusWeeks(4); // Mensal (4 semanas, mantendo o mesmo dia da semana)
+                    } else {
+                        // Semanal (ou intervalo customizado em dias)
+                        int salto = (diasIntervalo != null && diasIntervalo > 0) ? diasIntervalo : 7;
+                        dataOcorrencia = dataOcorrencia.plusDays(salto);
+                    }
                 }
             }
-            dataAtual = dataAtual.plusDays(1);
         }
 
         if (!novosCompromissos.isEmpty()) {
@@ -282,12 +305,18 @@ public class GradeTerapeuticaService {
                     prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
                 }
 
+                Periodicidade periodicidade = null;
+                if (itemDTO.getIdPeriodicidade() != null && !itemDTO.getIdPeriodicidade().isBlank()) {
+                    periodicidade = periodicidadeRepository.findById(itemDTO.getIdPeriodicidade()).orElse(null);
+                }
+
                 GradeTerapeuticaItem item = GradeTerapeuticaItem.builder()
                         .diaSemana(itemDTO.getDiaSemana())
                         .horaInicio(itemDTO.getHoraInicio())
                         .horaFim(itemDTO.getHoraFim())
                         .tipoCompromisso(tipo)
                         .profissional(prof)
+                        .periodicidade(periodicidade)
                         .sala(itemDTO.getSala())
                         .build();
 
@@ -327,12 +356,18 @@ public class GradeTerapeuticaService {
                     prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
                 }
 
+                Periodicidade periodicidade = null;
+                if (itemDTO.getIdPeriodicidade() != null && !itemDTO.getIdPeriodicidade().isBlank()) {
+                    periodicidade = periodicidadeRepository.findById(itemDTO.getIdPeriodicidade()).orElse(null);
+                }
+
                 novaVersao.addItem(GradeTerapeuticaItem.builder()
                         .diaSemana(itemDTO.getDiaSemana())
                         .horaInicio(itemDTO.getHoraInicio())
                         .horaFim(itemDTO.getHoraFim())
                         .tipoCompromisso(tipo)
                         .profissional(prof)
+                        .periodicidade(periodicidade)
                         .sala(itemDTO.getSala())
                         .build());
             }

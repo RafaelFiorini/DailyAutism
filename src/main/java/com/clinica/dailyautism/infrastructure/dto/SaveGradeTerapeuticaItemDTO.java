@@ -29,5 +29,7 @@ public class SaveGradeTerapeuticaItemDTO {
 
     private String idProfissional;
 
+    private String idPeriodicidade;
+
     private String sala;
 }

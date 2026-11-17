@@ -5,9 +5,11 @@ import { DIAS_SEMANA_ORDENADOS } from '../../types/gradeTerapeutica';
 import { pacienteService } from '../../services/pacienteService';
 import { profissionalService } from '../../services/profissionalService';
 import { compromissoService } from '../../services/compromissoService';
+import { periodicidadeService } from '../../services/periodicidadeService';
 import type { Paciente } from '../../types/paciente';
 import type { Profissional } from '../../types/profissional';
 import type { TipoCompromisso } from '../../types/compromisso';
+import type { Periodicidade } from '../../types/periodicidade';
 
 interface NovaPropostaModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [tiposCompromisso, setTiposCompromisso] = useState<TipoCompromisso[]>([]);
+  const [periodicidades, setPeriodicidades] = useState<Periodicidade[]>([]);
 
   const [idPaciente, setIdPaciente] = useState(idPacientePreselecionado || '');
   const [dataInicioVigencia, setDataInicioVigencia] = useState('');
@@ -63,14 +66,24 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
 
   async function carregarListasAuxiliares() {
     try {
-      const [pacData, profData, tiposData] = await Promise.all([
+      const [pacData, profData, tiposData, periodData] = await Promise.all([
         pacienteService.list(),
         profissionalService.list(),
         compromissoService.listTipos(),
+        periodicidadeService.list(),
       ]);
       setPacientes(pacData);
       setProfissionais(profData);
       setTiposCompromisso(tiposData);
+      setPeriodicidades(periodData);
+
+      // Define periodicidade padrão (ex: Semanal) no item inicial se ainda não preenchido
+      const semanal = periodData.find((p) => p.nomePeriodicidade?.toLowerCase().includes('semanal')) || periodData[0];
+      if (semanal) {
+        setItens((prev) =>
+          prev.map((it) => (it.idPeriodicidade ? it : { ...it, idPeriodicidade: semanal.idPeriodicidade }))
+        );
+      }
     } catch (e: any) {
       console.error('Erro ao carregar dados auxiliares:', e);
     }
@@ -106,6 +119,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   }
 
   function handleAddItem() {
+    const semanal = periodicidades.find((p) => p.nomePeriodicidade?.toLowerCase().includes('semanal')) || periodicidades[0];
     setItens([
       ...itens,
       {
@@ -114,6 +128,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
         horaFim: '15:00',
         idTipoCompromisso: tiposCompromisso[0]?.idTipoCompromisso || '',
         idProfissional: '',
+        idPeriodicidade: semanal?.idPeriodicidade || '',
         sala: '',
       },
     ]);
@@ -300,12 +315,12 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   className="p-3 bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
                 >
                   {/* Dia da semana */}
-                  <div className="sm:col-span-3">
+                  <div className="sm:col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">Dia da Semana</label>
                     <select
                       value={item.diaSemana}
                       onChange={(e) => handleChangeItem(idx, 'diaSemana', e.target.value as DiaSemana)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-medium"
+                      className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-medium"
                     >
                       {DIAS_SEMANA_ORDENADOS.map((d) => (
                         <option key={d.key} value={d.key}>
@@ -316,14 +331,14 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   </div>
 
                   {/* Horários Início e Fim */}
-                  <div className="sm:col-span-3 flex gap-2">
+                  <div className="sm:col-span-2 flex gap-1.5">
                     <div className="flex-1">
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">Início</label>
                       <input
                         type="time"
                         value={item.horaInicio}
                         onChange={(e) => handleChangeItem(idx, 'horaInicio', e.target.value)}
-                        className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-1.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
                       />
                     </div>
                     <div className="flex-1">
@@ -332,7 +347,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                         type="time"
                         value={item.horaFim}
                         onChange={(e) => handleChangeItem(idx, 'horaFim', e.target.value)}
-                        className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full px-1.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
                       />
                     </div>
                   </div>
@@ -343,7 +358,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                     <select
                       value={item.idTipoCompromisso}
                       onChange={(e) => handleChangeItem(idx, 'idTipoCompromisso', e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-medium"
+                      className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-medium"
                     >
                       <option value="">Selecione...</option>
                       {tiposCompromisso.map((t) => (
@@ -360,12 +375,28 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                     <select
                       value={item.idProfissional || ''}
                       onChange={(e) => handleChangeItem(idx, 'idProfissional', e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                      className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
                     >
                       <option value="">A definir</option>
                       {profissionais.map((prof) => (
                         <option key={prof.idProf} value={prof.idProf}>
                           {prof.nomeProfissional || 'Profissional'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Periodicidade */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">Periodicidade</label>
+                    <select
+                      value={item.idPeriodicidade || ''}
+                      onChange={(e) => handleChangeItem(idx, 'idPeriodicidade', e.target.value)}
+                      className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-primary-700 dark:text-primary-300"
+                    >
+                      {periodicidades.map((p) => (
+                        <option key={p.idPeriodicidade} value={p.idPeriodicidade}>
+                          {p.nomePeriodicidade}
                         </option>
                       ))}
                     </select>

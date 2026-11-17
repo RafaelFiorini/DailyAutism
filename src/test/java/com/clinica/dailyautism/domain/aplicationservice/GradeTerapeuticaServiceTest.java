@@ -289,4 +289,58 @@ class GradeTerapeuticaServiceTest {
         assertTrue(futuro1.getDescricaoCompromisso().contains("Profissional desligou-se"));
         verify(compromissoRepository).saveAll(anyList());
     }
+
+    @Test
+    @DisplayName("6. Deve replicar compromissos respeitando periodicidade Quinzenal (a cada 14 dias)")
+    void deveReplicarCompromissosComPeriodicidadeQuinzenal() {
+        LocalDate inicio = LocalDate.now().plusDays(1);
+        while (inicio.getDayOfWeek() != java.time.DayOfWeek.MONDAY) {
+            inicio = inicio.plusDays(1);
+        }
+        LocalDate fim = inicio.plusWeeks(3); // 4 semanas
+
+        Periodicidade periodicidadeQuinzenal = Periodicidade.builder()
+                .idPeriodicidade("per-quinz")
+                .nomePeriodicidade("Quinzenal")
+                .diasIntervalo(14)
+                .build();
+
+        GradeTerapeutica grade = GradeTerapeutica.builder()
+                .idGradeTerapeutica("grade-quinzenal")
+                .paciente(paciente)
+                .clinica(clinica)
+                .numeroVersao(1)
+                .dataInicioVigencia(inicio)
+                .dataFimVigencia(fim)
+                .status(StatusGradeTerapeutica.PENDENTE_APROVACAO)
+                .itens(new ArrayList<>())
+                .build();
+
+        GradeTerapeuticaItem itemQuinzenal = GradeTerapeuticaItem.builder()
+                .idGradeTerapeuticaItem("item-quinz")
+                .gradeTerapeutica(grade)
+                .diaSemana(DiaSemana.SEGUNDA)
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFim(LocalTime.of(11, 0))
+                .tipoCompromisso(tipoPsico)
+                .profissional(profissional)
+                .periodicidade(periodicidadeQuinzenal)
+                .build();
+        grade.getItens().add(itemQuinzenal);
+
+        when(gradeTerapeuticaRepository.findByIdWithItens("grade-quinzenal")).thenReturn(Optional.of(grade));
+        when(gradeTerapeuticaRepository.save(any(GradeTerapeutica.class))).thenAnswer(i -> i.getArgument(0));
+        when(periodicidadeRepository.findAll()).thenReturn(List.of(periodicidadeSemanal, periodicidadeQuinzenal));
+        when(userRepository.findByEmailUser("secretaria@clinica.com")).thenReturn(Optional.of(usuario));
+        when(compromissoRepository.countConflitosProfissional(eq("prof-1"), any(LocalDateTime.class), isNull()))
+                .thenReturn(0L);
+
+        List<Compromisso> gerados = gradeTerapeuticaService.aprovarEReplicar("grade-quinzenal", "secretaria@clinica.com");
+
+        // Em 4 semanas, quinzenal gera exatamente 2 compromissos (semana 1 e semana 3)
+        assertEquals(2, gerados.size());
+        assertEquals(inicio.atTime(10, 0), gerados.get(0).getDataHoraCompromisso());
+        assertEquals(inicio.plusWeeks(2).atTime(10, 0), gerados.get(1).getDataHoraCompromisso());
+        assertEquals(periodicidadeQuinzenal, gerados.get(0).getPeriodicidade());
+    }
 }
