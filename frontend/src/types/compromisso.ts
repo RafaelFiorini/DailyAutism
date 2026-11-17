@@ -4,7 +4,8 @@ export type StatusCompromisso =
   | 'REJEITADO'
   | 'REALIZADO'
   | 'CANCELADO'
-  | 'FALTOU';
+  | 'FALTOU'
+  | 'PENDENTE_REAGENDAMENTO';
 
 export interface Compromisso {
   idCompromisso: string;

@@ -15,6 +15,7 @@ import Agenda from './pages/Agenda';
 import Arquivos from './pages/Arquivos';
 import Financeiro from './pages/Financeiro';
 import FinanceiroProfissionalPage from './pages/FinanceiroProfissionalPage';
+import GradeTerapeuticaPage from './pages/GradeTerapeuticaPage';
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="planos" element={<PlanosSaude />} />
               <Route path="periodicidades" element={<Periodicidades />} />
               <Route path="agenda" element={<Agenda />} />
+              <Route path="grade-terapeutica" element={<GradeTerapeuticaPage />} />
               <Route path="arquivos" element={<Arquivos />} />
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="meu-financeiro" element={<FinanceiroProfissionalPage />} />

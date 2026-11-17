@@ -148,12 +148,12 @@
 - Modify: `frontend/src/pages/Agenda.tsx` (ou aba dedicada de Grade no perfil do paciente)
 - Test: `frontend/src/components/GradeTerapeuticaMontadorModal.test.tsx`
 
-- [ ] **Step 1:** Criar tipos TypeScript e serviço frontend `gradeTerapeuticaService.ts`.
-- [ ] **Step 2:** Criar modal `GradeTerapeuticaMontadorModal` com grade horária visual (dias da semana x horários), seletores de especialidade e profissional, e seleção da guia/contrato de vigência.
-- [ ] **Step 3:** Criar visualização de status da proposta: se `SUGESTAO_RESPONSAVEL`, exibir o texto enviado pela família e botão para ajustar.
-- [ ] **Step 4:** Criar modal/card `GradeTerapeuticaConflitosModal` listando atendimentos com status `PENDENTE_REAGENDAMENTO` para resolução rápida.
-- [ ] **Step 5:** Escrever testes unitários e integrar na tela de Agenda/Pacientes da Web.
-- [ ] **Step 6:** Commit do painel Web da secretaria.
+- [x] **Step 1:** Criar tipos TypeScript e serviço frontend `gradeTerapeuticaService.ts`.
+- [x] **Step 2:** Criar modal `GradeTerapeuticaMontadorModal` com grade horária visual (dias da semana x horários), seletores de especialidade e profissional, e seleção da guia/contrato de vigência.
+- [x] **Step 3:** Criar visualização de status da proposta: se `SUGESTAO_RESPONSAVEL`, exibir o texto enviado pela família e botão para ajustar.
+- [x] **Step 4:** Criar modal/card `GradeTerapeuticaConflitosModal` listando atendimentos com status `PENDENTE_REAGENDAMENTO` para resolução rápida.
+- [x] **Step 5:** Escrever testes unitários e integrar na tela de Agenda/Pacientes da Web.
+- [x] **Step 6:** Commit do painel Web da secretaria.
 
 ---
 

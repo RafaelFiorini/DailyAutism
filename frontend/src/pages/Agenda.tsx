@@ -74,6 +74,13 @@ const STATUS_CONFIG: Record<
     border: 'border-red-200',
     icon: XCircle,
   },
+  PENDENTE_REAGENDAMENTO: {
+    label: 'Pendente Reagendamento',
+    bg: 'bg-amber-100',
+    text: 'text-amber-800',
+    border: 'border-amber-300',
+    icon: AlertCircle,
+  },
 };
 
 export default function Agenda() {

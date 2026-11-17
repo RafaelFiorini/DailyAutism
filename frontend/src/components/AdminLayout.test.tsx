@@ -68,5 +68,9 @@ describe('AdminLayout Component', () => {
     const financeiroLink = screen.getByRole('link', { name: /^financeiro$/i });
     expect(financeiroLink).toBeInTheDocument();
     expect(financeiroLink).toHaveAttribute('href', '/admin/financeiro');
+
+    const gradeLink = screen.getByRole('link', { name: /grade terapêutica/i });
+    expect(gradeLink).toBeInTheDocument();
+    expect(gradeLink).toHaveAttribute('href', '/admin/grade-terapeutica');
   });
 });

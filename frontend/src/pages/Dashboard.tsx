@@ -65,6 +65,10 @@ const STATUS_BADGE: Record<StatusCompromisso, { label: string; className: string
     label: 'Rejeitado',
     className: 'bg-red-50 text-red-700 border-red-200',
   },
+  PENDENTE_REAGENDAMENTO: {
+    label: 'Pendente Reagendamento',
+    className: 'bg-amber-100 text-amber-800 border-amber-300',
+  },
 };
 
 function getTodayISO(): string {

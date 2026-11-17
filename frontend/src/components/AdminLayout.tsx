@@ -13,6 +13,7 @@ import {
   CreditCard,
   CalendarClock,
   Calendar,
+  CalendarRange,
   FileText,
   DollarSign,
   LogOut,
@@ -27,6 +28,7 @@ export default function AdminLayout() {
       const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
+        { name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
         { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
         { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
@@ -39,7 +41,7 @@ export default function AdminLayout() {
       ];
 
       if (isProfissional) {
-        items.splice(4, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
+        items.splice(5, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
       }
 
       return items;
@@ -49,6 +51,7 @@ export default function AdminLayout() {
       const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
+        { name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
         { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
         { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
@@ -58,7 +61,7 @@ export default function AdminLayout() {
       ];
 
       if (isProfissional) {
-        items.splice(4, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
+        items.splice(5, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
       }
 
       if (isAdminClinica) {
