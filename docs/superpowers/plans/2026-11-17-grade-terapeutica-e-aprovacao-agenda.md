@@ -126,15 +126,15 @@
 - Create: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/home/DetalhesGradeDialog.kt`
 - Modify: `DApp/app/src/main/java/com/dailyautism/dapp/ui/screens/home/HomeResponsavelScreen.kt`
 
-- [ ] **Step 1:** Construir `PropostaGradeCard` exibido na Home do Responsável quando houver proposta `PENDENTE_APROVACAO`.
-- [ ] **Step 2:** Construir `DetalhesGradeDialog`:
+- [x] **Step 1:** Construir `PropostaGradeCard` exibido na Home do Responsável quando houver proposta `PENDENTE_APROVACAO`.
+- [x] **Step 2:** Construir `DetalhesGradeDialog`:
   - Visualização da tabela de horários semanais agrupada por dia (Segunda a Sexta).
   - Exibição de terapeuta, especialidade e vigência.
   - Botão "Aprovar Horários".
   - Botão "Sugerir Alterações" com campo de texto livre.
   - Botão "Rejeitar".
-- [ ] **Step 3:** Integrar o card e o dialog na `HomeResponsavelScreen.kt`.
-- [ ] **Step 4:** Commit dos componentes de tela no DApp.
+- [x] **Step 3:** Integrar o card e o dialog na `HomeResponsavelScreen.kt`.
+- [x] **Step 4:** Commit dos componentes de tela no DApp.
 
 ---
 
