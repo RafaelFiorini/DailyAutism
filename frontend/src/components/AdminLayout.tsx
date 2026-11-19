@@ -16,6 +16,7 @@ import {
   CalendarRange,
   FileText,
   DollarSign,
+  ShieldCheck,
   LogOut,
 } from 'lucide-react';
 
@@ -38,6 +39,7 @@ export default function AdminLayout() {
         { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
         { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
         { name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false },
+        { name: 'Auditoria & Logs', href: '/admin/auditoria', icon: ShieldCheck, end: false },
       ];
 
       if (isProfissional) {

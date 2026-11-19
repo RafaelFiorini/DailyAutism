@@ -33,6 +33,7 @@ public class GradeTerapeuticaService {
     private final PeriodicidadeRepository periodicidadeRepository;
     private final TipoCompromissoRepository tipoCompromissoRepository;
     private final ProfissionalRepository profissionalRepository;
+    private final AuditoriaService auditoriaService;
 
     @Transactional(readOnly = true)
     public GradeTerapeutica carregarGrade(String idGrade) {
@@ -68,7 +69,24 @@ public class GradeTerapeuticaService {
             }
         }
 
-        return gradeTerapeuticaRepository.save(grade);
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(grade);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Sistema/Clínica",
+                "clinica@dailyautism.com",
+                "SECRETARIA",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.CRIACAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Criou/atualizou proposta de grade terapêutica v" + salva.getNumeroVersao() + " (status: " + salva.getStatus() + ")",
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
     }
 
     @Transactional
@@ -79,7 +97,24 @@ public class GradeTerapeuticaService {
         }
         grade.setStatus(StatusGradeTerapeutica.PENDENTE_APROVACAO);
         grade.setDataEnvio(LocalDateTime.now());
-        return gradeTerapeuticaRepository.save(grade);
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(grade);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Secretaria",
+                "secretaria@dailyautism.com",
+                "SECRETARIA",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.EDICAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Enviou grade terapêutica v" + salva.getNumeroVersao() + " para aprovação do responsável",
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
     }
 
     @Transactional
@@ -90,7 +125,24 @@ public class GradeTerapeuticaService {
         grade.setStatus(StatusGradeTerapeutica.SUGESTAO_RESPONSAVEL);
         grade.setJustificativaSugestaoResponsavel(justificativa);
         grade.setDataResposta(LocalDateTime.now());
-        return gradeTerapeuticaRepository.save(grade);
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(grade);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Responsável (Família)",
+                "responsavel@dapp.dailyautism.com",
+                "RESPONSAVEL",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.EDICAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Responsável enviou contraproposta na grade v" + salva.getNumeroVersao() + ": " + justificativa,
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
     }
 
     @Transactional
@@ -99,7 +151,24 @@ public class GradeTerapeuticaService {
         grade.setStatus(StatusGradeTerapeutica.REJEITADA);
         grade.setMotivoRejeicao(motivo);
         grade.setDataResposta(LocalDateTime.now());
-        return gradeTerapeuticaRepository.save(grade);
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(grade);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Responsável (Família)",
+                "responsavel@dapp.dailyautism.com",
+                "RESPONSAVEL",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.REJEICAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Responsável rejeitou a proposta de grade v" + salva.getNumeroVersao() + ". Motivo: " + motivo,
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
     }
 
     @Transactional
@@ -238,6 +307,23 @@ public class GradeTerapeuticaService {
         grade.setDataResposta(LocalDateTime.now());
         gradeTerapeuticaRepository.save(grade);
 
+        auditoriaService.registrarAcaoAsync(
+                usuario.getIdUser(),
+                usuario.getNomeUser(),
+                usuario.getEmailUser(),
+                "RESPONSAVEL",
+                grade.getClinica() != null ? grade.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.APROVACAO,
+                "GradeTerapeutica",
+                grade.getIdGradeTerapeutica(),
+                "Aprovou grade terapêutica v" + grade.getNumeroVersao() + " com replicação de " + novosCompromissos.size() + " compromissos até " + grade.getDataFimVigencia(),
+                null,
+                null,
+                null,
+                null
+        );
+
         return novosCompromissos;
     }
 
@@ -271,6 +357,24 @@ public class GradeTerapeuticaService {
         if (!paraCancelar.isEmpty()) {
             compromissoRepository.saveAll(paraCancelar);
         }
+
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Secretaria / Gestão",
+                "clinica@dailyautism.com",
+                "SECRETARIA",
+                null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.CANCELAMENTO,
+                "GradeTerapeutica",
+                idGrade,
+                "Cancelou " + paraCancelar.size() + " compromissos futuros do profissional a partir de " + dataCorte + " (" + motivo + ")",
+                null,
+                null,
+                null,
+                null
+        );
+
         return paraCancelar.size();
     }
 

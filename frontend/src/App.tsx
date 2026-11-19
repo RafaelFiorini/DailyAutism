@@ -16,6 +16,7 @@ import Arquivos from './pages/Arquivos';
 import Financeiro from './pages/Financeiro';
 import FinanceiroProfissionalPage from './pages/FinanceiroProfissionalPage';
 import GradeTerapeuticaPage from './pages/GradeTerapeuticaPage';
+import AuditoriaPage from './pages/AuditoriaPage';
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="arquivos" element={<Arquivos />} />
               <Route path="financeiro" element={<Financeiro />} />
               <Route path="meu-financeiro" element={<FinanceiroProfissionalPage />} />
+              <Route path="auditoria" element={<AuditoriaPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

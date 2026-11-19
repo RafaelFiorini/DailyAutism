@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>DailyAutism - Apresentação Executiva e Manual</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    @page {
+      size: A4;
+      margin: 15mm 15mm 15mm 15mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1e293b;
+      background: #ffffff;
+      line-height: 1.5;
+      font-size: 10pt;
+    }
+
+    /* Quebras de Página */
+    .page-break {
+      page-break-before: always;
+    }
+    .avoid-break {
+      page-break-inside: avoid;
+    }
+
+    /* Capa Executiva */
+    .cover {
+      height: 96vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 20px;
+      page-break-after: always;
+    }
+
+    .cover-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      font-weight: 800;
+      font-size: 20pt;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+    }
+
+    .brand-name {
+      font-size: 22pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+    }
+
+    .brand-name span {
+      color: #2563eb;
+    }
+
+    .cover-middle {
+      margin: auto 0;
+    }
+
+    .cover-tag {
+      display: inline-block;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .cover-title {
+      font-size: 28pt;
+      font-weight: 800;
+      line-height: 1.15;
+      color: #0f172a;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .cover-subtitle {
+      font-size: 13pt;
+      color: #475569;
+      font-weight: 400;
+      max-width: 650px;
+      line-height: 1.5;
+    }
+
+    .cover-footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 9pt;
+      color: #64748b;
+    }
+
+    .cover-meta strong {
+      display: block;
+      color: #0f172a;
+      font-size: 10pt;
+      margin-bottom: 2px;
+    }
+
+    /* Cabeçalhos internos */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 8px;
+      margin-bottom: 20px;
+    }
+
+    .header-bar h2 {
+      font-size: 15pt;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .header-bar .chapter {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 14px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin-bottom: 10px;
+      color: #334155;
+      text-align: justify;
+    }
+
+    /* Cards e Caixas */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .card-highlight {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-desc {
+      font-size: 8.5pt;
+      color: #475569;
+      line-height: 1.4;
+    }
+
+    /* Tabelas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+      font-size: 8.5pt;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      text-align: left;
+      font-weight: 700;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+    }
+
+    td {
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-amber { background: #fef3c7; color: #b45309; }
+
+    /* Fluxo em Passos */
+    .steps-container {
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9pt;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 12px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 9.5pt;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .step-text {
+      font-size: 8.5pt;
+      color: #475569;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    /* Alerta */
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      margin: 12px 0;
+      font-size: 8.5pt;
+      color: #1e40af;
+    }
+
+    .callout strong {
+      color: #1e3a8a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CAPA -->
+  <div class="cover">
+    <div class="cover-top">
+      <div class="logo-badge">DA</div>
+      <div class="brand-name">Daily<span>Autism</span></div>
+    </div>
+
+    <div class="cover-middle">
+      <div class="cover-tag">Apresentação Executiva & Manual de Operação</div>
+      <h1 class="cover-title">Plataforma Integrada de Gestão Clínica e Terapêutica</h1>
+      <p class="cover-subtitle">
+        A solução definitiva para clínicas multidisciplinares de Neurodesenvolvimento e Intervenção no Transtorno do Espectro Autista (TEA).
+      </p>
+    </div>
+
+    <div class="cover-footer">
+      <div class="cover-meta">
+        <strong>Preparado para Apresentação à Diretoria</strong>
+        Clínica Multidisciplinar Especializada
+      </div>
+      <div>
+        Versão da Plataforma: <strong>v1.0 (Produção)</strong><br>
+        Ambiente em Nuvem: <strong>Oracle Cloud Infrastructure (OCI)</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 1: VISÃO GERAL E PROBLEMAS RESOLVIDOS -->
+  <div class="avoid-break">
+    <div class="header-bar">
+      <h2>1. Visão Geral e Proposta de Valor</h2>
+      <div class="chapter">Seção 01</div>
+    </div>
+
+    <p>
+      O <strong>DailyAutism</strong> foi projetado especificamente para solucionar os maiores gargalos operacionais e financeiros das clínicas de terapias seriadas de alta frequência (ABA, Terapia Ocupacional, Fonoaudiologia, Fisioterapia, Musicoterapia e Psicopedagogia).
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">❌ O Desafio das Clínicas Tradicionais</div>
+        <div class="card-desc">
+          • <strong>Sobrecarga na Recepção:</strong> Pacientes realizam de 10 a 30 horas semanais de terapia. Negociar grades no WhatsApp gera confusão e ociosidade de salas.<br>
+          • <strong>Conflitos Frequentes:</strong> Horários encavalados de terapeutas e salas.<br>
+          • <strong>Glosas de Convênio:</strong> Falta de controle de saldo de guias autorizadas e fichas de papel perdidas ou não assinadas.<br>
+          • <strong>Fechamento Financeiro Demorado:</strong> Horas calculando repasses manuais de cada profissional ao final do mês.
+        </div>
+      </div>
+
+      <div class="card card-highlight">
+        <div class="card-title">✅ A Resposta Inteligente do DailyAutism</div>
+        <div class="card-desc">
+          • <strong>Grade Terapêutica Automática:</strong> Cria a matriz de horários semanais e replica de 6 a 12 meses no calendário com 1 clique.<br>
+          • <strong>Aprovação pelo DApp Mobile:</strong> Os pais recebem a proposta no celular e aprovam ou sugerem alterações sem ruído.<br>
+          • <strong>Assinatura Eletrônica das Sessões:</strong> Os responsáveis assinam a presença pelo app com senha pessoal e validade jurídica.<br>
+          • <strong>Extrato Financeiro Automatizado:</strong> Terapeutas acompanham suas comissões em tempo real, sem retrabalho administrativo.
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Impacto Clínico Comprovado:</strong> Redução de até <strong>85% no tempo gasto pela secretaria</strong> na marcação de consultas recorrentes e eliminação quase total de glosas por guias vencidas ou sem assinatura.
+    </div>
+
+    <h3>Arquitetura dos 4 Perfis de Acesso (RBAC)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 22%;">Perfil</th>
+          <th style="width: 20%;">Canal de Acesso</th>
+          <th style="width: 28%;">Foco Principal</th>
+          <th style="width: 30%;">Capacidades Chave</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>👑 Dono / Administrador</strong></td>
+          <td>Web (Computador/Tablet)</td>
+          <td>Gestão Estratégica e Governança</td>
+          <td>Controle multi-clínicas, auditoria de usuários, parametrização de comissões, faturamento consolidado.</td>
+        </tr>
+        <tr>
+          <td><strong>📋 Secretaria / Recepção</strong></td>
+          <td>Web (Computador)</td>
+          <td>Operação Diária e Atendimento</td>
+          <td>Cadastro de pacientes, guias de convênio, criação de propostas de grade, gestão de conflitos de agenda.</td>
+        </tr>
+        <tr>
+          <td><strong>🩺 Terapeuta / Profissional</strong></td>
+          <td>Web / Tablet</td>
+          <td>Atendimento e Prontuário</td>
+          <td>Agenda pessoal, prontuário com evolução clínica de atendimentos e extrato transparente em *"Meu Financeiro"*.</td>
+        </tr>
+        <tr>
+          <td><strong>👨‍👩‍👧 Responsável / Família</strong></td>
+          <td>Mobile DApp (Android)</td>
+          <td>Acompanhamento e Validação</td>
+          <td>Notificações push, aprovação de grade semanal, assinatura digital de sessões e histórico de presença.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PÁGINA 2: FUNCIONALIDADES DETALHADAS -->
+  <div class="page-break avoid-break">
+    <div class="header-bar">
+      <h2>2. Módulos e Recursos Principais</h2>
+      <div class="chapter">Seção 02</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📅 Grade Terapêutica & Motor de Replicação</div>
+        <div class="card-desc">
+          • <strong>Matriz Semanal Visual:</strong> Configuração rápida por dia da semana, faixa de horário, terapeuta e sala.<br>
+          • <strong>Suporte a Múltiplas Periodicidades:</strong>
+          <span class="badge badge-blue">Semanal (7d)</span>
+          <span class="badge badge-purple">Quinzenal (14d)</span>
+          <span class="badge badge-amber">Mensal (28d)</span>
+          <span class="badge badge-green">Avulsa (1x)</span>.<br>
+          • <strong>Prevenção Ativa de Choques:</strong> Compromissos com conflitos de horário com o terapeuta são marcados com status seguro <code>PENDENTE_REAGENDAMENTO</code>, sem sobrescrever agendas.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔄 Gestão de Alterações com Data de Corte</div>
+        <div class="card-desc">
+          • <strong>Substituição de Profissional sem Perda de Dados:</strong> Quando um terapeuta sai ou altera seu turno, a clínica define a partir de qual data vigora a nova grade.<br>
+          • <strong>Passado Preservado:</strong> Todos os registros e históricos anteriores à data de corte permanecem intactos para auditoria e cobrança.<br>
+          • <strong>Futuro Atualizado:</strong> Apenas as sessões futuras são canceladas e reescritas com o novo terapeuta.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Controle de Guias e Convênios</div>
+        <div class="card-desc">
+          • Vínculo da grade com a <strong>Guia de Liberação</strong> do plano de saúde ou contrato particular.<br>
+          • Monitoramento em tempo real do <strong>saldo de sessões autorizadas</strong> vs. sessões agendadas.<br>
+          • Alertas automáticos antes do vencimento da vigência para requisição antecipada de prorrogação ao convênio.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">✍️ Assinatura Digital no DApp dos Pais</div>
+        <div class="card-desc">
+          • Elimina a necessidade de assinaturas manuais em papel após cada sessão de terapia.<br>
+          • O responsável valida o atendimento direto no celular usando senha pessoal ou código de segurança.<br>
+          • Registro com carimbo de tempo, geolocalização e IP do dispositivo, atendendo às exigências da ANS.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 10px;">
+      <div class="card-title">💰 Módulo Financeiro e Repasse a Terapeutas</div>
+      <div class="card-desc">
+        Configuração flexível do modelo de remuneração por profissional: <strong>Porcentagem</strong> (ex: 60% terapeuta / 40% clínica) ou <strong>Valor Fixo por Sessão</strong> (ex: R$ 80,00). O terapeuta visualiza seu extrato diário no painel <em>"Meu Financeiro"</em>, eliminando dúvidas e conflitos no fechamento do mês.
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 3: MANUAL DE USO RÁPIDO (QUICK START) -->
+  <div class="page-break avoid-break">
+    <div class="header-bar">
+      <h2>3. Manual de Operação Rápida (Passo a Passo)</h2>
+      <div class="chapter">Seção 03</div>
+    </div>
+
+    <p>
+      Como a clínica opera no dia a dia, desde a chegada do paciente até o faturamento da sessão:
+    </p>
+
+    <div class="steps-container">
+      <div class="step-item">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">Secretaria: Cadastro do Paciente e da Guia de Convênio</div>
+          <div class="step-text">
+            Acesse <strong>Pacientes</strong> &gt; <strong>Novo Paciente</strong>. Preencha os dados da criança e dos responsáveis. Na seção do convênio, cadastre a guia de autorização informando o plano, código da guia, quantidade de sessões autorizadas e a data de validade.
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">Secretaria: Montagem da Proposta de Grade Terapêutica</div>
+          <div class="step-text">
+            Acesse <strong>Grade Terapêutica</strong> e selecione o paciente. O sistema carrega automaticamente a vigência da guia. Clique em <strong>Nova Proposta</strong> e adicione as terapias semanais (dias, horários, especialidades, profissionais e periodicidades). Em seguida, clique em <strong>Enviar para Aprovação do Responsável</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">Família: Aprovação Instantânea no Celular (DApp)</div>
+          <div class="step-text">
+            O responsável recebe a notificação no aplicativo <strong>DailyAutism</strong>, visualiza a grade proposta e toca em <strong>Aprovar Grade de Horários</strong>. O motor em nuvem replica automaticamente todas as sessões até o final da vigência na agenda da clínica. Se os pais precisarem ajustar algum dia, podem enviar uma contraproposta em texto com 1 clique.
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <div class="step-title">Clínica: Atendimento, Evolução e Assinatura Eletrônica</div>
+          <div class="step-text">
+            No dia da sessão, a recepção registra a chegada (<strong>Presente</strong>). O terapeuta atende, registra a evolução clínica e conclui o compromisso. O responsável valida a presença no celular através da assinatura digital.
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <div class="step-title">Gestão: Fechamento Financeiro Automático</div>
+          <div class="step-text">
+            Acesse o menu <strong>Financeiro</strong> para visualizar o relatório consolidado de sessões realizadas, o faturamento da clínica e o valor líquido exato de repasse para cada profissional.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Por Que o DailyAutism é a Melhor Escolha?</h3>
+    <div class="grid-4">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 16pt; margin-bottom: 4px;">⚡</div>
+        <strong style="font-size: 8.5pt;">Agilidade Extrema</strong>
+        <p style="font-size: 7.5pt; color: #64748b; margin-top: 2px;">6 meses de agenda replicados em segundos.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 16pt; margin-bottom: 4px;">📱</div>
+        <strong style="font-size: 8.5pt;">App Moderno</strong>
+        <p style="font-size: 7.5pt; color: #64748b; margin-top: 2px;">Experiência VIP e transparente para os pais.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 16pt; margin-bottom: 4px;">🛡️</div>
+        <strong style="font-size: 8.5pt;">Zero Glosas</strong>
+        <p style="font-size: 7.5pt; color: #64748b; margin-top: 2px;">Assinatura digital e controle de saldo de guias.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 16pt; margin-bottom: 4px;">☁️</div>
+        <strong style="font-size: 8.5pt;">Nuvem Confiável</strong>
+        <p style="font-size: 7.5pt; color: #64748b; margin-top: 2px;">Oracle Cloud com backups e segurança LGPD.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
