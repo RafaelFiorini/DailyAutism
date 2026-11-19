@@ -117,7 +117,7 @@ class ReativacaoUniqueServicesTest {
                 pacienteRepository, pessoaRepository, userRepository, responsavelRepository,
                 planoSaudeRepository, clinicaRepository, pacientePlanoSaudeRepository,
                 pacienteClinicaRepository, compromissoRepository, profissionalPacienteRepository,
-                funcionarioClinicaRepository, pacientePlanoSaudeService, entityManager
+                profissionalClinicaRepository, funcionarioClinicaRepository, pacientePlanoSaudeService, entityManager
         );
         Paciente pacInativo = Paciente.builder().idPaciente("pac-1").pessoaPaciente(pessoa).build();
         pacInativo.desativar();

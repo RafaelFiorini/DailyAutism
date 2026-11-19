@@ -3,17 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import Pacientes from './Pacientes';
 import { pacienteService } from '../services/pacienteService';
+import * as useAuthModule from '../hooks/useAuth';
 
-vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { idUser: '1', nomeUser: 'Admin', perfis: ['ADMIN'] },
-    isAdmin: true,
-    isResponsavel: false,
-    isProfissional: false,
-    isAuthenticated: true,
-    loading: false,
-  }),
-}));
+vi.mock('../hooks/useAuth');
 
 vi.mock('../services/pacienteService', () => ({
   pacienteService: {
@@ -50,6 +42,16 @@ const mockPacientes = [
 describe('Pacientes Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(useAuthModule, 'useAuth').mockReturnValue({
+      user: { idUser: '1', nomeUser: 'Admin', perfis: ['ADMIN'] },
+      isAdmin: true,
+      isAdminClinica: false,
+      isFuncionarioClinica: false,
+      isResponsavel: false,
+      isProfissional: false,
+      isAuthenticated: true,
+      loading: false,
+    } as any);
   });
 
   it('renderiza o estado de carregamento inicialmente', () => {
@@ -144,6 +146,59 @@ describe('Pacientes Page', () => {
       expect(screen.getByText('Vence em 5d')).toBeInTheDocument();
       expect(screen.getByText('10 sessões')).toBeInTheDocument();
       expect(screen.getByText('até 15/12/2026')).toBeInTheDocument();
+    });
+  });
+
+  it('exibe título "Pacientes da Clínica" e botão "Novo Paciente" para usuário admin de clínica que também é profissional', async () => {
+    vi.spyOn(useAuthModule, 'useAuth').mockReturnValue({
+      user: { idUser: '2', nomeUser: 'Alexandra', perfis: ['ADMIN_CLINICA', 'PROFISSIONAL'] },
+      isAdmin: false,
+      isAdminClinica: true,
+      isFuncionarioClinica: false,
+      isResponsavel: false,
+      isProfissional: true,
+      isAuthenticated: true,
+      loading: false,
+    } as any);
+
+    vi.mocked(pacienteService.list).mockResolvedValueOnce(mockPacientes);
+
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: /Pacientes da Clínica/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Novo Paciente/i })).toBeInTheDocument();
+      expect(screen.queryByText('Pacientes em Atendimento')).not.toBeInTheDocument();
+    });
+  });
+
+  it('exibe título "Pacientes em Atendimento" quando usuário for apenas profissional', async () => {
+    vi.spyOn(useAuthModule, 'useAuth').mockReturnValue({
+      user: { idUser: '3', nomeUser: 'Dr. Roberto', perfis: ['PROFISSIONAL'] },
+      isAdmin: false,
+      isAdminClinica: false,
+      isFuncionarioClinica: false,
+      isResponsavel: false,
+      isProfissional: true,
+      isAuthenticated: true,
+      loading: false,
+    } as any);
+
+    vi.mocked(pacienteService.list).mockResolvedValueOnce(mockPacientes);
+
+    render(
+      <MemoryRouter>
+        <Pacientes />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 1, name: /Pacientes em Atendimento/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Novo Paciente/i })).not.toBeInTheDocument();
     });
   });
 });

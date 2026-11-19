@@ -23,8 +23,8 @@ import { extractApiErrorMessage } from '../utils/apiError';
 
 export default function Pacientes() {
   const navigate = useNavigate();
-  const { isAdmin, isFuncionarioClinica, isResponsavel, isProfissional } = useAuth();
-  const canManageInativos = isAdmin || isFuncionarioClinica;
+  const { isAdmin, isAdminClinica, isFuncionarioClinica, isResponsavel, isProfissional } = useAuth();
+  const canManageInativos = isAdmin || isAdminClinica || isFuncionarioClinica;
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -118,6 +118,9 @@ export default function Pacientes() {
     return `${c.slice(0, 3)}.${c.slice(3, 6)}.${c.slice(6, 9)}-${c.slice(9)}`;
   };
 
+  const isGestaoClinica = isAdminClinica || isFuncionarioClinica;
+  const canCriarPaciente = isAdmin || isResponsavel || isGestaoClinica;
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -127,6 +130,8 @@ export default function Pacientes() {
             <h1 className="text-2xl font-bold text-gray-900">
               {isResponsavel
                 ? 'Meus Pacientes'
+                : isGestaoClinica
+                ? 'Pacientes da Clínica'
                 : isProfissional
                 ? 'Pacientes em Atendimento'
                 : 'Pacientes'}
@@ -138,13 +143,15 @@ export default function Pacientes() {
           <p className="text-sm text-gray-500 mt-1">
             {isResponsavel
               ? 'Pacientes sob sua responsabilidade e acompanhamento.'
+              : isGestaoClinica
+              ? 'Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.'
               : isProfissional
               ? 'Pacientes com agendamentos e consultas vinculados a você.'
               : 'Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.'}
           </p>
         </div>
 
-        {(isAdmin || isResponsavel) && (
+        {canCriarPaciente && (
           <button
             onClick={() => {
               setEditingPaciente(null);
@@ -375,7 +382,7 @@ export default function Pacientes() {
                               >
                                 <Pencil className="h-4 w-4" />
                               </button>
-                              {isAdmin && (
+                              {(isAdmin || isAdminClinica) && (
                                 <button
                                   onClick={() => handleDelete(pac.idPaciente, pac.nomePessoa)}
                                   disabled={deletingId === pac.idPaciente}
