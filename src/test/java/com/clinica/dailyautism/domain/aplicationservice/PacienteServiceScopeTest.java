@@ -74,24 +74,24 @@ class PacienteServiceScopeTest {
         paciente1 = Paciente.builder()
                 .idPaciente("pac-1")
                 .apelidoPaciente("Paciente 1")
-                .ativo(true)
                 .clinicas(List.of(
                         PacienteClinica.builder()
                                 .clinica(clinicaAttenzione)
                                 .build()
                 ))
                 .build();
+        paciente1.setAtivo(true);
 
         paciente2 = Paciente.builder()
                 .idPaciente("pac-2")
                 .apelidoPaciente("Paciente 2")
-                .ativo(true)
                 .clinicas(List.of(
                         PacienteClinica.builder()
                                 .clinica(clinicaAttenzione)
                                 .build()
                 ))
                 .build();
+        paciente2.setAtivo(true);
     }
 
     @Test
