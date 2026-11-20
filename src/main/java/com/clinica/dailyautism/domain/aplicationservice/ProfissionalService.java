@@ -18,8 +18,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -177,11 +180,27 @@ public class ProfissionalService {
                         .filter(v -> v.getClinica() != null)
                         .map(v -> v.getClinica().getIdClinica())
                         .toList();
+
+                // 1. Vinculado via ProfissionalClinica
                 List<ProfissionalClinica> vinculosProf = profissionalClinicaRepository.findByProfissionalIdProf(profissionalId);
                 boolean pertence = vinculosProf.stream()
                         .anyMatch(vp -> vp.getClinica() != null && clinicaIds.contains(vp.getClinica().getIdClinica()));
                 if (pertence) {
                     return profissional;
+                }
+
+                // 2. Se o profissional for o do próprio usuário logado
+                if (user.getPessoa().getProfissional() != null && profissionalId.equals(user.getPessoa().getProfissional().getIdProf())) {
+                    return profissional;
+                }
+
+                // 3. Se a pessoa do profissional for funcionária da clínica
+                if (profissional.getPessoaProf() != null) {
+                    boolean funcionarioDaClinica = funcionarioClinicaRepository.findByPessoa(profissional.getPessoaProf()).stream()
+                            .anyMatch(fc -> fc.getClinica() != null && clinicaIds.contains(fc.getClinica().getIdClinica()));
+                    if (funcionarioDaClinica) {
+                        return profissional;
+                    }
                 }
             }
             throw new AccessDeniedException("Você não tem permissão para visualizar profissionais de outra clínica.");
@@ -224,15 +243,88 @@ public class ProfissionalService {
             if (clinicaIds.isEmpty()) {
                 return List.of();
             }
-            return profissionalClinicaRepository.findProfissionaisByClinicaIds(clinicaIds);
+
+            Map<String, Profissional> profissionaisMap = new LinkedHashMap<>();
+
+            // 1. Profissionais vinculados formalmente via ProfissionalClinica
+            List<Profissional> vinculados = profissionalClinicaRepository.findProfissionaisByClinicaIds(clinicaIds);
+            for (Profissional p : vinculados) {
+                if (p.getIdProf() != null && (p.getAtivo() == null || p.getAtivo())) {
+                    profissionaisMap.put(p.getIdProf(), p);
+                }
+            }
+
+            // 2. Profissionais que são funcionários ou administradores dessas clínicas
+            for (String clinicaId : clinicaIds) {
+                Clinica clinicaRef = vinculos.stream()
+                        .filter(v -> v.getClinica() != null && clinicaId.equals(v.getClinica().getIdClinica()))
+                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
+                        .findFirst()
+                        .orElse(null);
+
+                List<com.clinica.dailyautism.domain.entity.FuncionarioClinica> funcsDaClinica = funcionarioClinicaRepository.findByClinicaIdClinica(clinicaId);
+                for (var fc : funcsDaClinica) {
+                    if (fc.getPessoa() != null) {
+                        profissionalRepository.findByPessoaProf(fc.getPessoa()).ifPresent(profFunc -> {
+                            if (profFunc.getIdProf() != null && (profFunc.getAtivo() == null || profFunc.getAtivo())) {
+                                if (!profissionaisMap.containsKey(profFunc.getIdProf())) {
+                                    profissionaisMap.put(profFunc.getIdProf(), profFunc);
+                                    // Auto-sincroniza o vínculo em ProfissionalClinica para integridade no banco
+                                    if (clinicaRef != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(profFunc, clinicaRef)) {
+                                        ProfissionalClinica pc = ProfissionalClinica.builder()
+                                                .profissional(profFunc)
+                                                .clinica(clinicaRef)
+                                                .build();
+                                        if (pc.getAtivo() == null) pc.setAtivo(true);
+                                        profissionalClinicaRepository.save(pc);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 3. Se o próprio usuário logado possuir cadastro de profissional, garante presença
+            profissionalRepository.findByPessoaProf(user.getPessoa()).ifPresent(meuProf -> {
+                if (meuProf.getIdProf() != null && (meuProf.getAtivo() == null || meuProf.getAtivo())) {
+                    profissionaisMap.putIfAbsent(meuProf.getIdProf(), meuProf);
+                }
+            });
+
+            return new ArrayList<>(profissionaisMap.values());
         }
 
         boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
         if (isProfissional && user.getPessoa() != null) {
-            return profissionalRepository.findByPessoaProf(user.getPessoa())
-                    .map(List::of)
-                    .orElse(List.of());
+            Map<String, Profissional> profissionaisMap = new LinkedHashMap<>();
+
+            // Profissional a si mesmo
+            profissionalRepository.findByPessoaProf(user.getPessoa()).ifPresent(p -> {
+                if (p.getIdProf() != null && (p.getAtivo() == null || p.getAtivo())) {
+                    profissionaisMap.put(p.getIdProf(), p);
+                }
+            });
+
+            // Se atuar em clínicas, inclui os colegas da clínica para seleção na grade/agenda
+            if (user.getPessoa().getProfissional() != null) {
+                String idProf = user.getPessoa().getProfissional().getIdProf();
+                List<String> clinicaIds = profissionalClinicaRepository.findByProfissionalIdProf(idProf).stream()
+                        .filter(pc -> pc.getClinica() != null)
+                        .map(pc -> pc.getClinica().getIdClinica())
+                        .toList();
+                if (!clinicaIds.isEmpty()) {
+                    List<Profissional> colegas = profissionalClinicaRepository.findProfissionaisByClinicaIds(clinicaIds);
+                    for (Profissional c : colegas) {
+                        if (c.getIdProf() != null && (c.getAtivo() == null || c.getAtivo())) {
+                            profissionaisMap.putIfAbsent(c.getIdProf(), c);
+                        }
+                    }
+                }
+            }
+
+            return new ArrayList<>(profissionaisMap.values());
         }
 
         return listProfissionais();

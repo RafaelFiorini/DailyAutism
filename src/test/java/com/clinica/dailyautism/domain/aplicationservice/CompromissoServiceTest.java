@@ -28,6 +28,7 @@ class CompromissoServiceTest {
     @Mock private ProfissionalRepository profissionalRepository;
     @Mock private ResponsavelRepository responsavelRepository;
     @Mock private PacienteService pacienteService;
+    @Mock private ProfissionalService profissionalService;
     @Mock private ClinicaRepository clinicaRepository;
     @Mock private ClinicaAccessHelper clinicaAccessHelper;
     @Mock private ContratoParticularService contratoParticularService;

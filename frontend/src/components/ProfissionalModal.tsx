@@ -46,7 +46,12 @@ export default function ProfissionalModal({
       setLoadingClinicas(true);
       clinicaService
         .list()
-        .then((data) => setClinicas(data))
+        .then((data) => {
+          setClinicas(data);
+          if (!initialData && data.length === 1) {
+            setIdClinica(data[0].idClinica);
+          }
+        })
         .catch(() => setClinicas([]))
         .finally(() => setLoadingClinicas(false));
 

@@ -30,6 +30,7 @@ public class CompromissoService {
     private final ProfissionalRepository profissionalRepository;
     private final ResponsavelRepository responsavelRepository;
     private final PacienteService pacienteService;
+    private final ProfissionalService profissionalService;
     private final ClinicaRepository clinicaRepository;
     private final ClinicaAccessHelper clinicaAccessHelper;
     private final ContratoParticularService contratoParticularService;
@@ -115,31 +116,59 @@ public class CompromissoService {
                 if (isAdmin) {
                     listaBase = compromissoRepository.findAllByOrderByDataHoraCompromissoDesc();
                 } else {
-                    boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
-                            .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+                    boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
+                            .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
 
-                    if (isProfissional && user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
-                        String idProf = user.getPessoa().getProfissional().getIdProf();
+                    if (isClinica) {
                         Set<Compromisso> unicos = new LinkedHashSet<>();
-                        unicos.addAll(compromissoRepository.findByProfissionalIdProfOrderByDataHoraCompromissoDesc(idProf));
 
+                        // 1. Compromissos dos pacientes da clínica
                         List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
                         List<String> pacIds = pacientesPermitidos.stream().map(Paciente::getIdPaciente).toList();
                         if (!pacIds.isEmpty()) {
                             unicos.addAll(compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(pacIds));
                         }
+
+                        // 2. Compromissos dos profissionais da clínica
+                        List<Profissional> profissionaisPermitidos = profissionalService.listProfissionaisForUser(email);
+                        for (Profissional prof : profissionaisPermitidos) {
+                            if (prof.getIdProf() != null) {
+                                unicos.addAll(compromissoRepository.findByProfissionalIdProfOrderByDataHoraCompromissoDesc(prof.getIdProf()));
+                            }
+                        }
+
+                        // 3. Compromissos criados pelo usuário
                         unicos.addAll(compromissoRepository.findByCriadoPorIdUser(user.getIdUser()));
+
                         listaBase = new ArrayList<>(unicos);
                         listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.reverseOrder())));
                     } else {
-                        List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
-                        if (pacientesPermitidos.isEmpty()) {
-                            listaBase = List.of();
+                        boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+
+                        if (isProfissional && user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+                            String idProf = user.getPessoa().getProfissional().getIdProf();
+                            Set<Compromisso> unicos = new LinkedHashSet<>();
+                            unicos.addAll(compromissoRepository.findByProfissionalIdProfOrderByDataHoraCompromissoDesc(idProf));
+
+                            List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
+                            List<String> pacIds = pacientesPermitidos.stream().map(Paciente::getIdPaciente).toList();
+                            if (!pacIds.isEmpty()) {
+                                unicos.addAll(compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(pacIds));
+                            }
+                            unicos.addAll(compromissoRepository.findByCriadoPorIdUser(user.getIdUser()));
+                            listaBase = new ArrayList<>(unicos);
+                            listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.reverseOrder())));
                         } else {
-                            List<String> ids = pacientesPermitidos.stream()
-                                    .map(Paciente::getIdPaciente)
-                                    .toList();
-                            listaBase = compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(ids);
+                            List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
+                            if (pacientesPermitidos.isEmpty()) {
+                                listaBase = List.of();
+                            } else {
+                                List<String> ids = pacientesPermitidos.stream()
+                                        .map(Paciente::getIdPaciente)
+                                        .toList();
+                                listaBase = compromissoRepository.findByPacienteIdPacienteInOrderByDataHoraCompromissoDesc(ids);
+                            }
                         }
                     }
                 }

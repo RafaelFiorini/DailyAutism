@@ -5,6 +5,7 @@ import com.clinica.dailyautism.domain.entity.FuncionarioClinica;
 import com.clinica.dailyautism.domain.entity.Paciente;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
+import com.clinica.dailyautism.domain.entity.ProfissionalClinica;
 import com.clinica.dailyautism.domain.entity.Responsavel;
 import com.clinica.dailyautism.domain.entity.security.Perfil;
 import com.clinica.dailyautism.domain.entity.security.User;
@@ -18,6 +19,7 @@ import com.clinica.dailyautism.domain.repository.FuncionarioClinicaRepository;
 import com.clinica.dailyautism.domain.repository.PacienteRepository;
 import com.clinica.dailyautism.domain.repository.PerfilRepository;
 import com.clinica.dailyautism.domain.repository.PessoaRepository;
+import com.clinica.dailyautism.domain.repository.ProfissionalClinicaRepository;
 import com.clinica.dailyautism.domain.repository.ProfissionalRepository;
 import com.clinica.dailyautism.domain.repository.ResponsavelRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
@@ -47,6 +49,7 @@ public class UserService {
     private final ProfissionalRepository profissionalRepository;
     private final ClinicaRepository clinicaRepository;
     private final FuncionarioClinicaRepository funcionarioClinicaRepository;
+    private final ProfissionalClinicaRepository profissionalClinicaRepository;
     private final PacienteRepository pacienteRepository;
 
     @Transactional
@@ -258,6 +261,20 @@ public class UserService {
             }
         }
 
+        // 8. Auto-vínculo de Profissional com a Clínica (se for profissional de clínica)
+        if (Boolean.TRUE.equals(dto.getIsProfissional()) && funcSalvo != null && funcSalvo.getClinica() != null) {
+            Clinica clinicaAlvo = funcSalvo.getClinica();
+            Profissional profAtual = profissionalRepository.findByPessoaProf(pessoa).orElse(null);
+            if (profAtual != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(profAtual, clinicaAlvo)) {
+                ProfissionalClinica pc = ProfissionalClinica.builder()
+                        .profissional(profAtual)
+                        .clinica(clinicaAlvo)
+                        .build();
+                if (pc.getAtivo() == null) pc.setAtivo(true);
+                profissionalClinicaRepository.save(pc);
+            }
+        }
+
         return UserDTO.create(user, funcSalvo);
     }
 
@@ -407,6 +424,20 @@ public class UserService {
             for (FuncionarioClinica f : listFunc) {
                 f.desativar();
                 funcionarioClinicaRepository.save(f);
+            }
+        }
+
+        // 8. Auto-vínculo de Profissional com a Clínica (se for profissional de clínica)
+        if (Boolean.TRUE.equals(dto.getIsProfissional()) && funcSalvo != null && funcSalvo.getClinica() != null) {
+            Clinica clinicaAlvo = funcSalvo.getClinica();
+            Profissional profAtual = profissionalRepository.findByPessoaProf(pessoa).orElse(null);
+            if (profAtual != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(profAtual, clinicaAlvo)) {
+                ProfissionalClinica pc = ProfissionalClinica.builder()
+                        .profissional(profAtual)
+                        .clinica(clinicaAlvo)
+                        .build();
+                if (pc.getAtivo() == null) pc.setAtivo(true);
+                profissionalClinicaRepository.save(pc);
             }
         }
 

@@ -85,8 +85,12 @@ const STATUS_CONFIG: Record<
 
 export default function Agenda() {
   const auth = useContext(AuthContext);
+  const isAdmin = auth?.isAdmin ?? false;
+  const isAdminClinica = auth?.isAdminClinica ?? false;
+  const isFuncionarioClinica = auth?.isFuncionarioClinica ?? false;
   const isResponsavel = auth?.isResponsavel ?? false;
   const isProfissional = auth?.isProfissional ?? false;
+  const isGestaoClinica = isAdmin || isAdminClinica || isFuncionarioClinica;
 
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
@@ -263,6 +267,8 @@ export default function Agenda() {
 
   const pageSubtitle = isResponsavel
     ? 'Acompanhe as sessões e terapias agendadas com os profissionais para seus dependentes.'
+    : isGestaoClinica
+    ? 'Gestão centralizada de atendimentos, escalonamento de profissionais e agenda de pacientes.'
     : isProfissional
     ? 'Acompanhe seus horários de atendimento e a sequência de pacientes agendados.'
     : 'Gestão centralizada de atendimentos, escalonamento de profissionais e agenda de pacientes.';
@@ -274,7 +280,7 @@ export default function Agenda() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">
-              {isProfissional ? 'Minha Agenda de Atendimentos' : 'Agenda'}
+              {isGestaoClinica ? 'Agenda da Clínica' : isProfissional ? 'Minha Agenda de Atendimentos' : 'Agenda'}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
               {compromissos.length} agendamentos
@@ -355,7 +361,7 @@ export default function Agenda() {
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Filtro por Profissional (para clínica/admin ou responsável) */}
-            {!isProfissional && profissionais.length > 0 && (
+            {(isGestaoClinica || !isProfissional) && profissionais.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <Briefcase className="w-4 h-4 text-gray-400 shrink-0 hidden sm:block" />
                 <select

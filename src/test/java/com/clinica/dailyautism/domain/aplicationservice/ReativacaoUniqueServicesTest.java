@@ -74,7 +74,7 @@ class ReativacaoUniqueServicesTest {
         UserService service = new UserService(
                 userRepository, pessoaRepository, passwordEncoder, perfilRepository,
                 responsavelRepository, profissionalRepository, clinicaRepository,
-                funcionarioClinicaRepository, pacienteRepository
+                funcionarioClinicaRepository, profissionalClinicaRepository, pacienteRepository
         );
 
         User inativo = User.builder()
