@@ -80,6 +80,25 @@ public class ClinicaAccessHelper {
                     .forEach(ids::add);
         }
 
+        // 3. Fallback inteligente: se for gestor/staff de clínica ou profissional e não encontrou vínculos,
+        // mas existir uma única clínica no sistema, auto-vincula para garantir integridade
+        if (ids.isEmpty() && (isStaffClinica(user) || isProfissional(user))) {
+            List<Clinica> todas = clinicaRepository.findAll();
+            if (todas.size() == 1) {
+                Clinica clinicaUnica = todas.get(0);
+                ids.add(clinicaUnica.getIdClinica());
+                if (isStaffClinica(user) && funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream().noneMatch(f -> clinicaUnica.equals(f.getClinica()))) {
+                    FuncionarioClinica fc = FuncionarioClinica.builder()
+                            .pessoa(user.getPessoa())
+                            .clinica(clinicaUnica)
+                            .cargo(isStaffClinica(user) ? "Administrador / Gestor" : "Profissional")
+                            .build();
+                    if (fc.getAtivo() == null) fc.setAtivo(true);
+                    funcionarioClinicaRepository.save(fc);
+                }
+            }
+        }
+
         return new ArrayList<>(ids);
     }
 

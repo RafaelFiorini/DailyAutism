@@ -209,6 +209,31 @@ public class ProfissionalService {
         return profissional;
     }
 
+    private void autoVincularProfissionaisSemClinicaSeNecessario(List<String> clinicaIds) {
+        if (clinicaIds == null || clinicaIds.isEmpty()) return;
+        long totalClinicas = clinicaRepository.count();
+        if (totalClinicas == 1 || clinicaIds.size() == 1) {
+            String clinicaId = clinicaIds.get(0);
+            Clinica clinica = clinicaRepository.findById(clinicaId).orElse(null);
+            if (clinica == null) return;
+            List<Profissional> todos = profissionalRepository.findAll();
+            for (Profissional p : todos) {
+                if (p.getIdProf() != null && (p.getAtivo() == null || p.getAtivo())) {
+                    boolean jaVinculado = profissionalClinicaRepository.findByProfissionalIdProf(p.getIdProf())
+                            .stream().anyMatch(pc -> pc.getClinica() != null);
+                    if (!jaVinculado) {
+                        ProfissionalClinica pc = ProfissionalClinica.builder()
+                                .profissional(p)
+                                .clinica(clinica)
+                                .build();
+                        if (pc.getAtivo() == null) pc.setAtivo(true);
+                        profissionalClinicaRepository.save(pc);
+                    }
+                }
+            }
+        }
+    }
+
     public List<Profissional> listProfissionais() {
         return profissionalRepository.findAll();
     }
@@ -236,13 +261,31 @@ public class ProfissionalService {
                 return List.of();
             }
             var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
-            List<String> clinicaIds = vinculos.stream()
+            List<String> clinicaIds = new ArrayList<>(vinculos.stream()
                     .filter(v -> v.getClinica() != null)
                     .map(v -> v.getClinica().getIdClinica())
-                    .toList();
+                    .toList());
+
+            // Se for staff de clínica e não tiver clínica vinculada mas só houver 1 clínica no sistema, auto-vincula
             if (clinicaIds.isEmpty()) {
-                return List.of();
+                List<Clinica> todasClinicas = clinicaRepository.findAll();
+                if (todasClinicas.size() == 1) {
+                    Clinica unica = todasClinicas.get(0);
+                    FuncionarioClinica fc = FuncionarioClinica.builder()
+                            .pessoa(user.getPessoa())
+                            .clinica(unica)
+                            .cargo("Gestor / Administrador")
+                            .build();
+                    if (fc.getAtivo() == null) fc.setAtivo(true);
+                    fc = funcionarioClinicaRepository.save(fc);
+                    vinculos = List.of(fc);
+                    clinicaIds.add(unica.getIdClinica());
+                } else {
+                    return List.of();
+                }
             }
+
+            autoVincularProfissionaisSemClinicaSeNecessario(clinicaIds);
 
             Map<String, Profissional> profissionaisMap = new LinkedHashMap<>();
 
@@ -286,11 +329,57 @@ public class ProfissionalService {
             }
 
             // 3. Se o próprio usuário logado possuir cadastro de profissional, garante presença
-            profissionalRepository.findByPessoaProf(user.getPessoa()).ifPresent(meuProf -> {
-                if (meuProf.getIdProf() != null && (meuProf.getAtivo() == null || meuProf.getAtivo())) {
-                    profissionaisMap.putIfAbsent(meuProf.getIdProf(), meuProf);
-                }
-            });
+            profissionalRepository.findByPessoaProf(user.getPessoa()).ifPresentOrElse(
+                    meuProf -> {
+                        if (meuProf.getIdProf() != null && (meuProf.getAtivo() == null || meuProf.getAtivo())) {
+                            profissionaisMap.putIfAbsent(meuProf.getIdProf(), meuProf);
+                            if (!clinicaIds.isEmpty()) {
+                                Clinica clinicaRef = vinculos.stream()
+                                        .filter(v -> v.getClinica() != null && clinicaIds.get(0).equals(v.getClinica().getIdClinica()))
+                                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
+                                        .findFirst()
+                                        .orElseGet(() -> clinicaRepository.findById(clinicaIds.get(0)).orElse(null));
+                                if (clinicaRef != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(meuProf, clinicaRef)) {
+                                    ProfissionalClinica pc = ProfissionalClinica.builder()
+                                            .profissional(meuProf)
+                                            .clinica(clinicaRef)
+                                            .build();
+                                    if (pc.getAtivo() == null) pc.setAtivo(true);
+                                    profissionalClinicaRepository.save(pc);
+                                }
+                            }
+                        }
+                    },
+                    () -> {
+                        boolean temPerfilProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+                        if (temPerfilProfissional && user.getPessoa() != null) {
+                            Profissional novoProf = Profissional.builder()
+                                    .pessoaProf(user.getPessoa())
+                                    .conselhoProf("Não informado")
+                                    .build();
+                            if (novoProf.getAtivo() == null) novoProf.setAtivo(true);
+                            novoProf = profissionalRepository.save(novoProf);
+                            profissionaisMap.putIfAbsent(novoProf.getIdProf(), novoProf);
+
+                            if (!clinicaIds.isEmpty()) {
+                                Clinica clinicaRef = vinculos.stream()
+                                        .filter(v -> v.getClinica() != null && clinicaIds.get(0).equals(v.getClinica().getIdClinica()))
+                                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
+                                        .findFirst()
+                                        .orElseGet(() -> clinicaRepository.findById(clinicaIds.get(0)).orElse(null));
+                                if (clinicaRef != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(novoProf, clinicaRef)) {
+                                    ProfissionalClinica pc = ProfissionalClinica.builder()
+                                            .profissional(novoProf)
+                                            .clinica(clinicaRef)
+                                            .build();
+                                    if (pc.getAtivo() == null) pc.setAtivo(true);
+                                    profissionalClinicaRepository.save(pc);
+                                }
+                            }
+                        }
+                    }
+            );
 
             return new ArrayList<>(profissionaisMap.values());
         }
