@@ -97,15 +97,39 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
     }
   }
 
+  function formatarDataBR(dataIso?: string): string {
+    if (!dataIso) return '';
+    const partes = dataIso.split('-');
+    if (partes.length === 3) {
+      return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+    return dataIso;
+  }
+
   async function carregarVigenciaPaciente(pacId: string) {
     if (!pacId) return;
     try {
       const pac = await pacienteService.getById(pacId);
-      if (pac.vencimentoLiberacao) {
+      const qtdSessoes = pac.quantidadeSessoesLiberadas ?? 0;
+      const isPorQuantidade =
+        pac.tipoLiberacao === 'QUANTIDADE' || (!pac.vencimentoLiberacao && qtdSessoes > 0);
+      const isPorData = !isPorQuantidade && Boolean(pac.vencimentoLiberacao);
+
+      if (isPorQuantidade) {
+        const hoje = new Date();
+        const seisMeses = new Date();
+        seisMeses.setMonth(seisMeses.getMonth() + 6);
+        setDataInicioVigencia(pac.dataInicioLiberacao || hoje.toISOString().split('T')[0]);
+        setDataFimVigencia(pac.vencimentoLiberacao || seisMeses.toISOString().split('T')[0]);
+        setTipoOrigemVigencia('GUIA_CONVENIO');
+        setInfoGuia(
+          `Guia de Convênio: ${qtdSessoes} ${qtdSessoes === 1 ? 'sessão autorizada' : 'sessões autorizadas'}`
+        );
+      } else if (isPorData && pac.vencimentoLiberacao) {
         setDataFimVigencia(pac.vencimentoLiberacao);
         setDataInicioVigencia(pac.dataInicioLiberacao || new Date().toISOString().split('T')[0]);
         setTipoOrigemVigencia('GUIA_CONVENIO');
-        setInfoGuia(`Guia de Convênio: Vencimento em ${pac.vencimentoLiberacao} (${pac.quantidadeSessoesLiberadas || 0} sessões autorizadas)`);
+        setInfoGuia(`Guia de Convênio: Vencimento em ${formatarDataBR(pac.vencimentoLiberacao)}`);
       } else {
         // Padrão de 6 meses
         const hoje = new Date();
@@ -213,7 +237,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in-95 duration-200">
         {/* Topo do Modal */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
@@ -321,10 +345,10 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
               {itens.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-xl grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+                  className="p-3 bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-700 rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end"
                 >
                   {/* Dia da semana */}
-                  <div className="sm:col-span-2">
+                  <div className="lg:col-span-2 min-w-0">
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">Dia da Semana</label>
                     <select
                       value={item.diaSemana}
@@ -340,29 +364,29 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   </div>
 
                   {/* Horários Início e Fim */}
-                  <div className="sm:col-span-2 flex gap-1.5">
-                    <div className="flex-1">
+                  <div className="lg:col-span-3 min-w-0 grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">Início</label>
                       <input
                         type="time"
                         value={item.horaInicio}
                         onChange={(e) => handleChangeItem(idx, 'horaInicio', e.target.value)}
-                        className="w-full px-1.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full min-w-0 px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
                       />
                     </div>
-                    <div className="flex-1">
+                    <div className="min-w-0">
                       <label className="block text-[11px] font-semibold text-gray-500 mb-1">Fim</label>
                       <input
                         type="time"
                         value={item.horaFim}
                         onChange={(e) => handleChangeItem(idx, 'horaFim', e.target.value)}
-                        className="w-full px-1.5 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
+                        className="w-full min-w-0 px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"
                       />
                     </div>
                   </div>
 
                   {/* Especialidade */}
-                  <div className="sm:col-span-3">
+                  <div className="lg:col-span-2 min-w-0">
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">Especialidade *</label>
                     <select
                       value={item.idTipoCompromisso}
@@ -379,7 +403,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   </div>
 
                   {/* Terapeuta */}
-                  <div className="sm:col-span-2">
+                  <div className="lg:col-span-2 min-w-0">
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">Terapeuta</label>
                     <select
                       value={item.idProfissional || ''}
@@ -396,7 +420,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   </div>
 
                   {/* Periodicidade */}
-                  <div className="sm:col-span-2">
+                  <div className="lg:col-span-2 min-w-0">
                     <label className="block text-[11px] font-semibold text-gray-500 mb-1">Periodicidade</label>
                     <select
                       value={item.idPeriodicidade || ''}
@@ -412,7 +436,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
                   </div>
 
                   {/* Botão Remover */}
-                  <div className="sm:col-span-1 flex justify-end pt-4 sm:pt-4">
+                  <div className="lg:col-span-1 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(idx)}
