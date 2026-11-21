@@ -261,8 +261,8 @@ public class ProfissionalService {
             if (user.getPessoa() == null) {
                 return List.of();
             }
-            var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
-            List<String> clinicaIds = new ArrayList<>(vinculos.stream()
+            final List<FuncionarioClinica> vinculos = new ArrayList<>(funcionarioClinicaRepository.findByPessoa(user.getPessoa()));
+            final List<String> clinicaIds = new ArrayList<>(vinculos.stream()
                     .filter(v -> v.getClinica() != null)
                     .map(v -> v.getClinica().getIdClinica())
                     .toList());
@@ -279,7 +279,7 @@ public class ProfissionalService {
                             .build();
                     if (fc.getAtivo() == null) fc.setAtivo(true);
                     fc = funcionarioClinicaRepository.save(fc);
-                    vinculos = List.of(fc);
+                    vinculos.add(fc);
                     clinicaIds.add(unica.getIdClinica());
                 } else {
                     return List.of();
@@ -287,6 +287,14 @@ public class ProfissionalService {
             }
 
             autoVincularProfissionaisSemClinicaSeNecessario(clinicaIds);
+
+            final Clinica clinicaRefUsuario = !clinicaIds.isEmpty()
+                    ? vinculos.stream()
+                            .filter(v -> v.getClinica() != null && clinicaIds.get(0).equals(v.getClinica().getIdClinica()))
+                            .map(FuncionarioClinica::getClinica)
+                            .findFirst()
+                            .orElseGet(() -> clinicaRepository.findById(clinicaIds.get(0)).orElse(null))
+                    : null;
 
             Map<String, Profissional> profissionaisMap = new LinkedHashMap<>();
 
@@ -302,11 +310,11 @@ public class ProfissionalService {
             for (String clinicaId : clinicaIds) {
                 Clinica clinicaRef = vinculos.stream()
                         .filter(v -> v.getClinica() != null && clinicaId.equals(v.getClinica().getIdClinica()))
-                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
+                        .map(FuncionarioClinica::getClinica)
                         .findFirst()
                         .orElse(null);
 
-                List<com.clinica.dailyautism.domain.entity.FuncionarioClinica> funcsDaClinica = funcionarioClinicaRepository.findByClinicaIdClinica(clinicaId);
+                List<FuncionarioClinica> funcsDaClinica = funcionarioClinicaRepository.findByClinicaIdClinica(clinicaId);
                 for (var fc : funcsDaClinica) {
                     if (fc.getPessoa() != null) {
                         profissionalRepository.findByPessoaProf(fc.getPessoa()).ifPresent(profFunc -> {
@@ -334,20 +342,13 @@ public class ProfissionalService {
                     meuProf -> {
                         if (meuProf.getIdProf() != null && (meuProf.getAtivo() == null || meuProf.getAtivo())) {
                             profissionaisMap.putIfAbsent(meuProf.getIdProf(), meuProf);
-                            if (!clinicaIds.isEmpty()) {
-                                Clinica clinicaRef = vinculos.stream()
-                                        .filter(v -> v.getClinica() != null && clinicaIds.get(0).equals(v.getClinica().getIdClinica()))
-                                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
-                                        .findFirst()
-                                        .orElseGet(() -> clinicaRepository.findById(clinicaIds.get(0)).orElse(null));
-                                if (clinicaRef != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(meuProf, clinicaRef)) {
-                                    ProfissionalClinica pc = ProfissionalClinica.builder()
-                                            .profissional(meuProf)
-                                            .clinica(clinicaRef)
-                                            .build();
-                                    if (pc.getAtivo() == null) pc.setAtivo(true);
-                                    profissionalClinicaRepository.save(pc);
-                                }
+                            if (clinicaRefUsuario != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(meuProf, clinicaRefUsuario)) {
+                                ProfissionalClinica pc = ProfissionalClinica.builder()
+                                        .profissional(meuProf)
+                                        .clinica(clinicaRefUsuario)
+                                        .build();
+                                if (pc.getAtivo() == null) pc.setAtivo(true);
+                                profissionalClinicaRepository.save(pc);
                             }
                         }
                     },
@@ -363,20 +364,13 @@ public class ProfissionalService {
                             novoProf = profissionalRepository.save(novoProf);
                             profissionaisMap.putIfAbsent(novoProf.getIdProf(), novoProf);
 
-                            if (!clinicaIds.isEmpty()) {
-                                Clinica clinicaRef = vinculos.stream()
-                                        .filter(v -> v.getClinica() != null && clinicaIds.get(0).equals(v.getClinica().getIdClinica()))
-                                        .map(com.clinica.dailyautism.domain.entity.FuncionarioClinica::getClinica)
-                                        .findFirst()
-                                        .orElseGet(() -> clinicaRepository.findById(clinicaIds.get(0)).orElse(null));
-                                if (clinicaRef != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(novoProf, clinicaRef)) {
-                                    ProfissionalClinica pc = ProfissionalClinica.builder()
-                                            .profissional(novoProf)
-                                            .clinica(clinicaRef)
-                                            .build();
-                                    if (pc.getAtivo() == null) pc.setAtivo(true);
-                                    profissionalClinicaRepository.save(pc);
-                                }
+                            if (clinicaRefUsuario != null && !profissionalClinicaRepository.existsByProfissionalAndClinica(novoProf, clinicaRefUsuario)) {
+                                ProfissionalClinica pc = ProfissionalClinica.builder()
+                                        .profissional(novoProf)
+                                        .clinica(clinicaRefUsuario)
+                                        .build();
+                                if (pc.getAtivo() == null) pc.setAtivo(true);
+                                profissionalClinicaRepository.save(pc);
                             }
                         }
                     }
