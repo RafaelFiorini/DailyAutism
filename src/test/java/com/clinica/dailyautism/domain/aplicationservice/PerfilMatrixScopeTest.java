@@ -237,7 +237,7 @@ class PerfilMatrixScopeTest {
 
     private void vincularComoResponsavel() {
         Responsavel resp = Responsavel.builder()
-                .idResp("resp-user")
+                .idResponsavel("resp-user")
                 .pessoaResponsavel(pessoaUsuario)
                 .pacientes(List.of(pacFilhoResponsavel))
                 .build();
