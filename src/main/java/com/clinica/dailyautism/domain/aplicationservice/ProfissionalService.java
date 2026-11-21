@@ -12,6 +12,7 @@ import com.clinica.dailyautism.domain.exception.InactiveResourceConflictExceptio
 import com.clinica.dailyautism.domain.exception.PessoaNotFoundException;
 import com.clinica.dailyautism.domain.exception.ProfissionalNotFoundException;
 import com.clinica.dailyautism.domain.repository.*;
+import com.clinica.dailyautism.infrastructure.dto.ProfissionalDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveProfissionalDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -588,5 +589,37 @@ public class ProfissionalService {
                             userRepository.save(novoUser);
                         }
                 );
+    }
+
+    public ProfissionalDTO toDTO(Profissional profissional) {
+        if (profissional == null) {
+            return null;
+        }
+        String idClinica = null;
+        String nomeClinica = null;
+
+        if (profissional.getIdProf() != null) {
+            List<ProfissionalClinica> vinculos = profissionalClinicaRepository.findByProfissionalIdProf(profissional.getIdProf());
+            for (ProfissionalClinica pc : vinculos) {
+                if (pc.getClinica() != null && (pc.getAtivo() == null || pc.getAtivo())) {
+                    idClinica = pc.getClinica().getIdClinica();
+                    nomeClinica = pc.getClinica().getNomeClinica();
+                    break;
+                }
+            }
+        }
+
+        if (idClinica == null && profissional.getPessoaProf() != null) {
+            List<FuncionarioClinica> funcs = funcionarioClinicaRepository.findByPessoa(profissional.getPessoaProf());
+            for (FuncionarioClinica fc : funcs) {
+                if (fc.getClinica() != null && (fc.getAtivo() == null || fc.getAtivo())) {
+                    idClinica = fc.getClinica().getIdClinica();
+                    nomeClinica = fc.getClinica().getNomeClinica();
+                    break;
+                }
+            }
+        }
+
+        return ProfissionalDTO.create(profissional, idClinica, nomeClinica);
     }
 }

@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Award,
   Pencil,
+  Building2,
 } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { profissionalService } from '../services/profissionalService';
@@ -56,7 +57,8 @@ export default function Profissionais() {
         p.nomeProfissional?.toLowerCase().includes(term) ||
         p.conselhoProf?.toLowerCase().includes(term) ||
         p.cpf?.includes(term) ||
-        p.email?.toLowerCase().includes(term)
+        p.email?.toLowerCase().includes(term) ||
+        p.nomeClinica?.toLowerCase().includes(term)
     );
   }, [profissionais, search]);
 
@@ -200,6 +202,7 @@ export default function Profissionais() {
                   <th className="px-6 py-3.5">Profissional</th>
                   <th className="px-6 py-3.5">Conselho</th>
                   <th className="px-6 py-3.5">Contato</th>
+                  <th className="px-6 py-3.5">Clínica</th>
                   <th className="px-6 py-3.5 text-right">Ações</th>
                 </tr>
               </thead>
@@ -259,6 +262,17 @@ export default function Profissionais() {
                             <span className="text-gray-400 italic">Sem contato cadastrado</span>
                           )}
                         </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {prof.nomeClinica ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <Building2 className="h-3.5 w-3.5 text-emerald-500" />
+                            {prof.nomeClinica}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Não vinculada</span>
+                        )}
                       </td>
 
                       <td className="px-6 py-4 text-right">

@@ -29,7 +29,7 @@ public class ProfissionalRestResource {
         String email = currentUser != null ? currentUser.getUsername() : null;
         Profissional profissional = profissionalService.createProfissional(saveProfissionalDTO, email);
         return ResponseEntity.created(URI.create("/profissionais/" + profissional.getIdProf()))
-                .body(ProfissionalDTO.create(profissional));
+                .body(profissionalService.toDTO(profissional));
     }
 
     @GetMapping("/{id}")
@@ -38,14 +38,14 @@ public class ProfissionalRestResource {
                                                             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
         Profissional profissional = profissionalService.loadProfissionalForUser(id, email);
-        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+        return ResponseEntity.ok(profissionalService.toDTO(profissional));
     }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProfissionalDTO> getMe(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         Profissional profissional = profissionalService.findByEmail(currentUser.getUsername());
-        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+        return ResponseEntity.ok(profissionalService.toDTO(profissional));
     }
 
     @GetMapping
@@ -54,7 +54,7 @@ public class ProfissionalRestResource {
         String email = currentUser != null ? currentUser.getUsername() : null;
         List<ProfissionalDTO> profissionais = profissionalService.listProfissionaisForUser(email)
                 .stream()
-                .map(ProfissionalDTO::create)
+                .map(profissionalService::toDTO)
                 .toList();
         return ResponseEntity.ok(profissionais);
     }
@@ -65,7 +65,7 @@ public class ProfissionalRestResource {
         String email = currentUser != null ? currentUser.getUsername() : null;
         List<ProfissionalDTO> profissionais = profissionalService.listProfissionaisInativosForUser(email)
                 .stream()
-                .map(ProfissionalDTO::create)
+                .map(profissionalService::toDTO)
                 .toList();
         return ResponseEntity.ok(profissionais);
     }
@@ -76,7 +76,7 @@ public class ProfissionalRestResource {
             @PathVariable String id,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
-        return ResponseEntity.ok(ProfissionalDTO.create(profissionalService.reativarProfissional(id, email)));
+        return ResponseEntity.ok(profissionalService.toDTO(profissionalService.reativarProfissional(id, email)));
     }
 
     @PutMapping("/{id}")
@@ -84,7 +84,7 @@ public class ProfissionalRestResource {
     public ResponseEntity<ProfissionalDTO> updateProfissional(@PathVariable String id,
                                                               @Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = profissionalService.updateProfissional(id, saveProfissionalDTO);
-        return ResponseEntity.ok(ProfissionalDTO.create(profissional));
+        return ResponseEntity.ok(profissionalService.toDTO(profissional));
     }
 
     @DeleteMapping("/{id}")

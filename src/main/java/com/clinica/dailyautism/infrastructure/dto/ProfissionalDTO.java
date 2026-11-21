@@ -24,8 +24,14 @@ public class ProfissionalDTO {
     private String rg;
     private String endereco;
     private LocalDate datanasc;
+    private String idClinica;
+    private String nomeClinica;
 
     public static ProfissionalDTO create(Profissional profissional) {
+        return create(profissional, null, null);
+    }
+
+    public static ProfissionalDTO create(Profissional profissional, String idClinica, String nomeClinica) {
         String idPessoa = null;
         String nome = null;
         String cpf = null;
@@ -58,7 +64,9 @@ public class ProfissionalDTO {
                 profissional.getConselhoProf(),
                 rg,
                 endereco,
-                datanasc
+                datanasc,
+                idClinica,
+                nomeClinica
         );
     }
 }
