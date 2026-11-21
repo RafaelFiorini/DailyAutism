@@ -468,13 +468,6 @@ public class PacienteService {
                 .filter(p -> p.getAtivo() == null || p.getAtivo())
                 .toList();
     }
-            return pacienteRepository.findAllById(pacienteIds).stream()
-                    .filter(p -> p.getAtivo() == null || p.getAtivo())
-                    .toList();
-        }
-
-        return listPacientes();
-    }
 
     @Transactional
     public Paciente updatePaciente(String pacienteId, SavePacienteDTO savePacienteDTO) {
