@@ -56,8 +56,8 @@ export default function AdminLayout() {
       { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
     ];
 
-    // Grade Terapêutica: disponível para gestão clínica e para profissionais
-    if (isGestaoClinica || isProfissional) {
+    // Grade Terapêutica: disponível para gestão clínica, profissionais e responsáveis
+    if (isGestaoClinica || isProfissional || isResponsavel) {
       items.push({ name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false });
     }
 

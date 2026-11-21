@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import {
   CalendarRange,
   Plus,
@@ -24,6 +25,10 @@ import { AvisosConflitoModal } from '../components/grade/AvisosConflitoModal';
 import { CancelarProfissionalModal } from '../components/grade/CancelarProfissionalModal';
 
 export default function GradeTerapeuticaPage() {
+  const auth = useContext(AuthContext);
+  const canCriarProposta = auth
+    ? auth.isAdmin || auth.isAdminClinica || auth.isFuncionarioClinica || auth.isProfissional
+    : true;
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [idPacienteSelecionado, setIdPacienteSelecionado] = useState<string>('');
   const [grades, setGrades] = useState<GradeTerapeutica[]>([]);
@@ -172,12 +177,14 @@ export default function GradeTerapeuticaPage() {
             </button>
           )}
 
-          <button
-            onClick={() => setModalNovaProposta(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Nova Proposta de Grade
-          </button>
+          {canCriarProposta && (
+            <button
+              onClick={() => setModalNovaProposta(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Nova Proposta de Grade
+            </button>
+          )}
         </div>
       </div>
 
@@ -356,12 +363,14 @@ export default function GradeTerapeuticaPage() {
                 ? 'Clique no botão abaixo para montar e propor o quadro semanal deste paciente.'
                 : 'Selecione um paciente ou inicie uma nova proposta de grade terapêutica.'}
             </p>
-            <button
-              onClick={() => setModalNovaProposta(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
-            >
-              <Plus className="w-3.5 h-3.5" /> Criar Grade Terapêutica
-            </button>
+            {canCriarProposta && (
+              <button
+                onClick={() => setModalNovaProposta(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+              >
+                <Plus className="w-3.5 h-3.5" /> Criar Grade Terapêutica
+              </button>
+            )}
           </div>
         )}
       </div>

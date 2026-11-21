@@ -41,8 +41,11 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Validar compilação do Backend Spring Boot
-        run: mvn clean package -DskipTests
+      - name: Executar testes automatizados do Backend (Perfis e Serviços)
+        run: mvn test -Dtest='!DailyAutismApplicationTests'
+
+      - name: Validar compilação e empacotamento do Backend Spring Boot
+        run: mvn package -DskipTests
 
   deploy-oci:
     name: 🚀 CD - Deploy Automático na OCI
