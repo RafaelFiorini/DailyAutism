@@ -1,6 +1,7 @@
 package com.clinica.dailyautism.domain.aplicationservice;
 
 import com.clinica.dailyautism.domain.entity.Clinica;
+import com.clinica.dailyautism.domain.entity.FuncionarioClinica;
 import com.clinica.dailyautism.domain.entity.Pessoa;
 import com.clinica.dailyautism.domain.entity.Profissional;
 import com.clinica.dailyautism.domain.entity.ProfissionalClinica;
