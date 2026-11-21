@@ -37,6 +37,7 @@ class PacienteServiceScopeTest {
     @Mock private ProfissionalClinicaRepository profissionalClinicaRepository;
     @Mock private FuncionarioClinicaRepository funcionarioClinicaRepository;
     @Mock private PacientePlanoSaudeService pacientePlanoSaudeService;
+    @Mock private ClinicaAccessHelper clinicaAccessHelper;
     @Mock private EntityManager entityManager;
 
     @InjectMocks
@@ -98,13 +99,9 @@ class PacienteServiceScopeTest {
     @DisplayName("Usuário com perfil ADMIN_CLINICA e PROFISSIONAL deve listar todos os pacientes da clínica mesmo sem compromisso")
     void testListPacientesForUser_AdminClinicaEProfissional_RetornaPacientesDaClinica() {
         when(userRepository.findByEmailUser("alexandra@attenzione.com.br")).thenReturn(Optional.of(userAlexandra));
-
-        FuncionarioClinica vinculo = FuncionarioClinica.builder()
-                .pessoa(pessoaAlexandra)
-                .clinica(clinicaAttenzione)
-                .build();
-        when(funcionarioClinicaRepository.findByPessoa(pessoaAlexandra)).thenReturn(List.of(vinculo));
+        when(clinicaAccessHelper.listarIdsClinicasDoUsuario(userAlexandra)).thenReturn(List.of("clinica-1"));
         when(pacienteRepository.findByClinicaIds(List.of("clinica-1"))).thenReturn(List.of(paciente1, paciente2));
+        when(pacienteRepository.findAllById(anySet())).thenReturn(List.of(paciente1, paciente2));
 
         List<Paciente> result = pacienteService.listPacientesForUser("alexandra@attenzione.com.br");
 
@@ -119,12 +116,7 @@ class PacienteServiceScopeTest {
     void testLoadPacienteForUser_AdminClinicaEProfissional_Sucesso() {
         when(pacienteRepository.findById("pac-1")).thenReturn(Optional.of(paciente1));
         when(userRepository.findByEmailUser("alexandra@attenzione.com.br")).thenReturn(Optional.of(userAlexandra));
-
-        FuncionarioClinica vinculo = FuncionarioClinica.builder()
-                .pessoa(pessoaAlexandra)
-                .clinica(clinicaAttenzione)
-                .build();
-        when(funcionarioClinicaRepository.findByPessoa(pessoaAlexandra)).thenReturn(List.of(vinculo));
+        when(clinicaAccessHelper.listarIdsClinicasDoUsuario(userAlexandra)).thenReturn(List.of("clinica-1"));
 
         Paciente loaded = pacienteService.loadPacienteForUser("pac-1", "alexandra@attenzione.com.br");
 
@@ -178,12 +170,7 @@ class PacienteServiceScopeTest {
 
         when(pacienteRepository.findById("pac-outro")).thenReturn(Optional.of(pacienteOutraClinica));
         when(userRepository.findByEmailUser("alexandra@attenzione.com.br")).thenReturn(Optional.of(userAlexandra));
-
-        FuncionarioClinica vinculo = FuncionarioClinica.builder()
-                .pessoa(pessoaAlexandra)
-                .clinica(clinicaAttenzione)
-                .build();
-        when(funcionarioClinicaRepository.findByPessoa(pessoaAlexandra)).thenReturn(List.of(vinculo));
+        when(clinicaAccessHelper.listarIdsClinicasDoUsuario(userAlexandra)).thenReturn(List.of("clinica-1"));
 
         assertThrows(AccessDeniedException.class, () ->
                 pacienteService.loadPacienteForUser("pac-outro", "alexandra@attenzione.com.br")

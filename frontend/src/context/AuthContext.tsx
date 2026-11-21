@@ -32,14 +32,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState<boolean>(!!localStorage.getItem(TOKEN_KEY));
 
   const isAuthenticated = !!token && !!user;
-  const isAdmin = !!user?.perfis?.includes('ADMIN');
-  const isResponsavel = !!user?.perfis?.includes('RESPONSAVEL');
-  const isProfissional = !!user?.perfis?.includes('PROFISSIONAL');
-  const isAdminClinica = !!user?.perfis?.includes('ADMIN_CLINICA');
-  const isFuncionarioClinica = !!(
-    user?.perfis?.includes('CLINICA') ||
-    user?.perfis?.includes('FUNCIONARIO_CLINICA') ||
-    user?.perfis?.includes('ADMIN_CLINICA')
+  const isAdmin = Boolean(user?.isAdmin || (user as any)?.admin || user?.perfis?.some((p) => p === 'ADMIN' || p === 'ROLE_ADMIN'));
+  const isResponsavel = Boolean(user?.isResponsavel || (user as any)?.responsavel || user?.perfis?.some((p) => p === 'RESPONSAVEL' || p === 'ROLE_RESPONSAVEL'));
+  const isProfissional = Boolean(user?.isProfissional || (user as any)?.profissional || user?.perfis?.some((p) => p === 'PROFISSIONAL' || p === 'ROLE_PROFISSIONAL'));
+  const isAdminClinica = Boolean(user?.isAdminClinica || (user as any)?.adminClinica || user?.perfis?.some((p) => p === 'ADMIN_CLINICA' || p === 'ROLE_ADMIN_CLINICA'));
+  const isFuncionarioClinica = Boolean(
+    isAdminClinica ||
+    user?.isFuncionarioClinica ||
+    (user as any)?.funcionarioClinica ||
+    user?.perfis?.some((p) =>
+      p === 'CLINICA' || p === 'ROLE_CLINICA' ||
+      p === 'FUNCIONARIO_CLINICA' || p === 'ROLE_FUNCIONARIO_CLINICA' ||
+      p === 'ADMIN_CLINICA' || p === 'ROLE_ADMIN_CLINICA'
+    )
   );
 
   const logout = useCallback(() => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CalendarRange,
   Plus,
@@ -97,8 +98,11 @@ export default function GradeTerapeuticaPage() {
   async function handleSalvarNovaProposta(dados: SaveGradeTerapeutica) {
     await gradeTerapeuticaService.criarProposta(dados);
     setSucesso('Proposta de grade terapêutica salva com sucesso!');
-    if (idPacienteSelecionado) {
+    if (dados.idPaciente && dados.idPaciente !== idPacienteSelecionado) {
+      setIdPacienteSelecionado(dados.idPaciente);
+    } else if (idPacienteSelecionado) {
       await carregarGradesPaciente(idPacienteSelecionado);
+      await carregarConflitosPaciente(idPacienteSelecionado);
     }
   }
 
@@ -178,6 +182,20 @@ export default function GradeTerapeuticaPage() {
       </div>
 
       {/* Alertas */}
+      {pacientes.length === 0 && !loading && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-200 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>Nenhum paciente vinculado a esta clínica foi encontrado. Cadastre um paciente para iniciar a grade semanal.</span>
+          </div>
+          <Link
+            to="/admin/pacientes"
+            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shrink-0 transition"
+          >
+            Cadastrar Paciente
+          </Link>
+        </div>
+      )}
       {sucesso && (
         <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-200 text-sm flex items-center justify-between">
           <span>{sucesso}</span>
@@ -200,13 +218,18 @@ export default function GradeTerapeuticaPage() {
           <select
             value={idPacienteSelecionado}
             onChange={(e) => setIdPacienteSelecionado(e.target.value)}
+            disabled={pacientes.length === 0}
             className="w-full sm:w-80 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 focus:outline-none"
           >
-            {pacientes.map((p) => (
-              <option key={p.idPaciente} value={p.idPaciente}>
-                {p.nomePessoa || p.apelidoPaciente || 'Paciente'}
-              </option>
-            ))}
+            {pacientes.length === 0 ? (
+              <option value="">Nenhum paciente disponível</option>
+            ) : (
+              pacientes.map((p) => (
+                <option key={p.idPaciente} value={p.idPaciente}>
+                  {p.nomePessoa || p.apelidoPaciente || 'Paciente'}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -325,10 +348,20 @@ export default function GradeTerapeuticaPage() {
         {gradeVigente ? (
           <GradeSemanalGrid itens={gradeVigente.itens} />
         ) : (
-          <div className="py-12 text-center text-gray-400">
-            <CalendarRange className="w-12 h-12 mx-auto mb-3 opacity-40" />
-            <p className="font-semibold text-sm">Sem Grade Terapêutica Vigente</p>
-            <p className="text-xs mt-1">Clique em "Nova Proposta de Grade" para montar o quadro semanal deste paciente.</p>
+          <div className="py-12 text-center text-gray-500">
+            <CalendarRange className="w-12 h-12 mx-auto mb-3 text-gray-400 opacity-60" />
+            <p className="font-semibold text-base text-gray-800 dark:text-gray-200">Sem Grade Terapêutica Vigente</p>
+            <p className="text-xs text-gray-500 mt-1 mb-4 max-w-sm mx-auto">
+              {idPacienteSelecionado
+                ? 'Clique no botão abaixo para montar e propor o quadro semanal deste paciente.'
+                : 'Selecione um paciente ou inicie uma nova proposta de grade terapêutica.'}
+            </p>
+            <button
+              onClick={() => setModalNovaProposta(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+            >
+              <Plus className="w-3.5 h-3.5" /> Criar Grade Terapêutica
+            </button>
           </div>
         )}
       </div>

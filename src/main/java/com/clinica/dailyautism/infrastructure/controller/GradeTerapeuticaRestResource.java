@@ -23,7 +23,7 @@ public class GradeTerapeuticaRestResource {
     private final GradeTerapeuticaService gradeTerapeuticaService;
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
     public ResponseEntity<GradeTerapeuticaDTO> criarProposta(
             @Valid @RequestBody SaveGradeTerapeuticaDTO saveDTO
     ) {
@@ -33,14 +33,14 @@ public class GradeTerapeuticaRestResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('VER_COMPROMISSO', 'LISTAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('VER_COMPROMISSO', 'LISTAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<GradeTerapeuticaDTO> carregarGrade(@PathVariable String id) {
         GradeTerapeutica grade = gradeTerapeuticaService.carregarGrade(id);
         return ResponseEntity.ok(GradeTerapeuticaDTO.fromEntity(grade));
     }
 
     @GetMapping("/paciente/{idPaciente}")
-    @PreAuthorize("hasAnyAuthority('VER_COMPROMISSO', 'LISTAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('VER_COMPROMISSO', 'LISTAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<List<GradeTerapeuticaDTO>> listarPorPaciente(@PathVariable String idPaciente) {
         List<GradeTerapeuticaDTO> dtos = gradeTerapeuticaService.listarPorPaciente(idPaciente)
                 .stream()
@@ -50,7 +50,7 @@ public class GradeTerapeuticaRestResource {
     }
 
     @GetMapping("/clinica/{idClinica}")
-    @PreAuthorize("hasAnyAuthority('LISTAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('LISTAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
     public ResponseEntity<List<GradeTerapeuticaDTO>> listarPorClinica(@PathVariable String idClinica) {
         List<GradeTerapeuticaDTO> dtos = gradeTerapeuticaService.listarPorClinica(idClinica)
                 .stream()
@@ -60,14 +60,14 @@ public class GradeTerapeuticaRestResource {
     }
 
     @PostMapping("/{id}/enviar")
-    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
     public ResponseEntity<GradeTerapeuticaDTO> enviarParaAprovacao(@PathVariable String id) {
         GradeTerapeutica grade = gradeTerapeuticaService.enviarParaAprovacao(id);
         return ResponseEntity.ok(GradeTerapeuticaDTO.fromEntity(grade));
     }
 
     @PostMapping("/{id}/aprovar")
-    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'CRIAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'CRIAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<List<CompromissoDTO>> aprovarEReplicar(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetailsImpl currentUser
@@ -81,7 +81,7 @@ public class GradeTerapeuticaRestResource {
     }
 
     @PostMapping("/{id}/sugerir")
-    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<GradeTerapeuticaDTO> sugerirAlteracao(
             @PathVariable String id,
             @Valid @RequestBody SugestaoGradeDTO sugestaoDTO
@@ -91,7 +91,7 @@ public class GradeTerapeuticaRestResource {
     }
 
     @PostMapping("/{id}/rejeitar")
-    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('APROVAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<GradeTerapeuticaDTO> rejeitar(
             @PathVariable String id,
             @RequestBody(required = false) SugestaoGradeDTO motivoDTO
@@ -102,7 +102,7 @@ public class GradeTerapeuticaRestResource {
     }
 
     @PostMapping("/{id}/alterar")
-    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
     public ResponseEntity<GradeTerapeuticaDTO> proporAlteracao(
             @PathVariable String id,
             @Valid @RequestBody ProporAlteracaoGradeDTO alterarDTO
@@ -112,7 +112,7 @@ public class GradeTerapeuticaRestResource {
     }
 
     @PostMapping("/{id}/cancelar-profissional")
-    @PreAuthorize("hasAnyAuthority('EDITAR_COMPROMISSO', 'ADMIN')")
+    @PreAuthorize("hasAnyAuthority('EDITAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA')")
     public ResponseEntity<Integer> cancelarProfissional(
             @PathVariable String id,
             @Valid @RequestBody CancelarProfissionalGradeDTO cancelarDTO

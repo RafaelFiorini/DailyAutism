@@ -37,6 +37,7 @@ public class PacienteService {
     private final ProfissionalClinicaRepository profissionalClinicaRepository;
     private final FuncionarioClinicaRepository funcionarioClinicaRepository;
     private final PacientePlanoSaudeService pacientePlanoSaudeService;
+    private final ClinicaAccessHelper clinicaAccessHelper;
     private final EntityManager entityManager;
 
     @Transactional
@@ -78,11 +79,17 @@ public class PacienteService {
         String idClinicaAlvo = savePacienteDTO.getIdClinica();
         if ((idClinicaAlvo == null || idClinicaAlvo.isBlank()) && emailDoUsuario != null) {
             User userLogado = userRepository.findByEmailUser(emailDoUsuario).orElse(null);
-            if (userLogado != null && userLogado.getPessoa() != null) {
-                var vinculos = funcionarioClinicaRepository.findByPessoa(userLogado.getPessoa());
-                if (!vinculos.isEmpty() && vinculos.get(0).getClinica() != null) {
-                    idClinicaAlvo = vinculos.get(0).getClinica().getIdClinica();
+            if (userLogado != null) {
+                List<String> clinicasUser = clinicaAccessHelper.listarIdsClinicasDoUsuario(userLogado);
+                if (!clinicasUser.isEmpty()) {
+                    idClinicaAlvo = clinicasUser.get(0);
                 }
+            }
+        }
+        if (idClinicaAlvo == null || idClinicaAlvo.isBlank()) {
+            List<Clinica> todas = clinicaRepository.findAll();
+            if (todas.size() == 1) {
+                idClinicaAlvo = todas.get(0).getIdClinica();
             }
         }
 
@@ -227,7 +234,10 @@ public class PacienteService {
                     .clinica(clinicaAlvo)
                     .dataInicioAtendimento(LocalDate.now())
                     .build();
+            if (pc.getAtivo() == null) pc.setAtivo(true);
             pacienteClinicaRepository.save(pc);
+            if (paciente.getClinicas() == null) paciente.setClinicas(new ArrayList<>());
+            paciente.getClinicas().add(pc);
         } else if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
             Clinica clinicaSelecionada = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
             if (clinicaSelecionada != null) {
@@ -236,7 +246,10 @@ public class PacienteService {
                         .clinica(clinicaSelecionada)
                         .dataInicioAtendimento(LocalDate.now())
                         .build();
+                if (pc.getAtivo() == null) pc.setAtivo(true);
                 pacienteClinicaRepository.save(pc);
+                if (paciente.getClinicas() == null) paciente.setClinicas(new ArrayList<>());
+                paciente.getClinicas().add(pc);
             }
         }
 
@@ -267,63 +280,65 @@ public class PacienteService {
             return paciente;
         }
 
+        boolean autorizado = false;
+
+        // 1. Permissão via Clínica
         boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
         if (isClinica) {
-            if (user.getPessoa() != null) {
-                var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
-                List<String> clinicaIds = vinculos.stream()
-                        .filter(v -> v.getClinica() != null)
-                        .map(v -> v.getClinica().getIdClinica())
-                        .toList();
-                boolean pertence = paciente.getClinicas() != null && paciente.getClinicas().stream()
+            List<String> clinicaIds = clinicaAccessHelper.listarIdsClinicasDoUsuario(user);
+            if (!clinicaIds.isEmpty() && paciente.getClinicas() != null) {
+                boolean pertence = paciente.getClinicas().stream()
                         .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
                 if (pertence) {
-                    return paciente;
+                    autorizado = true;
                 }
             }
-            throw new AccessDeniedException("Você não tem permissão para visualizar pacientes de outra clínica.");
         }
 
-        boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
-                .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
-        if (isResponsavel) {
-            if (user.getPessoa() != null) {
+        // 2. Permissão via Responsável
+        if (!autorizado) {
+            boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
+                    .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
+            if (isResponsavel && user.getPessoa() != null) {
                 Responsavel resp = responsavelRepository.findByPessoaResponsavel(user.getPessoa()).orElse(null);
                 if (resp != null && resp.getPacientes() != null) {
-                    boolean autorizado = resp.getPacientes().stream()
-                            .anyMatch(p -> p.getIdPaciente().equals(pacienteId));
-                    if (autorizado) {
-                        return paciente;
+                    if (resp.getPacientes().stream().anyMatch(p -> p.getIdPaciente().equals(pacienteId))) {
+                        autorizado = true;
                     }
                 }
             }
-            throw new AccessDeniedException("Você não tem permissão para visualizar este paciente.");
         }
 
-        boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
-                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
-        if (isProfissional) {
-            boolean temCompromisso = compromissoRepository.findByCriadoPorIdUser(user.getIdUser()).stream()
-                    .anyMatch(c -> c.getPaciente() != null && c.getPaciente().getIdPaciente().equals(pacienteId));
-            boolean temVinculo = false;
-            boolean pertenceClinicaDoProfissional = false;
-            if (user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
-                String idProf = user.getPessoa().getProfissional().getIdProf();
-                temVinculo = profissionalPacienteRepository.existsByProfissionalIdProfAndPacienteIdPaciente(idProf, pacienteId);
+        // 3. Permissão via Profissional
+        if (!autorizado) {
+            boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
+                    .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+            if (isProfissional) {
+                boolean temCompromisso = compromissoRepository.findByCriadoPorIdUser(user.getIdUser()).stream()
+                        .anyMatch(c -> c.getPaciente() != null && c.getPaciente().getIdPaciente().equals(pacienteId));
+                boolean temVinculo = false;
+                boolean pertenceClinicaDoProfissional = false;
+                if (user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+                    String idProf = user.getPessoa().getProfissional().getIdProf();
+                    temVinculo = profissionalPacienteRepository.existsByProfissionalIdProfAndPacienteIdPaciente(idProf, pacienteId);
 
-                List<String> clinicasDoProf = profissionalClinicaRepository.findByProfissionalIdProf(idProf).stream()
-                        .filter(pc -> pc.getClinica() != null)
-                        .map(pc -> pc.getClinica().getIdClinica())
-                        .toList();
-                if (!clinicasDoProf.isEmpty() && paciente.getClinicas() != null) {
-                    pertenceClinicaDoProfissional = paciente.getClinicas().stream()
-                            .anyMatch(pc -> pc.getClinica() != null && clinicasDoProf.contains(pc.getClinica().getIdClinica()));
+                    List<String> clinicasDoProf = profissionalClinicaRepository.findByProfissionalIdProf(idProf).stream()
+                            .filter(pc -> pc.getClinica() != null)
+                            .map(pc -> pc.getClinica().getIdClinica())
+                            .toList();
+                    if (!clinicasDoProf.isEmpty() && paciente.getClinicas() != null) {
+                        pertenceClinicaDoProfissional = paciente.getClinicas().stream()
+                                .anyMatch(pc -> pc.getClinica() != null && clinicasDoProf.contains(pc.getClinica().getIdClinica()));
+                    }
+                }
+                if (temCompromisso || temVinculo || pertenceClinicaDoProfissional) {
+                    autorizado = true;
                 }
             }
-            if (temCompromisso || temVinculo || pertenceClinicaDoProfissional) {
-                return paciente;
-            }
+        }
+
+        if (!autorizado) {
             throw new AccessDeniedException("Você não tem permissão para visualizar este paciente.");
         }
 
@@ -332,6 +347,28 @@ public class PacienteService {
 
     public List<Paciente> listPacientes() {
         return pacienteRepository.findAll();
+    }
+
+    private void autoVincularPacientesSemClinicaSeNecessario(List<String> clinicaIds) {
+        if (clinicaIds == null || clinicaIds.isEmpty()) return;
+        List<Paciente> todos = pacienteRepository.findAll();
+        for (Paciente p : todos) {
+            boolean semClinica = p.getClinicas() == null || p.getClinicas().isEmpty();
+            if (semClinica) {
+                Clinica clinica = clinicaRepository.findById(clinicaIds.get(0)).orElse(null);
+                if (clinica != null && !pacienteClinicaRepository.existsByPacienteAndClinica(p, clinica)) {
+                    PacienteClinica pc = PacienteClinica.builder()
+                            .paciente(p)
+                            .clinica(clinica)
+                            .dataInicioAtendimento(LocalDate.now())
+                            .build();
+                    if (pc.getAtivo() == null) pc.setAtivo(true);
+                    pacienteClinicaRepository.save(pc);
+                    if (p.getClinicas() == null) p.setClinicas(new ArrayList<>());
+                    p.getClinicas().add(pc);
+                }
+            }
+        }
     }
 
     public List<Paciente> listPacientesForUser(String email) {
@@ -350,47 +387,43 @@ public class PacienteService {
             return listPacientes();
         }
 
+        Set<String> pacienteIds = new LinkedHashSet<>();
+
+        // 1. Escopo de Clínica (ADMIN_CLINICA, CLINICA, FUNCIONARIO_CLINICA)
         boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
         if (isClinica) {
-            if (user.getPessoa() != null) {
-                var vinculos = funcionarioClinicaRepository.findByPessoa(user.getPessoa());
-                if (!vinculos.isEmpty()) {
-                    List<String> clinicaIds = vinculos.stream()
-                            .filter(v -> v.getClinica() != null)
-                            .map(v -> v.getClinica().getIdClinica())
-                            .toList();
-                    if (!clinicaIds.isEmpty()) {
-                        return pacienteRepository.findByClinicaIds(clinicaIds).stream()
-                                .filter(p -> p.getAtivo() == null || p.getAtivo())
-                                .toList();
+            List<String> clinicaIds = clinicaAccessHelper.listarIdsClinicasDoUsuario(user);
+            if (!clinicaIds.isEmpty()) {
+                autoVincularPacientesSemClinicaSeNecessario(clinicaIds);
+                List<Paciente> pacsClinica = pacienteRepository.findByClinicaIds(clinicaIds);
+                for (Paciente p : pacsClinica) {
+                    if (p.getAtivo() == null || p.getAtivo()) {
+                        pacienteIds.add(p.getIdPaciente());
                     }
                 }
             }
-            return List.of();
         }
 
+        // 2. Escopo de Responsável (RESPONSAVEL)
         boolean isResponsavel = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
-        if (isResponsavel) {
-            if (user.getPessoa() == null) {
-                return List.of();
-            }
+        if (isResponsavel && user.getPessoa() != null) {
             Responsavel resp = responsavelRepository.findByPessoaResponsavel(user.getPessoa()).orElse(null);
-            if (resp == null || resp.getPacientes() == null) {
-                return List.of();
+            if (resp != null && resp.getPacientes() != null) {
+                for (Paciente p : resp.getPacientes()) {
+                    if (p.getAtivo() == null || p.getAtivo()) {
+                        pacienteIds.add(p.getIdPaciente());
+                    }
+                }
             }
-            return resp.getPacientes().stream()
-                    .filter(p -> p.getAtivo() == null || p.getAtivo())
-                    .toList();
         }
 
+        // 3. Escopo de Profissional (PROFISSIONAL)
         boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
         if (isProfissional) {
-            Set<String> pacienteIds = new HashSet<>();
-
-            // 1. Pacientes dos compromissos agendados pelo profissional
+            // Pacientes dos compromissos agendados pelo profissional
             List<Compromisso> compromissos = compromissoRepository.findByCriadoPorIdUser(user.getIdUser());
             if (compromissos != null) {
                 for (Compromisso c : compromissos) {
@@ -400,7 +433,7 @@ public class PacienteService {
                 }
             }
 
-            // 2. Pacientes vinculados diretamente via ProfissionalPaciente
+            // Pacientes vinculados diretamente via ProfissionalPaciente
             if (user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
                 String idProf = user.getPessoa().getProfissional().getIdProf();
                 List<ProfissionalPaciente> vinculos = profissionalPacienteRepository.findByProfissionalIdProf(idProf);
@@ -412,7 +445,7 @@ public class PacienteService {
                     }
                 }
 
-                // 3. Pacientes das clínicas em que o profissional atende
+                // Pacientes das clínicas em que o profissional atende
                 List<String> clinicasDoProf = profissionalClinicaRepository.findByProfissionalIdProf(idProf).stream()
                         .filter(pc -> pc.getClinica() != null)
                         .map(pc -> pc.getClinica().getIdClinica())
@@ -426,10 +459,15 @@ public class PacienteService {
                     }
                 }
             }
+        }
 
-            if (pacienteIds.isEmpty()) {
-                return List.of();
-            }
+        if (pacienteIds.isEmpty()) {
+            return List.of();
+        }
+        return pacienteRepository.findAllById(pacienteIds).stream()
+                .filter(p -> p.getAtivo() == null || p.getAtivo())
+                .toList();
+    }
             return pacienteRepository.findAllById(pacienteIds).stream()
                     .filter(p -> p.getAtivo() == null || p.getAtivo())
                     .toList();
@@ -519,9 +557,28 @@ public class PacienteService {
         // Vínculo opcional com Plano de Saúde e Guia
         salvarOuAtualizarVinculoPlano(paciente, savePacienteDTO);
 
-        // Vínculo opcional com Clínica se idClinica informado
-        if (savePacienteDTO.getIdClinica() != null && !savePacienteDTO.getIdClinica().isBlank()) {
-            Clinica clinica = clinicaRepository.findById(savePacienteDTO.getIdClinica().trim()).orElse(null);
+        // Vínculo com Clínica (se informado ou auto-resolvido se o paciente não tiver clínica ainda)
+        String idClinicaAlvo = savePacienteDTO.getIdClinica();
+        if ((idClinicaAlvo == null || idClinicaAlvo.isBlank()) && (paciente.getClinicas() == null || paciente.getClinicas().isEmpty())) {
+            if (emailDoUsuario != null && !emailDoUsuario.isBlank()) {
+                User userLogado = userRepository.findByEmailUser(emailDoUsuario).orElse(null);
+                if (userLogado != null) {
+                    List<String> clinicasUser = clinicaAccessHelper.listarIdsClinicasDoUsuario(userLogado);
+                    if (!clinicasUser.isEmpty()) {
+                        idClinicaAlvo = clinicasUser.get(0);
+                    }
+                }
+            }
+            if (idClinicaAlvo == null || idClinicaAlvo.isBlank()) {
+                List<Clinica> todas = clinicaRepository.findAll();
+                if (todas.size() == 1) {
+                    idClinicaAlvo = todas.get(0).getIdClinica();
+                }
+            }
+        }
+
+        if (idClinicaAlvo != null && !idClinicaAlvo.isBlank()) {
+            Clinica clinica = clinicaRepository.findById(idClinicaAlvo.trim()).orElse(null);
             if (clinica != null) {
                 var clinicasAtuais = pacienteClinicaRepository.findByPacienteIdPaciente(paciente.getIdPaciente());
                 boolean jaTem = false;
@@ -538,7 +595,11 @@ public class PacienteService {
                             .clinica(clinica)
                             .dataInicioAtendimento(LocalDate.now())
                             .build();
+                    if (pc.getAtivo() == null) pc.setAtivo(true);
                     pacienteClinicaRepository.save(pc);
+                    if (paciente.getClinicas() != null) {
+                        paciente.getClinicas().add(pc);
+                    }
                 }
             }
         }
@@ -577,11 +638,7 @@ public class PacienteService {
         if (!isClinica || user.getPessoa() == null) {
             throw new AccessDeniedException("Você não tem permissão para listar pacientes inativos.");
         }
-        Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
-                .map(FuncionarioClinica::getClinica)
-                .filter(java.util.Objects::nonNull)
-                .map(Clinica::getIdClinica)
-                .collect(java.util.stream.Collectors.toSet());
+        List<String> clinicaIds = clinicaAccessHelper.listarIdsClinicasDoUsuario(user);
         if (clinicaIds.isEmpty()) {
             return List.of();
         }
@@ -607,11 +664,7 @@ public class PacienteService {
                 if (!isClinica || user.getPessoa() == null) {
                     throw new AccessDeniedException("Você não tem permissão para reativar pacientes.");
                 }
-                Set<String> clinicaIds = funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
-                        .map(FuncionarioClinica::getClinica)
-                        .filter(java.util.Objects::nonNull)
-                        .map(Clinica::getIdClinica)
-                        .collect(java.util.stream.Collectors.toSet());
+                List<String> clinicaIds = clinicaAccessHelper.listarIdsClinicasDoUsuario(user);
                 boolean pertence = paciente.getClinicas() != null && paciente.getClinicas().stream()
                         .anyMatch(pc -> pc.getClinica() != null && clinicaIds.contains(pc.getClinica().getIdClinica()));
                 if (!pertence) {

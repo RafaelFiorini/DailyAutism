@@ -114,12 +114,18 @@ export default function PacienteModal({
       setClinicasOptions(clinicas);
       setResponsaveisOptions(resps);
       setPeriodicidadesOptions(periods);
+
+      if (clinicas.length === 1 && !idClinica) {
+        setIdClinica(clinicas[0].idClinica);
+      } else if (!idClinica && user?.idClinica) {
+        setIdClinica(user.idClinica);
+      }
     } catch {
       // Ignora erros de carregamento secundário
     } finally {
       setLoadingOptions(false);
     }
-  }, []);
+  }, [idClinica, user?.idClinica]);
 
   useEffect(() => {
     if (!isOpen) return;

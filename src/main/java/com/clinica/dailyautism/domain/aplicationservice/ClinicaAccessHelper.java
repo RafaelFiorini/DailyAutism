@@ -22,6 +22,7 @@ public class ClinicaAccessHelper {
     private final ClinicaRepository clinicaRepository;
     private final ResponsavelRepository responsavelRepository;
     private final ProfissionalClinicaRepository profissionalClinicaRepository;
+    private final ProfissionalRepository profissionalRepository;
 
     public User loadUserOrNull(String email) {
         if (email == null || email.isBlank()) {
@@ -47,17 +48,39 @@ public class ClinicaAccessHelper {
                 .anyMatch(p -> "RESPONSAVEL".equalsIgnoreCase(p.getNome()));
     }
 
+    public boolean isProfissional(User user) {
+        return user != null && user.getPerfis() != null && user.getPerfis().stream()
+                .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
+    }
+
     public List<String> listarIdsClinicasDoUsuario(User user) {
         if (user == null || user.getPessoa() == null) {
             return List.of();
         }
-        return funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
+        Set<String> ids = new LinkedHashSet<>();
+
+        // 1. Vínculos como funcionário ou administrador de clínica
+        funcionarioClinicaRepository.findByPessoa(user.getPessoa()).stream()
                 .filter(v -> v.getAtivo() == null || v.getAtivo())
                 .map(FuncionarioClinica::getClinica)
                 .filter(Objects::nonNull)
                 .map(Clinica::getIdClinica)
-                .distinct()
-                .toList();
+                .forEach(ids::add);
+
+        // 2. Vínculos como profissional de clínica
+        Profissional prof = (user.getPessoa().getProfissional() != null)
+                ? user.getPessoa().getProfissional()
+                : profissionalRepository.findByPessoaProf(user.getPessoa()).orElse(null);
+        if (prof != null && prof.getIdProf() != null) {
+            profissionalClinicaRepository.findByProfissionalIdProf(prof.getIdProf()).stream()
+                    .filter(pc -> pc.getAtivo() == null || pc.getAtivo())
+                    .map(ProfissionalClinica::getClinica)
+                    .filter(Objects::nonNull)
+                    .map(Clinica::getIdClinica)
+                    .forEach(ids::add);
+        }
+
+        return new ArrayList<>(ids);
     }
 
     /**

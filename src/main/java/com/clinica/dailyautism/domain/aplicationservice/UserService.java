@@ -73,7 +73,16 @@ public class UserService {
                 func = list.get(0);
             }
         }
-        return UserDTO.create(user, func);
+        UserDTO dto = UserDTO.create(user, func);
+        if (dto.getIdClinica() == null && user.getPessoa() != null && user.getPessoa().getProfissional() != null) {
+            String idProf = user.getPessoa().getProfissional().getIdProf();
+            var vinculosProf = profissionalClinicaRepository.findByProfissionalIdProf(idProf);
+            if (!vinculosProf.isEmpty() && vinculosProf.get(0).getClinica() != null) {
+                dto.setIdClinica(vinculosProf.get(0).getClinica().getIdClinica());
+                dto.setNomeClinica(vinculosProf.get(0).getClinica().getNomeClinica());
+            }
+        }
+        return dto;
     }
 
     public List<UserDTO> listUsers() {

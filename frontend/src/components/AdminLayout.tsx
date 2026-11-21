@@ -25,6 +25,8 @@ export default function AdminLayout() {
   const [isPerfilModalOpen, setIsPerfilModalOpen] = useState(false);
 
   const navigation = useMemo(() => {
+    const isGestaoClinica = isAdminClinica || isFuncionarioClinica;
+
     if (isAdmin) {
       const items = [
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
@@ -49,59 +51,54 @@ export default function AdminLayout() {
       return items;
     }
 
-    if (isFuncionarioClinica) {
-      const items = [
-        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
-        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
-        { name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false },
-        { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
-        { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
-        { name: 'Pacientes da Clínica', href: '/admin/pacientes', icon: HeartPulse, end: false },
-        { name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false },
-        { name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false },
-        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
-      ];
-
-      if (isProfissional) {
-        items.splice(5, 0, { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
-      }
-
-      if (isAdminClinica) {
-        items.push({ name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false });
-      }
-
-      return items;
-    }
-
-    if (isResponsavel) {
-      return [
-        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
-        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
-        { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
-        { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
-        { name: 'Meus Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
-        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
-      ];
-    }
-
-    if (isProfissional) {
-      return [
-        { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
-        { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
-        { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
-        { name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false },
-        { name: 'Pacientes em Atendimento', href: '/admin/pacientes', icon: HeartPulse, end: false },
-        { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
-      ];
-    }
-
-    return [
+    const items: Array<{ name: string; href: string; icon: any; end: boolean }> = [
       { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
       { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
-      { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
-      { name: 'Pacientes', href: '/admin/pacientes', icon: HeartPulse, end: false },
-      { name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false },
     ];
+
+    // Grade Terapêutica: disponível para gestão clínica e para profissionais
+    if (isGestaoClinica || isProfissional) {
+      items.push({ name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false });
+    }
+
+    // Documentos sempre presente
+    items.push({ name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false });
+
+    // Financeiro da Clínica / Gestão
+    if (isGestaoClinica || isResponsavel) {
+      items.push({ name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false });
+    }
+
+    // Meu Financeiro para quem é profissional
+    if (isProfissional) {
+      items.push({ name: 'Meu Financeiro', href: '/admin/meu-financeiro', icon: DollarSign, end: false });
+    }
+
+    // Pacientes: label dinâmico conforme o perfil principal do usuário
+    const labelPacientes = isGestaoClinica
+      ? 'Pacientes da Clínica'
+      : isProfissional
+      ? 'Pacientes em Atendimento'
+      : isResponsavel
+      ? 'Meus Pacientes'
+      : 'Pacientes';
+    items.push({ name: labelPacientes, href: '/admin/pacientes', icon: HeartPulse, end: false });
+
+    // Gestão da Clínica: Responsáveis e Profissionais da equipe
+    if (isGestaoClinica) {
+      items.push({ name: 'Responsáveis', href: '/admin/responsaveis', icon: UserCheck, end: false });
+      items.push({ name: 'Profissionais', href: '/admin/profissionais', icon: Briefcase, end: false });
+    }
+
+    // Planos de Saúde para todos os perfis
+    items.push({ name: 'Planos de Saúde', href: '/admin/planos', icon: CreditCard, end: false });
+
+    // Periodicidades apenas para Administrador da Clínica (ou ADMIN)
+    if (isAdminClinica) {
+      items.push({ name: 'Periodicidades', href: '/admin/periodicidades', icon: CalendarClock, end: false });
+    }
+
+    return items;
   }, [isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica]);
 
   const initials = user?.nomeUser
@@ -115,12 +112,16 @@ export default function AdminLayout() {
 
   const roleLabel = isAdmin
     ? 'Admin'
+    : isAdminClinica
+    ? 'Admin Clínica'
     : isFuncionarioClinica
     ? 'Clínica'
-    : isResponsavel
-    ? 'Responsável'
+    : isProfissional && isResponsavel
+    ? 'Profissional / Resp'
     : isProfissional
     ? 'Profissional'
+    : isResponsavel
+    ? 'Responsável'
     : 'Portal';
 
   return (

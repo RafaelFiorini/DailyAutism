@@ -203,6 +203,13 @@ public class ResponsavelService {
             return responsavel;
         }
 
+        // Se o responsável for o próprio usuário logado, autoriza imediatamente
+        if (user.getPessoa() != null && user.getPessoa().getResponsavel() != null) {
+            if (responsavelId.equals(user.getPessoa().getResponsavel().getIdResponsavel())) {
+                return responsavel;
+            }
+        }
+
         boolean isClinica = user.getPerfis() != null && user.getPerfis().stream()
                 .anyMatch(p -> "CLINICA".equalsIgnoreCase(p.getNome()) || "FUNCIONARIO_CLINICA".equalsIgnoreCase(p.getNome()) || "ADMIN_CLINICA".equalsIgnoreCase(p.getNome()));
         if (isClinica) {

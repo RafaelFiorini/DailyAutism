@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, AlertCircle, Send, Save, Sparkles } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 import type { SaveGradeTerapeutica, SaveGradeTerapeuticaItem, DiaSemana } from '../../types/gradeTerapeutica';
 import { DIAS_SEMANA_ORDENADOS } from '../../types/gradeTerapeutica';
 import { pacienteService } from '../../services/pacienteService';
@@ -26,6 +27,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   onSalvar,
   idPacientePreselecionado,
 }) => {
+  const { user } = useAuth();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [tiposCompromisso, setTiposCompromisso] = useState<TipoCompromisso[]>([]);
@@ -76,6 +78,12 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
       setProfissionais(profData);
       setTiposCompromisso(tiposData);
       setPeriodicidades(periodData);
+
+      // Se nenhum paciente foi pré-selecionado na prop, mas há pacientes, pré-seleciona o primeiro
+      if (!idPacientePreselecionado && !idPaciente && pacData.length > 0) {
+        setIdPaciente(pacData[0].idPaciente);
+        carregarVigenciaPaciente(pacData[0].idPaciente);
+      }
 
       // Define periodicidade padrão (ex: Semanal) no item inicial se ainda não preenchido
       const semanal = periodData.find((p) => p.nomePeriodicidade?.toLowerCase().includes('semanal')) || periodData[0];
@@ -184,6 +192,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
       setLoading(true);
       const payload: SaveGradeTerapeutica = {
         idPaciente,
+        idClinica: user?.idClinica || undefined,
         dataInicioVigencia,
         dataFimVigencia,
         tipoOrigemVigencia,

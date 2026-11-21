@@ -33,6 +33,7 @@ public class GradeTerapeuticaService {
     private final PeriodicidadeRepository periodicidadeRepository;
     private final TipoCompromissoRepository tipoCompromissoRepository;
     private final ProfissionalRepository profissionalRepository;
+    private final PacienteClinicaRepository pacienteClinicaRepository;
     private final AuditoriaService auditoriaService;
 
     @Transactional(readOnly = true)
@@ -385,7 +386,36 @@ public class GradeTerapeuticaService {
 
         Clinica clinica = null;
         if (dto.getIdClinica() != null && !dto.getIdClinica().isBlank()) {
-            clinica = clinicaRepository.findById(dto.getIdClinica()).orElse(null);
+            clinica = clinicaRepository.findById(dto.getIdClinica().trim()).orElse(null);
+        }
+
+        if (clinica == null && paciente.getClinicas() != null && !paciente.getClinicas().isEmpty()) {
+            for (PacienteClinica pc : paciente.getClinicas()) {
+                if (pc.getClinica() != null && (pc.getAtivo() == null || pc.getAtivo())) {
+                    clinica = pc.getClinica();
+                    break;
+                }
+            }
+        }
+
+        if (clinica == null) {
+            List<Clinica> todas = clinicaRepository.findAll();
+            if (todas.size() == 1) {
+                clinica = todas.get(0);
+            }
+        }
+
+        if (clinica != null && !pacienteClinicaRepository.existsByPacienteAndClinica(paciente, clinica)) {
+            PacienteClinica pc = PacienteClinica.builder()
+                    .paciente(paciente)
+                    .clinica(clinica)
+                    .dataInicioAtendimento(LocalDate.now())
+                    .build();
+            if (pc.getAtivo() == null) pc.setAtivo(true);
+            pacienteClinicaRepository.save(pc);
+            if (paciente.getClinicas() != null) {
+                paciente.getClinicas().add(pc);
+            }
         }
 
         GradeTerapeutica grade = GradeTerapeutica.builder()

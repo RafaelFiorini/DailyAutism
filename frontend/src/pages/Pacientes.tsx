@@ -128,10 +128,10 @@ export default function Pacientes() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900">
-              {isResponsavel
-                ? 'Meus Pacientes'
-                : isGestaoClinica
+              {isGestaoClinica
                 ? 'Pacientes da Clínica'
+                : isResponsavel
+                ? 'Meus Pacientes'
                 : isProfissional
                 ? 'Pacientes em Atendimento'
                 : 'Pacientes'}
@@ -141,10 +141,10 @@ export default function Pacientes() {
             </span>
           </div>
           <p className="text-sm text-gray-500 mt-1">
-            {isResponsavel
-              ? 'Pacientes sob sua responsabilidade e acompanhamento.'
-              : isGestaoClinica
+            {isGestaoClinica
               ? 'Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.'
+              : isResponsavel
+              ? 'Pacientes sob sua responsabilidade e acompanhamento.'
               : isProfissional
               ? 'Pacientes com agendamentos e consultas vinculados a você.'
               : 'Gestão dos pacientes da clínica, vínculos com responsáveis, planos de saúde e clínicas.'}

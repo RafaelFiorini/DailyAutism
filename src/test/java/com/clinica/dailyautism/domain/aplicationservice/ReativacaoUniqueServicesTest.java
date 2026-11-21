@@ -113,11 +113,13 @@ class ReativacaoUniqueServicesTest {
                 .build();
 
         // Paciente
+        ClinicaAccessHelper clinicaAccessHelper = mock(ClinicaAccessHelper.class);
         PacienteService pacienteService = new PacienteService(
                 pacienteRepository, pessoaRepository, userRepository, responsavelRepository,
                 planoSaudeRepository, clinicaRepository, pacientePlanoSaudeRepository,
                 pacienteClinicaRepository, compromissoRepository, profissionalPacienteRepository,
-                profissionalClinicaRepository, funcionarioClinicaRepository, pacientePlanoSaudeService, entityManager
+                profissionalClinicaRepository, funcionarioClinicaRepository, pacientePlanoSaudeService,
+                clinicaAccessHelper, entityManager
         );
         Paciente pacInativo = Paciente.builder().idPaciente("pac-1").pessoaPaciente(pessoa).build();
         pacInativo.desativar();
