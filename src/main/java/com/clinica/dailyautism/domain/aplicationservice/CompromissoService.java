@@ -141,7 +141,7 @@ public class CompromissoService {
                         unicos.addAll(compromissoRepository.findByCriadoPorIdUser(user.getIdUser()));
 
                         listaBase = new ArrayList<>(unicos);
-                        listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.reverseOrder())));
+                        listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.naturalOrder())));
                     } else {
                         boolean isProfissional = user.getPerfis() != null && user.getPerfis().stream()
                                 .anyMatch(p -> "PROFISSIONAL".equalsIgnoreCase(p.getNome()));
@@ -158,7 +158,7 @@ public class CompromissoService {
                             }
                             unicos.addAll(compromissoRepository.findByCriadoPorIdUser(user.getIdUser()));
                             listaBase = new ArrayList<>(unicos);
-                            listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.reverseOrder())));
+                            listaBase.sort(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.naturalOrder())));
                         } else {
                             List<Paciente> pacientesPermitidos = pacienteService.listPacientesForUser(email);
                             if (pacientesPermitidos.isEmpty()) {
@@ -179,6 +179,7 @@ public class CompromissoService {
                 .filter(c -> pacienteId == null || pacienteId.isBlank() || (c.getPaciente() != null && pacienteId.equals(c.getPaciente().getIdPaciente())))
                 .filter(c -> profissionalId == null || profissionalId.isBlank() || (c.getProfissional() != null && profissionalId.equals(c.getProfissional().getIdProf())))
                 .filter(c -> status == null || c.getStatus() == status)
+                .sorted(Comparator.comparing(Compromisso::getDataHoraCompromisso, Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
     }
 

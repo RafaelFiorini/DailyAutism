@@ -165,6 +165,10 @@ export default function Agenda() {
       }
 
       return true;
+    }).sort((a, b) => {
+      const timeA = a.dataHoraCompromisso ? new Date(a.dataHoraCompromisso).getTime() : Number.MAX_SAFE_INTEGER;
+      const timeB = b.dataHoraCompromisso ? new Date(b.dataHoraCompromisso).getTime() : Number.MAX_SAFE_INTEGER;
+      return timeA - timeB;
     });
   }, [compromissos, search, statusFilter, profissionalFilter, dateFilter]);
 
