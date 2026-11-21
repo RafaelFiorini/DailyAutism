@@ -352,6 +352,7 @@ public class PacienteService {
 
     private void autoVincularPacientesSemClinicaSeNecessario(List<String> clinicaIds) {
         if (clinicaIds == null || clinicaIds.isEmpty()) return;
+        if (clinicaRepository.count() > 1) return;
         List<Paciente> todos = pacienteRepository.findAll();
         for (Paciente p : todos) {
             boolean semClinica = p.getClinicas() == null || p.getClinicas().isEmpty();
@@ -365,8 +366,9 @@ public class PacienteService {
                             .build();
                     if (pc.getAtivo() == null) pc.setAtivo(true);
                     pacienteClinicaRepository.save(pc);
-                    if (p.getClinicas() == null) p.setClinicas(new ArrayList<>());
-                    p.getClinicas().add(pc);
+                    List<PacienteClinica> listaMutavel = p.getClinicas() != null ? new ArrayList<>(p.getClinicas()) : new ArrayList<>();
+                    listaMutavel.add(pc);
+                    p.setClinicas(listaMutavel);
                 }
             }
         }

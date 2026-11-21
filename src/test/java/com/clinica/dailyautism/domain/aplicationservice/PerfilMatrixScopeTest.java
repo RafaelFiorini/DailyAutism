@@ -132,7 +132,7 @@ class PerfilMatrixScopeTest {
         pacAtendidoProfissional = Paciente.builder()
                 .idPaciente("pac-atendido")
                 .apelidoPaciente("Paciente Particular do Profissional")
-                .clinicas(List.of())
+                .clinicas(new ArrayList<>())
                 .build();
         pacAtendidoProfissional.setAtivo(true);
 
