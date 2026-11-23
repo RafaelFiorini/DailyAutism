@@ -34,6 +34,7 @@ export default function GradeTerapeuticaPage() {
   const [grades, setGrades] = useState<GradeTerapeutica[]>([]);
   const [conflitos, setConflitos] = useState<Compromisso[]>([]);
 
+  const [loadingPacientes, setLoadingPacientes] = useState(true);
   const [loading, setLoading] = useState(false);
   const [loadingAcao, setLoadingAcao] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -59,20 +60,26 @@ export default function GradeTerapeuticaPage() {
   }, [idPacienteSelecionado]);
 
   async function carregarPacientes() {
+    setLoadingPacientes(true);
+    setErro(null);
     try {
       const data = await pacienteService.list();
       setPacientes(data);
       if (data.length > 0 && !idPacienteSelecionado) {
+        setLoading(true);
         setIdPacienteSelecionado(data[0].idPaciente);
       }
     } catch (e: any) {
       setErro('Erro ao carregar lista de pacientes.');
+    } finally {
+      setLoadingPacientes(false);
     }
   }
 
   async function carregarGradesPaciente(idPac: string) {
     try {
       setLoading(true);
+      setErro(null);
       const data = await gradeTerapeuticaService.listPorPaciente(idPac);
       setGrades(data);
     } catch (e: any) {
@@ -189,7 +196,7 @@ export default function GradeTerapeuticaPage() {
       </div>
 
       {/* Alertas */}
-      {pacientes.length === 0 && !loading && (
+      {!loadingPacientes && !loading && !erro && pacientes.length === 0 && (
         <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-200 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -225,10 +232,12 @@ export default function GradeTerapeuticaPage() {
           <select
             value={idPacienteSelecionado}
             onChange={(e) => setIdPacienteSelecionado(e.target.value)}
-            disabled={pacientes.length === 0}
+            disabled={loadingPacientes || pacientes.length === 0}
             className="w-full sm:w-80 px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 focus:outline-none"
           >
-            {pacientes.length === 0 ? (
+            {loadingPacientes ? (
+              <option value="">Carregando pacientes...</option>
+            ) : pacientes.length === 0 ? (
               <option value="">Nenhum paciente disponível</option>
             ) : (
               pacientes.map((p) => (
@@ -328,7 +337,11 @@ export default function GradeTerapeuticaPage() {
                 </span>
               )}
             </div>
-            {gradeVigente ? (
+            {loadingPacientes || loading ? (
+              <p className="text-xs text-gray-400 mt-1 italic">
+                Carregando informações da grade...
+              </p>
+            ) : gradeVigente ? (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Período: {gradeVigente.dataInicioVigencia} até {gradeVigente.dataFimVigencia} • {gradeVigente.itens.length} sessões semanais
               </p>
@@ -352,7 +365,14 @@ export default function GradeTerapeuticaPage() {
           )}
         </div>
 
-        {gradeVigente ? (
+        {loadingPacientes || loading ? (
+          <div className="py-12 text-center text-gray-500">
+            <RefreshCw className="w-8 h-8 mx-auto mb-3 text-primary-500 animate-spin" />
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              Carregando grade terapêutica...
+            </p>
+          </div>
+        ) : gradeVigente ? (
           <GradeSemanalGrid itens={gradeVigente.itens} />
         ) : (
           <div className="py-12 text-center text-gray-500">

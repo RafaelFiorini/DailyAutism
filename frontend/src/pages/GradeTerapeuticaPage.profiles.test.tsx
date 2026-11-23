@@ -100,6 +100,7 @@ describe('GradeTerapeuticaPage - Matriz de Perfis Isolados e Mesclados', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('option', { name: 'Lucas Mendes' })).toBeInTheDocument();
+        expect(screen.queryByText(/Carregando grade terapêutica/i)).not.toBeInTheDocument();
       });
 
       if (canPropose) {
