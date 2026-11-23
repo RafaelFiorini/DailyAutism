@@ -20,6 +20,7 @@ const LAYOUT_MATRIX: LayoutProfileCase[] = [
       'Visão Geral',
       'Agenda',
       'Grade Terapêutica',
+      'Feriados & Recessos',
       'Documentos',
       'Financeiro',
       'Usuários',
@@ -40,6 +41,7 @@ const LAYOUT_MATRIX: LayoutProfileCase[] = [
       'Visão Geral',
       'Agenda',
       'Grade Terapêutica',
+      'Feriados & Recessos',
       'Documentos',
       'Financeiro',
       'Pacientes da Clínica',
@@ -57,6 +59,7 @@ const LAYOUT_MATRIX: LayoutProfileCase[] = [
       'Visão Geral',
       'Agenda',
       'Grade Terapêutica',
+      'Feriados & Recessos',
       'Documentos',
       'Financeiro',
       'Pacientes da Clínica',
@@ -78,7 +81,7 @@ const LAYOUT_MATRIX: LayoutProfileCase[] = [
       'Pacientes em Atendimento',
       'Planos de Saúde',
     ],
-    forbiddenLinks: ['Financeiro', 'Responsáveis', 'Profissionais', 'Periodicidades', 'Usuários', 'Auditoria & Logs'],
+    forbiddenLinks: ['Feriados & Recessos', 'Financeiro', 'Responsáveis', 'Profissionais', 'Periodicidades', 'Usuários', 'Auditoria & Logs'],
   },
   {
     label: 'RESPONSAVEL (Responsável / Família)',
@@ -92,7 +95,7 @@ const LAYOUT_MATRIX: LayoutProfileCase[] = [
       'Meus Pacientes',
       'Planos de Saúde',
     ],
-    forbiddenLinks: ['Meu Financeiro', 'Responsáveis', 'Profissionais', 'Periodicidades', 'Usuários', 'Auditoria & Logs'],
+    forbiddenLinks: ['Feriados & Recessos', 'Meu Financeiro', 'Responsáveis', 'Profissionais', 'Periodicidades', 'Usuários', 'Auditoria & Logs'],
   },
 
   // Mesclas (Sobreposição de perfis)

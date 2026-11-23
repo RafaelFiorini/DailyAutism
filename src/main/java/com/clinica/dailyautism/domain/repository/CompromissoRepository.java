@@ -65,4 +65,10 @@ public interface CompromissoRepository extends JpaRepository<Compromisso, String
             String idGradeTerapeutica,
             StatusCompromisso status
     );
+
+    List<Compromisso> findByClinicaIdClinicaAndDataHoraCompromissoBetweenOrderByDataHoraCompromissoAsc(
+            String idClinica,
+            LocalDateTime de,
+            LocalDateTime ate
+    );
 }

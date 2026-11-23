@@ -14,6 +14,7 @@ import {
   CalendarClock,
   Calendar,
   CalendarRange,
+  CalendarOff,
   FileText,
   DollarSign,
   ShieldCheck,
@@ -32,6 +33,7 @@ export default function AdminLayout() {
         { name: 'Visão Geral', href: '/admin', icon: LayoutDashboard, end: true },
         { name: 'Agenda', href: '/admin/agenda', icon: Calendar, end: false },
         { name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false },
+        { name: 'Feriados & Recessos', href: '/admin/feriados-recessos', icon: CalendarOff, end: false },
         { name: 'Documentos', href: '/admin/arquivos', icon: FileText, end: false },
         { name: 'Financeiro', href: '/admin/financeiro', icon: DollarSign, end: false },
         { name: 'Usuários', href: '/admin/usuarios', icon: Users, end: false },
@@ -59,6 +61,11 @@ export default function AdminLayout() {
     // Grade Terapêutica: disponível para gestão clínica, profissionais e responsáveis
     if (isGestaoClinica || isProfissional || isResponsavel) {
       items.push({ name: 'Grade Terapêutica', href: '/admin/grade-terapeutica', icon: CalendarRange, end: false });
+    }
+
+    // Feriados & Recessos: gestão da clínica (férias coletivas e suspensão de atendimentos)
+    if (isGestaoClinica) {
+      items.push({ name: 'Feriados & Recessos', href: '/admin/feriados-recessos', icon: CalendarOff, end: false });
     }
 
     // Documentos sempre presente

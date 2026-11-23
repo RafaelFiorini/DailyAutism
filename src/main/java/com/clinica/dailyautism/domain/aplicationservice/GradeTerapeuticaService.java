@@ -34,6 +34,7 @@ public class GradeTerapeuticaService {
     private final TipoCompromissoRepository tipoCompromissoRepository;
     private final ProfissionalRepository profissionalRepository;
     private final PacienteClinicaRepository pacienteClinicaRepository;
+    private final BloqueioAgendaClinicaRepository bloqueioAgendaClinicaRepository;
     private final AuditoriaService auditoriaService;
 
     @Transactional(readOnly = true)
@@ -215,10 +216,24 @@ public class GradeTerapeuticaService {
                 );
 
         // 3. Motor de replicação por item de grade respeitando sua periodicidade específica
+        // e os feriados/férias coletivas cadastrados para a clínica
         List<Compromisso> novosCompromissos = new ArrayList<>();
         LocalDate dataInicioVigencia = grade.getDataInicioVigencia();
         LocalDate dataFimVigencia = grade.getDataFimVigencia();
         LocalDateTime agora = LocalDateTime.now();
+
+        List<BloqueioAgendaClinica> bloqueiosClinica = (bloqueioAgendaClinicaRepository != null
+                && grade.getClinica() != null
+                && grade.getClinica().getIdClinica() != null)
+                ? bloqueioAgendaClinicaRepository.findConflitantesPorPeriodo(
+                        grade.getClinica().getIdClinica(),
+                        dataInicioVigencia,
+                        dataFimVigencia
+                )
+                : List.of();
+        if (bloqueiosClinica == null) {
+            bloqueiosClinica = List.of();
+        }
 
         if (grade.getItens() != null) {
             for (GradeTerapeuticaItem item : grade.getItens()) {
@@ -242,9 +257,10 @@ public class GradeTerapeuticaService {
                 // 3.3 Replica as sessões do item até o fim da vigência
                 while (!dataOcorrencia.isAfter(dataFimVigencia)) {
                     LocalDateTime dataHora = dataOcorrencia.atTime(item.getHoraInicio());
+                    boolean dataBloqueada = bloqueiosClinica.stream().anyMatch(b -> b.conflitaCom(dataHora));
 
-                    // Não replica no passado remoto
-                    if (!dataHora.isBefore(agora)) {
+                    // Não replica no passado remoto nem em feriados/férias coletivas da clínica
+                    if (!dataHora.isBefore(agora) && !dataBloqueada) {
                         StatusCompromisso statusCompromisso = StatusCompromisso.AGENDADO;
                         if (item.getProfissional() != null) {
                             long conflitos = compromissoRepository.countConflitosProfissional(
