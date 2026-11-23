@@ -23,7 +23,7 @@ public class ProfissionalRestResource {
     private final ProfissionalService profissionalService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('CRIAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA') or hasAuthority('CRIAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> createProfissional(@Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO,
                                                               @AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
@@ -33,7 +33,7 @@ public class ProfissionalRestResource {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('VER_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA', 'PROFISSIONAL') or hasAuthority('VER_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> loadProfissional(@PathVariable String id,
                                                             @AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
@@ -49,7 +49,7 @@ public class ProfissionalRestResource {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('LISTAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA', 'PROFISSIONAL', 'RESPONSAVEL') or hasAuthority('LISTAR_PROFISSIONAL')")
     public ResponseEntity<List<ProfissionalDTO>> listProfissionais(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
         List<ProfissionalDTO> profissionais = profissionalService.listProfissionaisForUser(email)
@@ -60,7 +60,7 @@ public class ProfissionalRestResource {
     }
 
     @GetMapping("/inativos")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA') or hasAuthority('EDITAR_PROFISSIONAL')")
     public ResponseEntity<List<ProfissionalDTO>> listProfissionaisInativos(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         String email = currentUser != null ? currentUser.getUsername() : null;
         List<ProfissionalDTO> profissionais = profissionalService.listProfissionaisInativosForUser(email)
@@ -71,7 +71,7 @@ public class ProfissionalRestResource {
     }
 
     @PatchMapping("/{id}/reativar")
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ROLE_ADMIN') or hasAuthority('EDITAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA') or hasAuthority('EDITAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> reativarProfissional(
             @PathVariable String id,
             @AuthenticationPrincipal UserDetailsImpl currentUser) {
@@ -80,7 +80,7 @@ public class ProfissionalRestResource {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('EDITAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA') or hasAuthority('EDITAR_PROFISSIONAL')")
     public ResponseEntity<ProfissionalDTO> updateProfissional(@PathVariable String id,
                                                               @Valid @RequestBody SaveProfissionalDTO saveProfissionalDTO) {
         Profissional profissional = profissionalService.updateProfissional(id, saveProfissionalDTO);
@@ -88,7 +88,7 @@ public class ProfissionalRestResource {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('DELETAR_PROFISSIONAL')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_CLINICA', 'CLINICA', 'FUNCIONARIO_CLINICA') or hasAuthority('DELETAR_PROFISSIONAL')")
     public ResponseEntity<Void> deleteProfissional(@PathVariable String id) {
         profissionalService.deleteProfissional(id);
         return ResponseEntity.noContent().build();

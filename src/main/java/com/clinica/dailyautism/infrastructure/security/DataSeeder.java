@@ -153,7 +153,7 @@ public class DataSeeder implements CommandLineRunner {
         // ADMIN_CLINICA — administrador/gestor da clínica (gestão completa da unidade, planos, periodicidades e documentos)
         Set<String> acoesAdminClinica = Set.of(
                 "VER_CLINICA", "LISTAR_CLINICA", "EDITAR_CLINICA",
-                "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL", "EDITAR_PROFISSIONAL",
+                "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL", "EDITAR_PROFISSIONAL", "DELETAR_PROFISSIONAL",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
                 "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
@@ -174,7 +174,7 @@ public class DataSeeder implements CommandLineRunner {
         // FUNCIONARIO_CLINICA / CLINICA — operacional / recepção (consulta planos, periodicidades e documentos liberados)
         Set<String> acoesFuncionarioClinica = Set.of(
                 "VER_CLINICA", "LISTAR_CLINICA",
-                "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL",
+                "CRIAR_PROFISSIONAL", "VER_PROFISSIONAL", "LISTAR_PROFISSIONAL", "EDITAR_PROFISSIONAL", "DELETAR_PROFISSIONAL",
                 "VINCULAR_PROFISSIONAL_CLINICA", "VER_PROFISSIONAL_CLINICA",
                 "VINCULAR_PACIENTE_CLINICA", "VER_PACIENTE_CLINICA",
                 "VER_CLINICA_PLANO_SAUDE", "VINCULAR_PLANO_SAUDE", "VER_AGENDA",
