@@ -57,6 +57,9 @@ public class UserDTO {
 
     private Boolean ativo;
     private List<String> pacientesIds;
+    private Boolean trocarSenhaNoProximoLogin;
+    private Boolean googleVinculado;
+    private String senhaTemporaria;
 
     public static UserDTO create(User user) {
         return create(user, null);
@@ -147,6 +150,8 @@ public class UserDTO {
                 .isAdmin(isAdmin)
                 .ativo(user.getAtivo())
                 .pacientesIds(pacientesIds)
+                .trocarSenhaNoProximoLogin(Boolean.TRUE.equals(user.getTrocarSenhaNoProximoLogin()))
+                .googleVinculado(user.getGoogleSub() != null && !user.getGoogleSub().isBlank())
                 .build();
     }
 

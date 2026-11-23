@@ -37,6 +37,13 @@ public class User extends BaseEntity implements UserDetails {
     @Column(nullable = false)
     private String passwordUser;
 
+    @Column(name = "trocar_senha_proximo_login")
+    @Builder.Default
+    private Boolean trocarSenhaNoProximoLogin = false;
+
+    @Column(name = "google_sub", length = 128, unique = true)
+    private String googleSub;
+
     @OneToOne
     @JoinColumn(name = "idPessoa", referencedColumnName = "idPessoa")
     private Pessoa pessoa;

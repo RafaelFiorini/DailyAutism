@@ -1,13 +1,14 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, UserPlus, KeyRound } from 'lucide-react';
 import RegisterModal from '../components/RegisterModal';
 import AtualizarCadastroModal from '../components/AtualizarCadastroModal';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 import logoImg from '../assets/logo.png';
 
 export default function Login() {
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, loginWithGoogle, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -24,6 +25,30 @@ export default function Login() {
       navigate('/admin', { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  const handleGoogleCredential = useCallback(
+    async (idToken: string) => {
+      if (!loginWithGoogle) return;
+      setError('');
+      setValidationError('');
+      setSubmitting(true);
+      try {
+        await loginWithGoogle(idToken);
+      } catch (err: any) {
+        const msg = err?.response?.data?.message;
+        if (msg) {
+          setError(msg);
+        } else if (!err?.response) {
+          setError('Não foi possível conectar ao servidor. Verifique sua conexão.');
+        } else {
+          setError('Não foi possível autenticar com o Google. Verifique se seu e-mail está cadastrado.');
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [loginWithGoogle]
+  );
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -44,8 +69,10 @@ export default function Login() {
     try {
       await login({ emailUser: email, passwordUser: password });
     } catch (err: any) {
-      if (err?.response?.status === 401 || err?.response?.status === 403) {
-        setError('E-mail ou senha incorretos');
+      if (err?.response?.status === 429) {
+        setError(err?.response?.data?.message || 'Muitas tentativas inválidas. Aguarde alguns minutos e tente novamente.');
+      } else if (err?.response?.status === 401 || err?.response?.status === 403) {
+        setError(err?.response?.data?.message || 'E-mail ou senha incorretos');
       } else if (!err?.response) {
         setError('Não foi possível conectar ao servidor. Verifique sua conexão.');
       } else {
@@ -150,6 +177,9 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {/* Login com Google (exibido automaticamente quando VITE_GOOGLE_CLIENT_ID estiver configurado) */}
+          <GoogleLoginButton onCredential={handleGoogleCredential} disabled={submitting} />
 
           {/* Opções de Autoatendimento */}
           <div className="mt-6 pt-6 border-t border-gray-100 text-center space-y-3">

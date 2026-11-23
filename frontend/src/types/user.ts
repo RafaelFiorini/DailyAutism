@@ -24,6 +24,9 @@ export interface UserDTO {
   isAdmin?: boolean;
   ativo?: boolean;
   pacientesIds?: string[];
+  trocarSenhaNoProximoLogin?: boolean;
+  googleVinculado?: boolean;
+  senhaTemporaria?: string;
 }
 
 export interface User {
@@ -57,6 +60,9 @@ export interface User {
   admin?: boolean;
   ativo?: boolean;
   pacientesIds?: string[];
+  trocarSenhaNoProximoLogin?: boolean;
+  googleVinculado?: boolean;
+  senhaTemporaria?: string;
 }
 
 export interface SaveUserInput {

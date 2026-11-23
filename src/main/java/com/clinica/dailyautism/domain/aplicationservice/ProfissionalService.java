@@ -575,14 +575,12 @@ public class ProfissionalService {
                             userRepository.save(userExistente);
                         },
                         () -> {
-                            String rawCpf = pessoa.getCPFPessoa();
-                            String senhaPadrao = (rawCpf != null && !rawCpf.isBlank())
-                                    ? rawCpf.replaceAll("\\D", "")
-                                    : "Daily@123";
+                            String senhaTemporaria = com.clinica.dailyautism.infrastructure.security.PasswordSecurityUtil.gerarSenhaTemporariaForte();
                             User novoUser = User.builder()
                                     .nomeUser(pessoa.getNomePessoa() != null && !pessoa.getNomePessoa().isBlank() ? pessoa.getNomePessoa() : "Profissional")
                                     .emailUser(email)
-                                    .passwordUser(passwordEncoder.encode(senhaPadrao))
+                                    .passwordUser(passwordEncoder.encode(senhaTemporaria))
+                                    .trocarSenhaNoProximoLogin(true)
                                     .pessoa(pessoa)
                                     .perfis(perfis)
                                     .build();

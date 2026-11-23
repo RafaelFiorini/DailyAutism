@@ -16,6 +16,15 @@ export const authService = {
     return response.data;
   },
 
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    const response = await api.post<AuthResponse>('/auth/google', { idToken });
+    return response.data;
+  },
+
+  async alterarSenha(senhaAtual: string, novaSenha: string): Promise<void> {
+    await api.post('/auth/alterar-senha', { senhaAtual, novaSenha });
+  },
+
   async register(payload: RegisterInput): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/register', payload);
     return response.data;

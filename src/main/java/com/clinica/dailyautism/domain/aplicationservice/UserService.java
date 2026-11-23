@@ -164,10 +164,14 @@ public class UserService {
         }
         pessoa = pessoaRepository.save(pessoa);
 
-        // 2. Senha
+        // 2. Senha (se não informada, gera senha temporária forte e exige troca no 1º acesso)
         String rawSenha = dto.getSenha();
+        String senhaTemporariaGerada = null;
+        boolean exigirTrocaSenha = false;
         if (rawSenha == null || rawSenha.isBlank()) {
-            rawSenha = "Daily@" + (cpfLimpo.length() >= 4 ? cpfLimpo.substring(0, 4) : "123");
+            rawSenha = com.clinica.dailyautism.infrastructure.security.PasswordSecurityUtil.gerarSenhaTemporariaForte();
+            senhaTemporariaGerada = rawSenha;
+            exigirTrocaSenha = true;
         }
 
         // 3. User
@@ -175,6 +179,7 @@ public class UserService {
                 .nomeUser(dto.getNome() != null ? dto.getNome().trim() : "")
                 .emailUser(email)
                 .passwordUser(passwordEncoder.encode(rawSenha))
+                .trocarSenhaNoProximoLogin(exigirTrocaSenha)
                 .pessoa(pessoa)
                 .build();
 
@@ -284,7 +289,9 @@ public class UserService {
             }
         }
 
-        return UserDTO.create(user, funcSalvo);
+        UserDTO retorno = UserDTO.create(user, funcSalvo);
+        retorno.setSenhaTemporaria(senhaTemporariaGerada);
+        return retorno;
     }
 
     @Transactional

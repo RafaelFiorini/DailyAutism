@@ -11,6 +11,10 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmailUser(String emailUser);
 
+    Optional<User> findByEmailUserIgnoreCase(String emailUser);
+
+    Optional<User> findByGoogleSub(String googleSub);
+
     @Query(value = "SELECT * FROM user WHERE ativo = false ORDER BY nome_user ASC", nativeQuery = true)
     List<User> findAllInactive();
 

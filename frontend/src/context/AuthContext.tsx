@@ -16,6 +16,8 @@ export interface AuthContextType {
   isAdminClinica: boolean;
   loading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithGoogle?: (idToken: string) => Promise<void>;
+  refreshUser?: () => Promise<void>;
   register: (payload: RegisterInput) => Promise<void>;
   logout: () => void;
 }
@@ -59,6 +61,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
 
+    const userProfile = await authService.getMe();
+    setUser(userProfile);
+  }, []);
+
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    const response = await authService.loginWithGoogle(idToken);
+    const newToken = response.token;
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+
+    const userProfile = await authService.getMe();
+    setUser(userProfile);
+  }, []);
+
+  const refreshUser = useCallback(async () => {
     const userProfile = await authService.getMe();
     setUser(userProfile);
   }, []);
@@ -117,6 +134,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAdminClinica,
         loading,
         login,
+        loginWithGoogle,
+        refreshUser,
         register,
         logout,
       }}

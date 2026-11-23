@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import MeuPerfilModal from './MeuPerfilModal';
+import TrocarSenhaObrigatoriaModal from './TrocarSenhaObrigatoriaModal';
 import logoImg from '../assets/logo.png';
 import {
   LayoutDashboard,
@@ -22,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminLayout() {
-  const { user, logout, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica } = useAuth();
+  const { user, logout, refreshUser, isAdmin, isResponsavel, isProfissional, isFuncionarioClinica, isAdminClinica } = useAuth();
   const [isPerfilModalOpen, setIsPerfilModalOpen] = useState(false);
 
   const navigation = useMemo(() => {
@@ -218,6 +219,15 @@ export default function AdminLayout() {
       <MeuPerfilModal
         isOpen={isPerfilModalOpen}
         onClose={() => setIsPerfilModalOpen(false)}
+      />
+
+      <TrocarSenhaObrigatoriaModal
+        isOpen={Boolean(user?.trocarSenhaNoProximoLogin)}
+        onSuccess={async () => {
+          if (refreshUser) {
+            await refreshUser();
+          }
+        }}
       />
     </div>
   );

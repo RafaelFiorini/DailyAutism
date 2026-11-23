@@ -246,6 +246,7 @@ public class AuthService {
                 throw new IllegalArgumentException("A nova senha deve ter no mínimo 6 caracteres.");
             }
             user.setPasswordUser(passwordEncoder.encode(dto.getNovaSenha().trim()));
+            user.setTrocarSenhaNoProximoLogin(false);
             userRepository.save(user);
         }
 
@@ -261,5 +262,28 @@ public class AuthService {
         }
 
         pessoaRepository.save(pessoa);
+    }
+
+    @Transactional
+    public void alterarSenha(String emailUsuario, com.clinica.dailyautism.infrastructure.dto.AlterarSenhaDTO dto) {
+        if (emailUsuario == null || emailUsuario.isBlank()) {
+            throw new IllegalArgumentException("Usuário não autenticado.");
+        }
+        User user = userRepository.findByEmailUserIgnoreCase(emailUsuario.trim())
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+
+        if (!passwordEncoder.matches(dto.getSenhaAtual(), user.getPasswordUser())) {
+            throw new IllegalArgumentException("A senha atual informada está incorreta.");
+        }
+
+        com.clinica.dailyautism.infrastructure.security.PasswordSecurityUtil.validarForcaSenha(dto.getNovaSenha());
+
+        if (passwordEncoder.matches(dto.getNovaSenha(), user.getPasswordUser())) {
+            throw new IllegalArgumentException("A nova senha deve ser diferente da senha atual.");
+        }
+
+        user.setPasswordUser(passwordEncoder.encode(dto.getNovaSenha()));
+        user.setTrocarSenhaNoProximoLogin(false);
+        userRepository.save(user);
     }
 }

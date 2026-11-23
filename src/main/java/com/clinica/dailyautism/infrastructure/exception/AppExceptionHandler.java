@@ -2,6 +2,8 @@ package com.clinica.dailyautism.infrastructure.exception;
 
 import com.clinica.dailyautism.domain.exception.InactiveResourceConflictException;
 import com.clinica.dailyautism.domain.exception.PessoaAccessDeniedException;
+import com.clinica.dailyautism.domain.exception.TooManyRequestsException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,16 @@ public class AppExceptionHandler extends ResponseEntityExceptionHandler {
         @ExceptionHandler(value = IllegalArgumentException.class)
         public ResponseEntity<Object> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
                 return handleException(ex, "BAD_REQUEST", ex.getMessage(), null, BAD_REQUEST, request);
+        }
+
+        @ExceptionHandler(value = TooManyRequestsException.class)
+        public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex, WebRequest request) {
+                return handleException(ex, "TOO_MANY_REQUESTS", ex.getMessage(), null, HttpStatus.TOO_MANY_REQUESTS, request);
+        }
+
+        @ExceptionHandler(value = AccessDeniedException.class)
+        public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+                return handleException(ex, "ACCESS_DENIED", ex.getMessage(), null, HttpStatus.FORBIDDEN, request);
         }
 
         @ExceptionHandler(value = Exception.class)

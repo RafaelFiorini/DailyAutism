@@ -13,6 +13,8 @@ import com.clinica.dailyautism.domain.repository.TipoArquivoRepository;
 import com.clinica.dailyautism.domain.repository.TipoCompromissoRepository;
 import com.clinica.dailyautism.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -32,6 +35,12 @@ public class DataSeeder implements CommandLineRunner {
     private final TipoArquivoRepository tipoArquivoRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${app.security.admin-initial-email:admin@dailyautism.com}")
+    private String adminInitialEmail;
+
+    @Value("${app.security.admin-initial-password:}")
+    private String adminInitialPassword;
+
     @Override
     public void run(String... args) {
         seedAcoes();
@@ -43,15 +52,47 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (userRepository.findByEmailUser("admin@dailyautism.com").isEmpty()) {
-            Perfil adminPerfil = perfilRepository.findByNome("ADMIN").orElseThrow();
-            User admin = User.builder()
-                    .nomeUser("Administrador DailyAutism")
-                    .emailUser("admin@dailyautism.com")
-                    .passwordUser(passwordEncoder.encode("admin123"))
-                    .perfis(Set.of(adminPerfil))
-                    .build();
-            userRepository.save(admin);
+        boolean jaExisteAlgumAdmin = userRepository.findAll().stream()
+                .anyMatch(u -> u.getPerfis() != null && u.getPerfis().stream()
+                        .anyMatch(p -> "ADMIN".equalsIgnoreCase(p.getNome())));
+        if (jaExisteAlgumAdmin) {
+            return;
+        }
+
+        String emailAdmin = (adminInitialEmail != null && !adminInitialEmail.isBlank())
+                ? adminInitialEmail.trim().toLowerCase()
+                : "admin@dailyautism.com";
+
+        if (userRepository.findByEmailUser(emailAdmin).isPresent()) {
+            return;
+        }
+
+        String senhaInicial;
+        boolean senhaGeradaAutomaticamente = false;
+        if (adminInitialPassword != null && !adminInitialPassword.isBlank()) {
+            senhaInicial = adminInitialPassword.trim();
+        } else {
+            senhaInicial = PasswordSecurityUtil.gerarSenhaTemporariaForte();
+            senhaGeradaAutomaticamente = true;
+        }
+
+        Perfil adminPerfil = perfilRepository.findByNome("ADMIN").orElseThrow();
+        User admin = User.builder()
+                .nomeUser("Administrador DailyAutism")
+                .emailUser(emailAdmin)
+                .passwordUser(passwordEncoder.encode(senhaInicial))
+                .trocarSenhaNoProximoLogin(true)
+                .perfis(Set.of(adminPerfil))
+                .build();
+        userRepository.save(admin);
+
+        if (senhaGeradaAutomaticamente) {
+            log.warn("=======================================================================");
+            log.warn("[SEGURANÇA] ADMIN inicial criado ({}) com senha temporária gerada: {}", emailAdmin, senhaInicial);
+            log.warn("[SEGURANÇA] Defina ADMIN_INITIAL_PASSWORD no ambiente ou troque no 1º login.");
+            log.warn("=======================================================================");
+        } else {
+            log.info("[SEGURANÇA] ADMIN inicial criado ({}) usando ADMIN_INITIAL_PASSWORD. Troca obrigatória ativada.", emailAdmin);
         }
     }
 
