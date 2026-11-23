@@ -108,16 +108,13 @@ public class BloqueioAgendaClinicaService {
 
         if (user != null) {
             auditoriaService.registrarAcaoAsync(
-                    user.getIdUser(),
-                    user.getNomeUser(),
-                    user.getEmailUser(),
-                    clinicaAccessHelper.isAdmin(user) ? "ADMIN" : "ADMIN_CLINICA",
-                    clinica.getIdClinica(),
+                    user,
                     CategoriaAuditoria.GRADE_TERAPEUTICA,
                     AcaoAuditoria.CRIACAO,
                     "BloqueioAgendaClinica",
                     saved.getIdBloqueio(),
                     "Criou bloqueio de agenda '" + saved.getTitulo() + "' (" + saved.getDataInicio() + " a " + saved.getDataFim() + ") com " + suspensos + " agendamento(s) suspenso(s)",
+                    null,
                     null,
                     null
             );
@@ -153,16 +150,13 @@ public class BloqueioAgendaClinicaService {
         User user = clinicaAccessHelper.loadUserOrNull(emailUsuario);
         if (user != null) {
             auditoriaService.registrarAcaoAsync(
-                    user.getIdUser(),
-                    user.getNomeUser(),
-                    user.getEmailUser(),
-                    clinicaAccessHelper.isAdmin(user) ? "ADMIN" : "ADMIN_CLINICA",
-                    bloqueio.getClinica() != null ? bloqueio.getClinica().getIdClinica() : null,
+                    user,
                     CategoriaAuditoria.GRADE_TERAPEUTICA,
                     AcaoAuditoria.EXCLUSAO,
                     "BloqueioAgendaClinica",
                     bloqueio.getIdBloqueio(),
                     "Removeu bloqueio de agenda '" + bloqueio.getTitulo() + "'",
+                    null,
                     null,
                     null
             );
