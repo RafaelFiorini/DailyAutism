@@ -36,7 +36,7 @@ services:
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
       - APP_SECURITY_ADMIN_INITIAL_EMAIL=${ADMIN_INITIAL_EMAIL:-admin@dailyautism.com}
       - APP_SECURITY_ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
-      - APP_SECURITY_GOOGLE_WEB_CLIENT_ID=${GOOGLE_OAUTH_WEB_CLIENT_ID:-}
+      - APP_SECURITY_GOOGLE_WEB_CLIENT_ID=${GOOGLE_OAUTH_WEB_CLIENT_ID:-55387188456-voalvhs1l7njqfp6l0ovsq5uucf7pm01.apps.googleusercontent.com}
       - APP_SECURITY_GOOGLE_ALLOWED_CLIENT_IDS=${GOOGLE_OAUTH_ALLOWED_CLIENT_IDS:-}
     ports:
       - "8080:8080"
@@ -52,7 +52,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-}
-        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_OAUTH_WEB_CLIENT_ID:-}
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_OAUTH_WEB_CLIENT_ID:-55387188456-voalvhs1l7njqfp6l0ovsq5uucf7pm01.apps.googleusercontent.com}
     container_name: dailyautism_frontend_prod
     restart: always
     ports:
