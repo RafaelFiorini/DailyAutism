@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2, AlertCircle, Send, Save, Sparkles } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
-import type { SaveGradeTerapeutica, SaveGradeTerapeuticaItem, DiaSemana } from '../../types/gradeTerapeutica';
+import type {
+  GradeTerapeutica,
+  SaveGradeTerapeutica,
+  SaveGradeTerapeuticaItem,
+  DiaSemana,
+} from '../../types/gradeTerapeutica';
 import { DIAS_SEMANA_ORDENADOS } from '../../types/gradeTerapeutica';
 import { pacienteService } from '../../services/pacienteService';
 import { profissionalService } from '../../services/profissionalService';
@@ -17,6 +22,7 @@ interface NovaPropostaModalProps {
   onClose: () => Unit | void;
   onSalvar: (dados: SaveGradeTerapeutica) => Promise<void>;
   idPacientePreselecionado?: string;
+  gradeParaEditar?: GradeTerapeutica | null;
 }
 
 type Unit = undefined;
@@ -26,6 +32,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   onClose,
   onSalvar,
   idPacientePreselecionado,
+  gradeParaEditar,
 }) => {
   const { user } = useAuth();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -55,16 +62,55 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setErro(null);
       carregarListasAuxiliares();
-    }
-  }, [isOpen]);
 
-  useEffect(() => {
-    if (idPacientePreselecionado) {
-      setIdPaciente(idPacientePreselecionado);
-      carregarVigenciaPaciente(idPacientePreselecionado);
+      if (gradeParaEditar) {
+        setIdPaciente(gradeParaEditar.idPaciente);
+        setDataInicioVigencia(gradeParaEditar.dataInicioVigencia || '');
+        setDataFimVigencia(gradeParaEditar.dataFimVigencia || '');
+        setTipoOrigemVigencia(gradeParaEditar.tipoOrigemVigencia || 'GUIA_CONVENIO');
+        setInfoGuia(null);
+        const itensConvertidos: SaveGradeTerapeuticaItem[] =
+          gradeParaEditar.itens && gradeParaEditar.itens.length > 0
+            ? gradeParaEditar.itens.map((it) => ({
+                diaSemana: it.diaSemana,
+                horaInicio: (it.horaInicio || '14:00').slice(0, 5),
+                horaFim: (it.horaFim || '15:00').slice(0, 5),
+                idTipoCompromisso: it.idTipoCompromisso || '',
+                idProfissional: it.idProfissional || '',
+                idPeriodicidade: it.idPeriodicidade || '',
+                sala: it.sala || '',
+              }))
+            : [
+                {
+                  diaSemana: 'SEGUNDA',
+                  horaInicio: '14:00',
+                  horaFim: '15:00',
+                  idTipoCompromisso: '',
+                  idProfissional: '',
+                  sala: '',
+                },
+              ];
+        setItens(itensConvertidos);
+      } else {
+        setItens([
+          {
+            diaSemana: 'SEGUNDA',
+            horaInicio: '14:00',
+            horaFim: '15:00',
+            idTipoCompromisso: '',
+            idProfissional: '',
+            sala: '',
+          },
+        ]);
+        if (idPacientePreselecionado) {
+          setIdPaciente(idPacientePreselecionado);
+          carregarVigenciaPaciente(idPacientePreselecionado);
+        }
+      }
     }
-  }, [idPacientePreselecionado]);
+  }, [isOpen, gradeParaEditar, idPacientePreselecionado]);
 
   async function carregarListasAuxiliares() {
     try {
@@ -243,7 +289,9 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary-600" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Nova Proposta de Grade Terapêutica
+              {gradeParaEditar
+                ? `Editar Rascunho / Proposta de Grade (v${gradeParaEditar.numeroVersao})`
+                : 'Nova Proposta de Grade Terapêutica'}
             </h2>
           </div>
           <button
@@ -272,7 +320,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
               <select
                 value={idPaciente}
                 onChange={(e) => handleSelecionarPaciente(e.target.value)}
-                disabled={loading || !!idPacientePreselecionado}
+                disabled={loading || !!idPacientePreselecionado || !!gradeParaEditar}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none"
               >
                 <option value="">Selecione o paciente...</option>
@@ -471,7 +519,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
               disabled={loading}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-200 transition disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Salvar Rascunho
+              <Save className="w-4 h-4" /> {gradeParaEditar ? 'Salvar Alterações' : 'Salvar Rascunho'}
             </button>
             <button
               type="button"

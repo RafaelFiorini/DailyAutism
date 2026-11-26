@@ -12,6 +12,8 @@ import {
   RefreshCw,
   MessageSquare,
   Sparkles,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { gradeTerapeuticaService } from '../services/gradeTerapeuticaService';
 import { pacienteService } from '../services/pacienteService';
@@ -42,6 +44,7 @@ export default function GradeTerapeuticaPage() {
 
   // Modais
   const [modalNovaProposta, setModalNovaProposta] = useState(false);
+  const [gradeEmEdicao, setGradeEmEdicao] = useState<GradeTerapeutica | null>(null);
   const [modalConflitos, setModalConflitos] = useState(false);
   const [modalCancelarProf, setModalCancelarProf] = useState(false);
 
@@ -108,13 +111,39 @@ export default function GradeTerapeuticaPage() {
   const nomePacienteAtual = pacienteAtual?.nomePessoa || pacienteAtual?.apelidoPaciente || 'Paciente';
 
   async function handleSalvarNovaProposta(dados: SaveGradeTerapeutica) {
-    await gradeTerapeuticaService.criarProposta(dados);
-    setSucesso('Proposta de grade terapêutica salva com sucesso!');
+    if (gradeEmEdicao) {
+      await gradeTerapeuticaService.atualizarProposta(gradeEmEdicao.idGradeTerapeutica, dados);
+      setSucesso('Rascunho / proposta de grade atualizada com sucesso!');
+      setGradeEmEdicao(null);
+    } else {
+      await gradeTerapeuticaService.criarProposta(dados);
+      setSucesso('Proposta de grade terapêutica salva com sucesso!');
+    }
     if (dados.idPaciente && dados.idPaciente !== idPacienteSelecionado) {
       setIdPacienteSelecionado(dados.idPaciente);
     } else if (idPacienteSelecionado) {
       await carregarGradesPaciente(idPacienteSelecionado);
       await carregarConflitosPaciente(idPacienteSelecionado);
+    }
+  }
+
+  function handleAbrirEditarProposta(grade: GradeTerapeutica) {
+    setGradeEmEdicao(grade);
+    setModalNovaProposta(true);
+  }
+
+  async function handleExcluirProposta(grade: GradeTerapeutica) {
+    if (!confirm(`Deseja realmente excluir este rascunho/proposta (v${grade.numeroVersao})?`)) return;
+    try {
+      setLoadingAcao(true);
+      setErro(null);
+      await gradeTerapeuticaService.excluirProposta(grade.idGradeTerapeutica);
+      setSucesso(`Rascunho/proposta (v${grade.numeroVersao}) excluído com sucesso!`);
+      await carregarGradesPaciente(idPacienteSelecionado);
+    } catch (e: any) {
+      setErro(e.response?.data?.message || e.message || 'Erro ao excluir rascunho/proposta.');
+    } finally {
+      setLoadingAcao(false);
     }
   }
 
@@ -186,7 +215,10 @@ export default function GradeTerapeuticaPage() {
 
           {canCriarProposta && (
             <button
-              onClick={() => setModalNovaProposta(true)}
+              onClick={() => {
+                setGradeEmEdicao(null);
+                setModalNovaProposta(true);
+              }}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition shadow-sm"
             >
               <Plus className="w-4 h-4" /> Nova Proposta de Grade
@@ -277,12 +309,32 @@ export default function GradeTerapeuticaPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                 STATUS_GRADE_LABELS[propostaPendente.status]?.bg
               } ${STATUS_GRADE_LABELS[propostaPendente.status]?.text}`}>
                 {STATUS_GRADE_LABELS[propostaPendente.status]?.label}
               </span>
+
+              {canCriarProposta && (
+                <button
+                  onClick={() => handleAbrirEditarProposta(propostaPendente)}
+                  disabled={loadingAcao}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-amber-100/70 dark:bg-gray-800 dark:hover:bg-gray-700 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 rounded-lg text-xs font-semibold shadow-sm transition"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Editar Rascunho
+                </button>
+              )}
+
+              {canCriarProposta && (
+                <button
+                  onClick={() => handleExcluirProposta(propostaPendente)}
+                  disabled={loadingAcao}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-white hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg text-xs font-semibold shadow-sm transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                </button>
+              )}
 
               {propostaPendente.status === 'RASCUNHO' && (
                 <button
@@ -406,25 +458,58 @@ export default function GradeTerapeuticaPage() {
           </div>
 
           <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {historicoGrades.map((g) => (
-              <div key={g.idGradeTerapeutica} className="py-3 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-gray-800 dark:text-gray-200">
-                      Versão {g.numeroVersao}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                      STATUS_GRADE_LABELS[g.status]?.bg
-                    } ${STATUS_GRADE_LABELS[g.status]?.text}`}>
-                      {STATUS_GRADE_LABELS[g.status]?.label}
-                    </span>
+            {historicoGrades.map((g) => {
+              const podeEditar =
+                canCriarProposta &&
+                (g.status === 'RASCUNHO' || g.status === 'PENDENTE_APROVACAO' || g.status === 'SUGESTAO_RESPONSAVEL');
+              const podeExcluir =
+                canCriarProposta && g.status !== 'VIGENTE' && g.status !== 'SUBSTITUIDA';
+
+              return (
+                <div key={g.idGradeTerapeutica} className="py-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-gray-800 dark:text-gray-200">
+                        Versão {g.numeroVersao}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                        STATUS_GRADE_LABELS[g.status]?.bg
+                      } ${STATUS_GRADE_LABELS[g.status]?.text}`}>
+                        {STATUS_GRADE_LABELS[g.status]?.label}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Vigência: {g.dataInicioVigencia} até {g.dataFimVigencia} • {g.itens.length} sessões semanais
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Vigência: {g.dataInicioVigencia} até {g.dataFimVigencia} • {g.itens.length} sessões semanais
-                  </p>
+
+                  {(podeEditar || podeExcluir) && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {podeEditar && (
+                        <button
+                          onClick={() => handleAbrirEditarProposta(g)}
+                          disabled={loadingAcao}
+                          title="Editar Rascunho"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-900/20 rounded-lg transition"
+                        >
+                          <Pencil className="w-3.5 h-3.5" /> Editar
+                        </button>
+                      )}
+                      {podeExcluir && (
+                        <button
+                          onClick={() => handleExcluirProposta(g)}
+                          disabled={loadingAcao}
+                          title="Excluir Rascunho"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Excluir
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -432,9 +517,13 @@ export default function GradeTerapeuticaPage() {
       {/* Modais */}
       <NovaPropostaModal
         isOpen={modalNovaProposta}
-        onClose={() => setModalNovaProposta(false)}
+        onClose={() => {
+          setModalNovaProposta(false);
+          setGradeEmEdicao(null);
+        }}
         onSalvar={handleSalvarNovaProposta}
         idPacientePreselecionado={idPacienteSelecionado}
+        gradeParaEditar={gradeEmEdicao}
       />
 
       <AvisosConflitoModal

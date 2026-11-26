@@ -28,6 +28,15 @@ export const gradeTerapeuticaService = {
     return data;
   },
 
+  async atualizarProposta(id: string, input: SaveGradeTerapeutica): Promise<GradeTerapeutica> {
+    const { data } = await api.put<GradeTerapeutica>(`/grades-terapeuticas/${id}`, input);
+    return data;
+  },
+
+  async excluirProposta(id: string): Promise<void> {
+    await api.delete(`/grades-terapeuticas/${id}`);
+  },
+
   async enviarParaAprovacao(id: string): Promise<GradeTerapeutica> {
     const { data } = await api.post<GradeTerapeutica>(`/grades-terapeuticas/${id}/enviar`);
     return data;

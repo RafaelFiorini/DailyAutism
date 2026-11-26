@@ -32,6 +32,23 @@ public class GradeTerapeuticaRestResource {
                 .body(GradeTerapeuticaDTO.fromEntity(grade));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
+    public ResponseEntity<GradeTerapeuticaDTO> atualizarProposta(
+            @PathVariable String id,
+            @Valid @RequestBody SaveGradeTerapeuticaDTO saveDTO
+    ) {
+        GradeTerapeutica grade = gradeTerapeuticaService.atualizarProposta(id, saveDTO);
+        return ResponseEntity.ok(GradeTerapeuticaDTO.fromEntity(grade));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('EXCLUIR_COMPROMISSO', 'CRIAR_COMPROMISSO', 'EDITAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL')")
+    public ResponseEntity<Void> excluirProposta(@PathVariable String id) {
+        gradeTerapeuticaService.excluirProposta(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('VER_COMPROMISSO', 'LISTAR_COMPROMISSO', 'ADMIN', 'ROLE_ADMIN', 'ROLE_ADMIN_CLINICA', 'ROLE_CLINICA', 'ROLE_FUNCIONARIO_CLINICA', 'ROLE_PROFISSIONAL', 'ROLE_RESPONSAVEL')")
     public ResponseEntity<GradeTerapeuticaDTO> carregarGrade(@PathVariable String id) {

@@ -324,6 +324,25 @@ public class GradeTerapeuticaService {
         grade.setDataResposta(LocalDateTime.now());
         gradeTerapeuticaRepository.save(grade);
 
+        // Limpa eventuais rascunhos/propostas pendentes antigos do mesmo paciente para não restar rascunho acima da grade efetivada
+        if (grade.getPaciente() != null && grade.getPaciente().getIdPaciente() != null) {
+            List<GradeTerapeutica> outrasGrades = gradeTerapeuticaRepository
+                    .findByPacienteIdPacienteOrderByNumeroVersaoDesc(grade.getPaciente().getIdPaciente());
+            List<GradeTerapeutica> rascunhosParaLimpar = new ArrayList<>();
+            for (GradeTerapeutica outra : outrasGrades) {
+                if (!outra.getIdGradeTerapeutica().equals(grade.getIdGradeTerapeutica())
+                        && (outra.getStatus() == StatusGradeTerapeutica.RASCUNHO
+                        || outra.getStatus() == StatusGradeTerapeutica.PENDENTE_APROVACAO
+                        || outra.getStatus() == StatusGradeTerapeutica.SUGESTAO_RESPONSAVEL)) {
+                    outra.setAtivo(false);
+                    rascunhosParaLimpar.add(outra);
+                }
+            }
+            if (!rascunhosParaLimpar.isEmpty()) {
+                gradeTerapeuticaRepository.saveAll(rascunhosParaLimpar);
+            }
+        }
+
         auditoriaService.registrarAcaoAsync(
                 usuario.getIdUser(),
                 usuario.getNomeUser(),
@@ -446,36 +465,118 @@ public class GradeTerapeuticaService {
                 .build();
 
         if (dto.getItens() != null) {
-            for (SaveGradeTerapeuticaItemDTO itemDTO : dto.getItens()) {
-                TipoCompromisso tipo = tipoCompromissoRepository.findById(itemDTO.getIdTipoCompromisso())
-                        .orElseThrow(() -> new IllegalArgumentException("Tipo de compromisso não encontrado: " + itemDTO.getIdTipoCompromisso()));
-
-                Profissional prof = null;
-                if (itemDTO.getIdProfissional() != null && !itemDTO.getIdProfissional().isBlank()) {
-                    prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
-                }
-
-                Periodicidade periodicidade = null;
-                if (itemDTO.getIdPeriodicidade() != null && !itemDTO.getIdPeriodicidade().isBlank()) {
-                    periodicidade = periodicidadeRepository.findById(itemDTO.getIdPeriodicidade()).orElse(null);
-                }
-
-                GradeTerapeuticaItem item = GradeTerapeuticaItem.builder()
-                        .diaSemana(itemDTO.getDiaSemana())
-                        .horaInicio(itemDTO.getHoraInicio())
-                        .horaFim(itemDTO.getHoraFim())
-                        .tipoCompromisso(tipo)
-                        .profissional(prof)
-                        .periodicidade(periodicidade)
-                        .sala(itemDTO.getSala())
-                        .build();
-
-                grade.addItem(item);
-            }
+            preencherItensGrade(grade, dto.getItens());
         }
 
         boolean enviar = Boolean.TRUE.equals(dto.getEnviarParaAprovacao());
         return salvarProposta(grade, enviar);
+    }
+
+    @Transactional
+    public GradeTerapeutica atualizarProposta(String idGrade, SaveGradeTerapeuticaDTO dto) {
+        GradeTerapeutica grade = carregarGrade(idGrade);
+        if (grade.getStatus() != StatusGradeTerapeutica.RASCUNHO
+                && grade.getStatus() != StatusGradeTerapeutica.SUGESTAO_RESPONSAVEL
+                && grade.getStatus() != StatusGradeTerapeutica.PENDENTE_APROVACAO) {
+            throw new IllegalStateException("Somente propostas em rascunho ou pendentes de aprovação podem ser editadas.");
+        }
+
+        grade.setTipoOrigemVigencia(dto.getTipoOrigemVigencia());
+        grade.setIdOrigemVigencia(dto.getIdOrigemVigencia());
+        grade.setDataInicioVigencia(dto.getDataInicioVigencia());
+        grade.setDataFimVigencia(dto.getDataFimVigencia());
+
+        if (grade.getItens() != null) {
+            grade.getItens().clear();
+        } else {
+            grade.setItens(new ArrayList<>());
+        }
+
+        if (dto.getItens() != null) {
+            preencherItensGrade(grade, dto.getItens());
+        }
+
+        if (Boolean.TRUE.equals(dto.getEnviarParaAprovacao())) {
+            grade.setStatus(StatusGradeTerapeutica.PENDENTE_APROVACAO);
+            grade.setDataEnvio(LocalDateTime.now());
+        }
+
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(grade);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Sistema/Clínica",
+                "clinica@dailyautism.com",
+                "SECRETARIA",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.EDICAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Editou rascunho/proposta de grade terapêutica v" + salva.getNumeroVersao() + " (status: " + salva.getStatus() + ")",
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
+    }
+
+    @Transactional
+    public void excluirProposta(String idGrade) {
+        GradeTerapeutica grade = carregarGrade(idGrade);
+        if (grade.getStatus() == StatusGradeTerapeutica.VIGENTE
+                || grade.getStatus() == StatusGradeTerapeutica.SUBSTITUIDA) {
+            throw new IllegalStateException("Não é possível excluir uma grade terapêutica vigente ou já efetivada.");
+        }
+
+        grade.setAtivo(false);
+        gradeTerapeuticaRepository.save(grade);
+
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Sistema/Clínica",
+                "clinica@dailyautism.com",
+                "SECRETARIA",
+                grade.getClinica() != null ? grade.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.EXCLUSAO,
+                "GradeTerapeutica",
+                grade.getIdGradeTerapeutica(),
+                "Excluiu rascunho/proposta de grade terapêutica v" + grade.getNumeroVersao() + " (status anterior: " + grade.getStatus() + ")",
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    private void preencherItensGrade(GradeTerapeutica grade, List<SaveGradeTerapeuticaItemDTO> itensDTO) {
+        for (SaveGradeTerapeuticaItemDTO itemDTO : itensDTO) {
+            TipoCompromisso tipo = tipoCompromissoRepository.findById(itemDTO.getIdTipoCompromisso())
+                    .orElseThrow(() -> new IllegalArgumentException("Tipo de compromisso não encontrado: " + itemDTO.getIdTipoCompromisso()));
+
+            Profissional prof = null;
+            if (itemDTO.getIdProfissional() != null && !itemDTO.getIdProfissional().isBlank()) {
+                prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
+            }
+
+            Periodicidade periodicidade = null;
+            if (itemDTO.getIdPeriodicidade() != null && !itemDTO.getIdPeriodicidade().isBlank()) {
+                periodicidade = periodicidadeRepository.findById(itemDTO.getIdPeriodicidade()).orElse(null);
+            }
+
+            GradeTerapeuticaItem item = GradeTerapeuticaItem.builder()
+                    .diaSemana(itemDTO.getDiaSemana())
+                    .horaInicio(itemDTO.getHoraInicio())
+                    .horaFim(itemDTO.getHoraFim())
+                    .tipoCompromisso(tipo)
+                    .profissional(prof)
+                    .periodicidade(periodicidade)
+                    .sala(itemDTO.getSala())
+                    .build();
+
+            grade.addItem(item);
+        }
     }
 
     @Transactional
