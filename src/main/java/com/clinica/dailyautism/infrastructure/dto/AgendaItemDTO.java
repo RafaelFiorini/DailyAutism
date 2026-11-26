@@ -18,6 +18,10 @@ public class AgendaItemDTO {
     private final String idProfissional;
     private final String nomeProfissional;
     private final String especialidade;
+    private final String motivoCancelamento;
+    private final String canceladoPorNome;
+    private final String canceladoPorPerfil;
+    private final String canceladoEm;
 
     public static AgendaItemDTO create(Compromisso c) {
         boolean temPlano = c.getPaciente() != null &&
@@ -47,7 +51,11 @@ public class AgendaItemDTO {
                 temPlano,
                 idProf,
                 nomeProf,
-                esp
+                esp,
+                c.getMotivoCancelamento(),
+                c.getCanceladoPorNome(),
+                c.getCanceladoPorPerfil(),
+                c.getCanceladoEm() != null ? c.getCanceladoEm().toString() : null
         );
     }
 }

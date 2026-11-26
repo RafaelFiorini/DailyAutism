@@ -36,6 +36,9 @@ public class CompromissoService {
     private final ContratoParticularService contratoParticularService;
     private final ConfiguracaoSistemaService configuracaoSistemaService;
     private final LancamentoRepasseService lancamentoRepasseService;
+    private final FuncionarioClinicaRepository funcionarioClinicaRepository;
+    private final NotificacaoService notificacaoService;
+    private final AuditoriaService auditoriaService;
 
     @Transactional
     public Compromisso createCompromisso(SaveCompromissoDTO saveCompromissoDTO, String emailDoToken) {
@@ -248,6 +251,170 @@ public class CompromissoService {
             lancamentoRepasseService.cancelarLancamentoPorCompromisso(saved.getIdCompromisso());
         }
         return saved;
+    }
+
+    @Transactional
+    public Compromisso cancelarCompromissoComJustificativa(String compromissoId, String motivo, String emailUsuario) {
+        if (motivo == null || motivo.trim().length() < 5) {
+            throw new IllegalArgumentException("Informe uma justificativa com pelo menos 5 caracteres para cancelar a sessão.");
+        }
+
+        Compromisso compromisso = loadCompromisso(compromissoId);
+
+        if (compromisso.getStatus() == StatusCompromisso.REALIZADO) {
+            throw new IllegalStateException("Não é possível cancelar uma sessão que já foi realizada.");
+        }
+        if (compromisso.getStatus() == StatusCompromisso.CANCELADO) {
+            throw new IllegalStateException("Esta sessão já está cancelada.");
+        }
+
+        User usuario = userRepository.findByEmailUserIgnoreCase(emailUsuario != null ? emailUsuario.trim() : "")
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailUsuario));
+
+        boolean isAdmin = clinicaAccessHelper.isAdmin(usuario);
+        boolean isStaffClinica = false;
+        if (clinicaAccessHelper.isStaffClinica(usuario) && compromisso.getClinica() != null) {
+            List<String> clinicasUsuario = clinicaAccessHelper.listarIdsClinicasDoUsuario(usuario);
+            isStaffClinica = clinicasUsuario.contains(compromisso.getClinica().getIdClinica());
+        }
+
+        boolean isProfissionalSessao = false;
+        if (compromisso.getProfissional() != null && usuario.getPessoa() != null) {
+            Profissional profUser = usuario.getPessoa().getProfissional() != null
+                    ? usuario.getPessoa().getProfissional()
+                    : profissionalRepository.findByPessoaProf(usuario.getPessoa()).orElse(null);
+            if (profUser != null && profUser.getIdProf().equals(compromisso.getProfissional().getIdProf())) {
+                isProfissionalSessao = true;
+            }
+        }
+
+        boolean isResponsavelPaciente = false;
+        if (compromisso.getPaciente() != null && usuario.getPessoa() != null) {
+            Responsavel resp = responsavelRepository.findByPessoaResponsavel(usuario.getPessoa()).orElse(null);
+            if (resp != null && resp.getPacientes() != null) {
+                String idPac = compromisso.getPaciente().getIdPaciente();
+                isResponsavelPaciente = resp.getPacientes().stream()
+                        .anyMatch(p -> p != null && idPac.equals(p.getIdPaciente()));
+            }
+        }
+
+        if (!isAdmin && !isStaffClinica && !isProfissionalSessao && !isResponsavelPaciente) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Você não tem permissão para cancelar esta sessão."
+            );
+        }
+
+        String perfilCancelador = isResponsavelPaciente && !isProfissionalSessao && !isStaffClinica && !isAdmin
+                ? "RESPONSAVEL"
+                : isProfissionalSessao && !isStaffClinica && !isAdmin
+                ? "PROFISSIONAL"
+                : isStaffClinica
+                ? "CLINICA"
+                : "ADMIN";
+
+        String motivoLimpo = motivo.trim();
+        StatusCompromisso statusAnterior = compromisso.getStatus();
+        compromisso.setStatus(StatusCompromisso.CANCELADO);
+        compromisso.setMotivoCancelamento(motivoLimpo);
+        compromisso.setCanceladoPorNome(usuario.getNomeUser());
+        compromisso.setCanceladoPorPerfil(perfilCancelador);
+        compromisso.setCanceladoEm(LocalDateTime.now());
+
+        Compromisso saved = compromissoRepository.save(compromisso);
+        contratoParticularService.processarAlteracaoStatusCompromisso(saved, statusAnterior, StatusCompromisso.CANCELADO);
+        lancamentoRepasseService.cancelarLancamentoPorCompromisso(saved.getIdCompromisso());
+
+        // Notificar todos os envolvidos (profissional, responsáveis e gestão da clínica), exceto quem cancelou
+        notificarEnvolvidosCancelamento(saved, usuario, perfilCancelador, motivoLimpo);
+
+        if (auditoriaService != null) {
+            auditoriaService.registrarAcaoAsync(
+                    usuario,
+                    CategoriaAuditoria.CLINICO,
+                    AcaoAuditoria.EXCLUSAO,
+                    "Compromisso",
+                    saved.getIdCompromisso(),
+                    "Sessão cancelada por " + perfilCancelador + " (" + usuario.getNomeUser() + "). Motivo: " + motivoLimpo,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+        return saved;
+    }
+
+    private void notificarEnvolvidosCancelamento(Compromisso compromisso, User autor, String perfilAutor, String motivo) {
+        if (notificacaoService == null) {
+            return;
+        }
+        List<User> destinatarios = new ArrayList<>();
+
+        // 1. Profissional da sessão
+        if (compromisso.getProfissional() != null && compromisso.getProfissional().getPessoaProf() != null) {
+            userRepository.findByPessoaIdAnyAtivo(compromisso.getProfissional().getPessoaProf().getIdPessoa())
+                    .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+                    .ifPresent(destinatarios::add);
+        }
+
+        // 2. Responsáveis pelo paciente
+        if (compromisso.getPaciente() != null && compromisso.getPaciente().getResponsaveis() != null) {
+            for (Responsavel resp : compromisso.getPaciente().getResponsaveis()) {
+                if (resp != null && resp.getPessoaResponsavel() != null) {
+                    userRepository.findByPessoaIdAnyAtivo(resp.getPessoaResponsavel().getIdPessoa())
+                            .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+                            .ifPresent(destinatarios::add);
+                }
+            }
+        }
+
+        // 3. Funcionários / Administradores da clínica da sessão
+        if (compromisso.getClinica() != null && funcionarioClinicaRepository != null) {
+            List<FuncionarioClinica> funcs = funcionarioClinicaRepository.findByClinicaIdClinica(compromisso.getClinica().getIdClinica());
+            for (FuncionarioClinica fc : funcs) {
+                if (fc != null && fc.getPessoa() != null && (fc.getAtivo() == null || fc.getAtivo())) {
+                    userRepository.findByPessoaIdAnyAtivo(fc.getPessoa().getIdPessoa())
+                            .filter(u -> Boolean.TRUE.equals(u.getAtivo()))
+                            .ifPresent(destinatarios::add);
+                }
+            }
+        }
+
+        String nomePaciente = (compromisso.getPaciente() != null && compromisso.getPaciente().getPessoaPaciente() != null)
+                ? compromisso.getPaciente().getPessoaPaciente().getNomePessoa()
+                : (compromisso.getPaciente() != null ? compromisso.getPaciente().getApelidoPaciente() : "Paciente");
+        String especialidade = compromisso.getTipoCompromisso() != null
+                ? compromisso.getTipoCompromisso().getNomeTipo()
+                : compromisso.getTituloCompromisso();
+        String dataFormatada = compromisso.getDataHoraCompromisso() != null
+                ? compromisso.getDataHoraCompromisso().format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"))
+                : "";
+
+        String papelTexto = switch (perfilAutor) {
+            case "RESPONSAVEL" -> "pelo responsável";
+            case "PROFISSIONAL" -> "pelo profissional";
+            case "CLINICA" -> "pela clínica";
+            default -> "pelo administrador";
+        };
+
+        String titulo = "Sessão cancelada " + papelTexto;
+        String mensagem = String.format(
+                "%s (%s) em %s foi cancelada por %s. Motivo: %s",
+                nomePaciente,
+                especialidade,
+                dataFormatada,
+                autor.getNomeUser(),
+                motivo
+        );
+
+        notificacaoService.notificarUsuarios(
+                destinatarios,
+                autor.getIdUser(),
+                titulo,
+                mensagem,
+                TipoNotificacao.CANCELAMENTO_SESSAO,
+                compromisso.getIdCompromisso()
+        );
     }
 
 //    @Transactional

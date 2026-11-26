@@ -23,7 +23,13 @@ export interface Compromisso {
   idProfissional?: string;
   nomeProfissional?: string;
   conselhoProfissional?: string;
+  idClinica?: string;
+  nomeClinica?: string;
   idUser: string;
+  motivoCancelamento?: string | null;
+  canceladoPorNome?: string | null;
+  canceladoPorPerfil?: string | null;
+  canceladoEm?: string | null;
 }
 
 export interface SaveCompromissoInput {

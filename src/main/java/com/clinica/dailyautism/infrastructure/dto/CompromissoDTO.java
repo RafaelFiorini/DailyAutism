@@ -26,6 +26,10 @@ public class CompromissoDTO {
     private final String idClinica;
     private final String nomeClinica;
     private final String idUser;
+    private final String motivoCancelamento;
+    private final String canceladoPorNome;
+    private final String canceladoPorPerfil;
+    private final LocalDateTime canceladoEm;
 
     public static CompromissoDTO create(Compromisso compromisso) {
         String idProf = compromisso.getProfissional() != null ? compromisso.getProfissional().getIdProf() : null;
@@ -70,7 +74,11 @@ public class CompromissoDTO {
                 conselhoProf,
                 idClinica,
                 nomeClinica,
-                idUser
+                idUser,
+                compromisso.getMotivoCancelamento(),
+                compromisso.getCanceladoPorNome(),
+                compromisso.getCanceladoPorPerfil(),
+                compromisso.getCanceladoEm()
         );
     }
 }

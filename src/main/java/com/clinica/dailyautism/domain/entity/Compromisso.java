@@ -61,4 +61,15 @@ public class Compromisso extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idGradeTerapeutica")
     private GradeTerapeutica gradeTerapeutica;
+
+    @Column(length = 500)
+    private String motivoCancelamento;
+
+    @Column(length = 150)
+    private String canceladoPorNome;
+
+    @Column(length = 50)
+    private String canceladoPorPerfil;
+
+    private LocalDateTime canceladoEm;
 }

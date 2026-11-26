@@ -3,6 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import MeuPerfilModal from './MeuPerfilModal';
 import TrocarSenhaObrigatoriaModal from './TrocarSenhaObrigatoriaModal';
+import NotificacoesBell from './NotificacoesBell';
 import logoImg from '../assets/logo.png';
 import {
   LayoutDashboard,
@@ -192,6 +193,7 @@ export default function AdminLayout() {
             </h2>
           </div>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink-0">
+            <NotificacoesBell />
             <button
               onClick={() => setIsPerfilModalOpen(true)}
               className="flex items-center gap-3 text-left hover:opacity-85 transition-opacity group cursor-pointer"

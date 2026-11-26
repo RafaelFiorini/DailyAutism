@@ -27,6 +27,7 @@ import { extractApiErrorMessage } from '../utils/apiError';
 import type { Compromisso, StatusCompromisso } from '../types/compromisso';
 import type { Profissional } from '../types/profissional';
 import CompromissoModal from '../components/CompromissoModal';
+import CancelarCompromissoModal from '../components/CancelarCompromissoModal';
 
 const STATUS_CONFIG: Record<
   StatusCompromisso,
@@ -103,6 +104,7 @@ export default function Agenda() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCompromisso, setEditingCompromisso] = useState<Compromisso | null>(null);
+  const [cancelingCompromisso, setCancelingCompromisso] = useState<Compromisso | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   const fetchCompromissos = useCallback(async () => {
@@ -547,13 +549,23 @@ export default function Agenda() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${cfg.bg} ${cfg.text} ${cfg.border}`}
                         >
                           <StatusIcon className="w-3.5 h-3.5" />
                           {cfg.label}
                         </span>
+                        {c.status === 'CANCELADO' && c.motivoCancelamento && (
+                          <div className="mt-1.5 text-[11px] text-gray-500 max-w-[220px] leading-snug">
+                            <span className="font-semibold text-gray-700">Motivo:</span> {c.motivoCancelamento}
+                            {c.canceladoPorNome && (
+                              <span className="block text-[10px] text-gray-400">
+                                Por {c.canceladoPorNome}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Ações */}
@@ -586,28 +598,39 @@ export default function Agenda() {
                               {/* Ações de status para agendado */}
                               {c.status === 'AGENDADO' && (
                                 <>
-                                  <button
-                                    onClick={() => handleUpdateStatus(c.idCompromisso, 'REALIZADO')}
-                                    title="Marcar como Realizado"
-                                    className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                                  >
-                                    <Check className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleUpdateStatus(c.idCompromisso, 'FALTOU')}
-                                    title="Marcar Falta"
-                                    className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
-                                  >
-                                    <UserX className="w-4 h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleUpdateStatus(c.idCompromisso, 'CANCELADO')}
-                                    title="Cancelar Atendimento"
-                                    className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                                  >
-                                    <Ban className="w-4 h-4" />
-                                  </button>
+                                  {!isResponsavel || isProfissional || isGestaoClinica ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleUpdateStatus(c.idCompromisso, 'REALIZADO')}
+                                        title="Marcar como Realizado"
+                                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                                      >
+                                        <Check className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleUpdateStatus(c.idCompromisso, 'FALTOU')}
+                                        title="Marcar Falta"
+                                        className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                                      >
+                                        <UserX className="w-4 h-4" />
+                                      </button>
+                                    </>
+                                  ) : null}
                                 </>
+                              )}
+
+                              {/* Cancelar com justificativa (disponível para Responsável, Profissional e Clínica) */}
+                              {(c.status === 'AGENDADO' ||
+                                c.status === 'AGUARDANDO_APROVACAO' ||
+                                c.status === 'PENDENTE_REAGENDAMENTO') && (
+                                <button
+                                  onClick={() => setCancelingCompromisso(c)}
+                                  title="Cancelar Sessão com Justificativa"
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <Ban className="w-3.5 h-3.5" />
+                                  <span>Cancelar</span>
+                                </button>
                               )}
 
                               {/* Editar */}
@@ -652,6 +675,16 @@ export default function Agenda() {
         }}
         onSuccess={handleSaved}
         initialData={editingCompromisso}
+      />
+
+      {/* Modal de Cancelamento com Justificativa */}
+      <CancelarCompromissoModal
+        compromisso={cancelingCompromisso}
+        onClose={() => setCancelingCompromisso(null)}
+        onCanceled={() => {
+          setCancelingCompromisso(null);
+          fetchCompromissos();
+        }}
       />
     </div>
   );

@@ -91,6 +91,17 @@ public class CompromissoRestResource {
         return ResponseEntity.ok(CompromissoDTO.create(compromisso));
     }
 
+    @PostMapping("/{id}/cancelar")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<CompromissoDTO> cancelarCompromisso(
+            @PathVariable String id,
+            @Valid @RequestBody com.clinica.dailyautism.infrastructure.dto.CancelarCompromissoDTO dto,
+            @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        String email = currentUser != null ? currentUser.getUsername() : null;
+        Compromisso compromisso = compromissoService.cancelarCompromissoComJustificativa(id, dto.getMotivo(), email);
+        return ResponseEntity.ok(CompromissoDTO.create(compromisso));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('DELETAR_COMPROMISSO')")
     public ResponseEntity<Void> deleteCompromisso(@PathVariable String id) {

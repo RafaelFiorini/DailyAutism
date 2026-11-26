@@ -47,6 +47,11 @@ export const compromissoService = {
     return data;
   },
 
+  async cancelar(id: string, motivo: string): Promise<Compromisso> {
+    const { data } = await api.post<Compromisso>(`/compromissos/${id}/cancelar`, { motivo });
+    return data;
+  },
+
   async listTipos(): Promise<TipoCompromisso[]> {
     const { data } = await api.get<TipoCompromisso[]>('/tipos-compromisso');
     return data;
