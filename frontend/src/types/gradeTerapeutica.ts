@@ -74,6 +74,8 @@ export interface SaveGradeTerapeutica {
 
 export interface ProporAlteracaoGrade {
   dataInicioNovaGrade: string;
+  dataFimNovaGrade?: string;
+  enviarParaAprovacao?: boolean;
   itens: SaveGradeTerapeuticaItem[];
 }
 

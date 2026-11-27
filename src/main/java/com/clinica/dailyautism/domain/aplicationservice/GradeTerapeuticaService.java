@@ -582,6 +582,10 @@ public class GradeTerapeuticaService {
     @Transactional
     public GradeTerapeutica proporAlteracao(String idGradeVigente, ProporAlteracaoGradeDTO dto) {
         GradeTerapeutica gradeVigente = carregarGrade(idGradeVigente);
+        boolean enviar = dto.getEnviarParaAprovacao() == null || Boolean.TRUE.equals(dto.getEnviarParaAprovacao());
+        LocalDate dataFim = dto.getDataFimNovaGrade() != null
+                ? dto.getDataFimNovaGrade()
+                : gradeVigente.getDataFimVigencia();
 
         GradeTerapeutica novaVersao = GradeTerapeutica.builder()
                 .paciente(gradeVigente.getPaciente())
@@ -591,40 +595,34 @@ public class GradeTerapeuticaService {
                 .tipoOrigemVigencia(gradeVigente.getTipoOrigemVigencia())
                 .idOrigemVigencia(gradeVigente.getIdOrigemVigencia())
                 .dataInicioVigencia(dto.getDataInicioNovaGrade())
-                .dataFimVigencia(gradeVigente.getDataFimVigencia())
-                .status(StatusGradeTerapeutica.PENDENTE_APROVACAO)
-                .dataEnvio(LocalDateTime.now())
+                .dataFimVigencia(dataFim)
+                .status(enviar ? StatusGradeTerapeutica.PENDENTE_APROVACAO : StatusGradeTerapeutica.RASCUNHO)
+                .dataEnvio(enviar ? LocalDateTime.now() : null)
                 .itens(new ArrayList<>())
                 .build();
 
         if (dto.getItens() != null) {
-            for (SaveGradeTerapeuticaItemDTO itemDTO : dto.getItens()) {
-                TipoCompromisso tipo = tipoCompromissoRepository.findById(itemDTO.getIdTipoCompromisso())
-                        .orElseThrow(() -> new IllegalArgumentException("Tipo de compromisso não encontrado: " + itemDTO.getIdTipoCompromisso()));
-
-                Profissional prof = null;
-                if (itemDTO.getIdProfissional() != null && !itemDTO.getIdProfissional().isBlank()) {
-                    prof = profissionalRepository.findById(itemDTO.getIdProfissional()).orElse(null);
-                }
-
-                Periodicidade periodicidade = null;
-                if (itemDTO.getIdPeriodicidade() != null && !itemDTO.getIdPeriodicidade().isBlank()) {
-                    periodicidade = periodicidadeRepository.findById(itemDTO.getIdPeriodicidade()).orElse(null);
-                }
-
-                novaVersao.addItem(GradeTerapeuticaItem.builder()
-                        .diaSemana(itemDTO.getDiaSemana())
-                        .horaInicio(itemDTO.getHoraInicio())
-                        .horaFim(itemDTO.getHoraFim())
-                        .tipoCompromisso(tipo)
-                        .profissional(prof)
-                        .periodicidade(periodicidade)
-                        .sala(itemDTO.getSala())
-                        .build());
-            }
+            preencherItensGrade(novaVersao, dto.getItens());
         }
 
-        return gradeTerapeuticaRepository.save(novaVersao);
+        GradeTerapeutica salva = gradeTerapeuticaRepository.save(novaVersao);
+        auditoriaService.registrarAcaoAsync(
+                null,
+                "Sistema/Clínica",
+                "clinica@dailyautism.com",
+                "SECRETARIA",
+                salva.getClinica() != null ? salva.getClinica().getIdClinica() : null,
+                CategoriaAuditoria.GRADE_TERAPEUTICA,
+                AcaoAuditoria.CRIACAO,
+                "GradeTerapeutica",
+                salva.getIdGradeTerapeutica(),
+                "Criou alteração da grade vigente (v" + salva.getNumeroVersao() + ", status: " + salva.getStatus() + ") a partir de " + salva.getDataInicioVigencia(),
+                null,
+                null,
+                null,
+                null
+        );
+        return salva;
     }
 
     @Transactional(readOnly = true)

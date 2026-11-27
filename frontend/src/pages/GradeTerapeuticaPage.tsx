@@ -45,6 +45,7 @@ export default function GradeTerapeuticaPage() {
   // Modais
   const [modalNovaProposta, setModalNovaProposta] = useState(false);
   const [gradeEmEdicao, setGradeEmEdicao] = useState<GradeTerapeutica | null>(null);
+  const [modoAlteracaoVigente, setModoAlteracaoVigente] = useState(false);
   const [modalConflitos, setModalConflitos] = useState(false);
   const [modalCancelarProf, setModalCancelarProf] = useState(false);
 
@@ -111,7 +112,21 @@ export default function GradeTerapeuticaPage() {
   const nomePacienteAtual = pacienteAtual?.nomePessoa || pacienteAtual?.apelidoPaciente || 'Paciente';
 
   async function handleSalvarNovaProposta(dados: SaveGradeTerapeutica) {
-    if (gradeEmEdicao) {
+    if (gradeEmEdicao && modoAlteracaoVigente) {
+      await gradeTerapeuticaService.proporAlteracao(gradeEmEdicao.idGradeTerapeutica, {
+        dataInicioNovaGrade: dados.dataInicioVigencia,
+        dataFimNovaGrade: dados.dataFimVigencia,
+        enviarParaAprovacao: dados.enviarParaAprovacao,
+        itens: dados.itens,
+      });
+      setSucesso(
+        dados.enviarParaAprovacao
+          ? `Nova versão (v${gradeEmEdicao.numeroVersao + 1}) criada e enviada para aprovação da família!`
+          : `Rascunho da nova versão (v${gradeEmEdicao.numeroVersao + 1}) salvo com sucesso!`
+      );
+      setGradeEmEdicao(null);
+      setModoAlteracaoVigente(false);
+    } else if (gradeEmEdicao) {
       await gradeTerapeuticaService.atualizarProposta(gradeEmEdicao.idGradeTerapeutica, dados);
       setSucesso('Rascunho / proposta de grade atualizada com sucesso!');
       setGradeEmEdicao(null);
@@ -128,6 +143,13 @@ export default function GradeTerapeuticaPage() {
   }
 
   function handleAbrirEditarProposta(grade: GradeTerapeutica) {
+    setModoAlteracaoVigente(false);
+    setGradeEmEdicao(grade);
+    setModalNovaProposta(true);
+  }
+
+  function handleAbrirAlterarGradeVigente(grade: GradeTerapeutica) {
+    setModoAlteracaoVigente(true);
     setGradeEmEdicao(grade);
     setModalNovaProposta(true);
   }
@@ -216,6 +238,7 @@ export default function GradeTerapeuticaPage() {
           {canCriarProposta && (
             <button
               onClick={() => {
+                setModoAlteracaoVigente(false);
                 setGradeEmEdicao(null);
                 setModalNovaProposta(true);
               }}
@@ -405,7 +428,16 @@ export default function GradeTerapeuticaPage() {
           </div>
 
           {gradeVigente && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {canCriarProposta && (
+                <button
+                  onClick={() => handleAbrirAlterarGradeVigente(gradeVigente)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 rounded-lg text-xs font-semibold transition"
+                  title="Editar terapias e horários a partir da grade vigente"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Alterar Grade Vigente
+                </button>
+              )}
               <button
                 onClick={() => setModalCancelarProf(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-xs font-semibold transition"
@@ -520,10 +552,12 @@ export default function GradeTerapeuticaPage() {
         onClose={() => {
           setModalNovaProposta(false);
           setGradeEmEdicao(null);
+          setModoAlteracaoVigente(false);
         }}
         onSalvar={handleSalvarNovaProposta}
         idPacientePreselecionado={idPacienteSelecionado}
         gradeParaEditar={gradeEmEdicao}
+        modoAlteracaoVigente={modoAlteracaoVigente}
       />
 
       <AvisosConflitoModal

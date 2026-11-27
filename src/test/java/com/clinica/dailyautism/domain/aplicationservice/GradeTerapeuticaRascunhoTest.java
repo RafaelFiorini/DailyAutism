@@ -3,6 +3,7 @@ package com.clinica.dailyautism.domain.aplicationservice;
 import com.clinica.dailyautism.domain.entity.*;
 import com.clinica.dailyautism.domain.entity.security.User;
 import com.clinica.dailyautism.domain.repository.*;
+import com.clinica.dailyautism.infrastructure.dto.ProporAlteracaoGradeDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveGradeTerapeuticaDTO;
 import com.clinica.dailyautism.infrastructure.dto.SaveGradeTerapeuticaItemDTO;
 import org.junit.jupiter.api.Test;
@@ -137,5 +138,45 @@ class GradeTerapeuticaRascunhoTest {
         assertTrue(gradeNova.getAtivo());
         assertFalse(rascunhoAntigo.getAtivo());
         verify(gradeTerapeuticaRepository).saveAll(List.of(rascunhoAntigo));
+    }
+
+    @Test
+    void proporAlteracao_criaNovaVersaoComoRascunhoVinculadaAGradeVigente() {
+        Paciente paciente = Paciente.builder().idPaciente("p-1").build();
+        GradeTerapeutica vigente = GradeTerapeutica.builder()
+                .idGradeTerapeutica("g-v1")
+                .paciente(paciente)
+                .numeroVersao(1)
+                .status(StatusGradeTerapeutica.VIGENTE)
+                .dataInicioVigencia(LocalDate.of(2026, 11, 1))
+                .dataFimVigencia(LocalDate.of(2026, 12, 31))
+                .itens(new ArrayList<>())
+                .build();
+
+        TipoCompromisso tipo = TipoCompromisso.builder().idTipoCompromisso("t-1").nomeTipo("Fono").build();
+        when(gradeTerapeuticaRepository.findByIdWithItens("g-v1")).thenReturn(Optional.of(vigente));
+        when(tipoCompromissoRepository.findById("t-1")).thenReturn(Optional.of(tipo));
+        when(gradeTerapeuticaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SaveGradeTerapeuticaItemDTO itemDTO = new SaveGradeTerapeuticaItemDTO();
+        itemDTO.setDiaSemana(DiaSemana.QUARTA);
+        itemDTO.setHoraInicio(LocalTime.of(15, 0));
+        itemDTO.setHoraFim(LocalTime.of(16, 0));
+        itemDTO.setIdTipoCompromisso("t-1");
+
+        ProporAlteracaoGradeDTO dto = ProporAlteracaoGradeDTO.builder()
+                .dataInicioNovaGrade(LocalDate.of(2026, 11, 30))
+                .dataFimNovaGrade(LocalDate.of(2027, 2, 28))
+                .enviarParaAprovacao(false)
+                .itens(List.of(itemDTO))
+                .build();
+
+        GradeTerapeutica v2 = service.proporAlteracao("g-v1", dto);
+
+        assertEquals(2, v2.getNumeroVersao());
+        assertEquals("g-v1", v2.getIdGradeAnterior());
+        assertEquals(StatusGradeTerapeutica.RASCUNHO, v2.getStatus());
+        assertEquals(LocalDate.of(2027, 2, 28), v2.getDataFimVigencia());
+        assertEquals(1, v2.getItens().size());
     }
 }

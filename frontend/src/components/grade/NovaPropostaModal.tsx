@@ -23,6 +23,7 @@ interface NovaPropostaModalProps {
   onSalvar: (dados: SaveGradeTerapeutica) => Promise<void>;
   idPacientePreselecionado?: string;
   gradeParaEditar?: GradeTerapeutica | null;
+  modoAlteracaoVigente?: boolean;
 }
 
 type Unit = undefined;
@@ -33,6 +34,7 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
   onSalvar,
   idPacientePreselecionado,
   gradeParaEditar,
+  modoAlteracaoVigente = false,
 }) => {
   const { user } = useAuth();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -66,11 +68,21 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
       carregarListasAuxiliares();
 
       if (gradeParaEditar) {
+        const hojeIso = new Date().toISOString().split('T')[0];
+        const inicioInicial = modoAlteracaoVigente
+          ? (gradeParaEditar.dataInicioVigencia && gradeParaEditar.dataInicioVigencia > hojeIso
+              ? gradeParaEditar.dataInicioVigencia
+              : hojeIso)
+          : gradeParaEditar.dataInicioVigencia || '';
         setIdPaciente(gradeParaEditar.idPaciente);
-        setDataInicioVigencia(gradeParaEditar.dataInicioVigencia || '');
+        setDataInicioVigencia(inicioInicial);
         setDataFimVigencia(gradeParaEditar.dataFimVigencia || '');
         setTipoOrigemVigencia(gradeParaEditar.tipoOrigemVigencia || 'GUIA_CONVENIO');
-        setInfoGuia(null);
+        setInfoGuia(
+          modoAlteracaoVigente
+            ? `Alterando Grade Vigente (v${gradeParaEditar.numeroVersao}) → será criada a versão v${gradeParaEditar.numeroVersao + 1}. Ao aprovar, apenas os atendimentos futuros a partir da nova data de início serão substituídos.`
+            : null
+        );
         const itensConvertidos: SaveGradeTerapeuticaItem[] =
           gradeParaEditar.itens && gradeParaEditar.itens.length > 0
             ? gradeParaEditar.itens.map((it) => ({
@@ -290,7 +302,9 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
             <Sparkles className="w-5 h-5 text-primary-600" />
             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
               {gradeParaEditar
-                ? `Editar Rascunho / Proposta de Grade (v${gradeParaEditar.numeroVersao})`
+                ? modoAlteracaoVigente
+                  ? `Alterar Grade Vigente (gerar v${gradeParaEditar.numeroVersao + 1})`
+                  : `Editar Rascunho / Proposta de Grade (v${gradeParaEditar.numeroVersao})`
                 : 'Nova Proposta de Grade Terapêutica'}
             </h2>
           </div>
@@ -519,7 +533,12 @@ export const NovaPropostaModal: React.FC<NovaPropostaModalProps> = ({
               disabled={loading}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-gray-700 dark:text-gray-200 transition disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> {gradeParaEditar ? 'Salvar Alterações' : 'Salvar Rascunho'}
+              <Save className="w-4 h-4" />{' '}
+              {gradeParaEditar
+                ? modoAlteracaoVigente
+                  ? `Salvar Rascunho (v${gradeParaEditar.numeroVersao + 1})`
+                  : 'Salvar Alterações'
+                : 'Salvar Rascunho'}
             </button>
             <button
               type="button"
